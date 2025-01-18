@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a Job - Jobify</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/globals.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+    <script src="https://kit.fontawesome.com/1eba5d9115.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <!-- Website Title -->
+            <div class="h2container">
+                <a href="{% url 'index' %}"><i class="fa-solid fa-money-bill-wave fa-2xl" style="color:#f83c20 ; margin-right: 5px;"></i></a>
+                <a href="{% url 'index' %}" style="text-decoration: none;"><h2>Jobify</h2></a>
+            </div>
+            <!-- Buttons Container -->
+            <div class="buttons-container">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'account' %}" style="text-decoration: none;"><button id="account">Account<i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button></button></a>
+                {% else %}
+                    <a href="{% url 'signin' %}" style="text-decoration: none;"><button id="sign-up">Register<i class="fa-solid fa-user-plus" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    <a href="{% url 'signin' %}" style="text-decoration: none;"><button id="sign-in">Log In<i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Section -->
+    <main class="post-job-main">
+        <div class="signin-container">
+            <div class="sign-in-form-container">
+                <h1>Post a Job</h1>
+                <p class="subtitle">Please enter the details of the job you want to post</p>
+            </div>
+            <form id="post-job-form" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="title">Job Title</label>
+                    {{ form.title }}
+                </div>
+                <div class="form-group">
+                    <label for="company_name">Company Name</label>
+                    {{ form.company_name }}
+                </div>
+                <div class="form-group">
+                    <label for="company_email">Company Email</label>
+                    {{ form.company_email }}
+                </div>
+                <div class="form-group">
+                    <label for="location">Location</label>
+                    {{ form.location }}
+                </div>
+                <div class="form-group">
+                    <label for="salary">Salary</label>
+                    {{ form.salary }}
+                </div>
+                <div class="form-group">
+                    <label for="description">Job Description</label>
+                    {{ form.description }}
+                </div>
+                <div class="form-group">
+                    <label for="requirements">Application Requirements</label>
+                    <div class="checkbox-group">
+                        {% for checkbox in form.requirements %}
+                            <div class="checkbox-item">
+                                {{ checkbox.tag }}
+                                <label for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="custom_questions">Custom Questions</label>
+                    <div id="custom-questions-container">
+                        <input type="text" name="custom_questions" class="form-control" placeholder="Enter a custom question">
+                    </div>
+                    <button type="button" id="add-question" class="btn btn-secondary">Add Question</button>
+                </div>
+                <button type="submit" class="post-job-button">Post Job</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="container">
+            <p>Developed by Jack and Mohnish</p>
+            <p>Terms of Service</p>
+            <p>Privacy Policy</p>
+            <p>Cookie Policy</p>
+            <p>Ads info</p>
+            <p>More</p>
+            <p>Job Portal Company Details</p>
+        </div>
+    </footer>
+    <script src="{% static 'js/postjob.js' %}"></script>
+    <script src="{% static 'js/signin.js' %}"></script>
+    <script>
+        window.embeddedChatbotConfig = {
+            chatbotId: "K05nNPTlJnV2SiHKD-nqs",
+            domain: "www.chatbase.co"
+        }
+    </script>
+    <script
+        src="https://www.chatbase.co/embed.min.js"
+        chatbotId="K05nNPTlJnV2SiHKD-nqs"
+        domain="www.chatbase.co"
+        defer>
+    </script>
+</body>
+</html>

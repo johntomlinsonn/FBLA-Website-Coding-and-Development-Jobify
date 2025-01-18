@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jobify - Find Your Dream Job</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/globals.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+    <script src="https://kit.fontawesome.com/1eba5d9115.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <!-- Website Title -->
+            <div class="h2container">
+                
+                <i id="money-icon"class="fa-solid fa-money-bill-wave fa-2xl" style="color:#f83c20 ; margin: 10%;"></i>
+                
+                <h2>Jobify</h2>
+            </div>
+            <!-- Buttons Container -->
+            <div class="buttons-container">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'account' %}" style="text-decoration: none;"><button id="account">Account<i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    <a href="{% url 'postjob' %}" style="text-decoration: none;"><button id="post-job" style="text-decoration: none;">Post a Job<i class="fa-solid fa-pencil" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    {% if user.is_staff or user.is_superuser %}
+                        <a href="{% url 'admin_panel' %}" style="text-decoration: none;"><button id="admin-panel">Admin Panel <i class="fa-solid fa-toolbox" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'postjob' %}" style="text-decoration: none;"><button id="post-job">Post a Job<i class="fa-solid fa-pencil" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    <a href="{% url 'signin' %}" style="text-decoration: none;"><button id="sign-up">Register<i class="fa-solid fa-user-plus" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    <a href="{% url 'signin' %}" style="text-decoration: none;"><button id="sign-in">Log In<i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Section -->
+    <main>
+        <div class="hero-section">
+            <h1>Join the workforce now</h1>
+            <!-- Search Box -->
+            <div id="input-box" style="display: flex; align-items: center;">
+                <form action="{% url 'search' %}" method="get" class="search-form" style="display: flex; width: 100%;justify-content: center;">
+                    <input type="search" id="search-bar" name="search" placeholder="Job title, company, or keywords" style="flex: 1;">
+                    <button type="submit" id="search-button"><i class="fa-solid fa-magnifying-glass" style="color: #ffffff;margin-right: 15%;"></i>Search Jobs</button>
+                </form>
+            </div>
+            <!-- Placeholder Text -->
+            <p class="description">Your Path to Local Jobs Starts Here - Empowering Normal Community Students to Kickstart Their Careers</p>
+        </div>
+        <div id="carousel-container">
+            <div class="carousel">
+                <div class="slide active">
+                    <img src="{% static 'images/carousel1.jpg' %}" alt="Carousel Image 1">
+                    <div class="carousel-caption">Helping employers find students for their jobs</div>
+                </div>
+                <div class="slide">
+                    <img src="{% static 'images/carousel2.jpg' %}" alt="Carousel Image 2">
+                    <div class="carousel-caption">Helping Students easily apply to Jobs</div>
+                </div>
+                <div class="slide">
+                    <img src="{% static 'images/carousel3.jpg' %}" alt="Carousel Image 3">
+                    <div class="carousel-caption">Getting Students into the workplace</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="container">
+            <p>Developed by Jack and Mohnish</p>
+            <p>Terms of Service</p>
+            <p>Privacy Policy</p>
+            <p>Cookie Policy</p>
+            <p>Ads info</p>
+            <p>More</p>
+            <p>Job Portal Company Details</p>
+        </div>
+    </footer>
+    <script src="{% static 'js/landing.js' %}"></script>
+    <script src="{% static 'js/signin.js' %}"></script>
+    <script>
+        window.embeddedChatbotConfig = {
+            chatbotId: "K05nNPTlJnV2SiHKD-nqs",
+            domain: "www.chatbase.co"
+        }
+    </script>
+    <script
+        src="https://www.chatbase.co/embed.min.js"
+        chatbotId="K05nNPTlJnV2SiHKD-nqs"
+        domain="www.chatbase.co"
+        defer>
+    </script>
+</body>
+</html>

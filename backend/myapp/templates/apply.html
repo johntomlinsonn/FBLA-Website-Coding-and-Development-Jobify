@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Job - Jobify</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/globals.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/images/favicon.png">
+    <script src="https://kit.fontawesome.com/1eba5d9115.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="container">
+            <!-- Website Title -->
+            <div class="h2container">
+                <a href="{% url 'index' %}"><i class="fa-solid fa-money-bill-wave fa-2xl" style="color:#f83c20 ; margin-right: 5px;"></i></a>
+                <a href="{% url 'index' %}" style="text-decoration: none;"><h2>Jobify</h2></a>
+            </div>
+            <!-- Buttons Container -->
+            <div class="buttons-container">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'account' %}" style="text-decoration: none;"><button id="account">Account<i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button><i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    <a href="{% url 'postjob' %}" style="text-decoration: none;"><button id="post-job">Post a Job<i class="fa-solid fa-pencil" style="color: #ffffff; margin-left: 15%;"></i></button</button></a>
+                    {% if user.is_staff or user.is_superuser %}
+                        <a href="{% url 'admin_panel' %}" style="text-decoration: none;"><button id="admin-panel">Admin Panel <i class="fa-solid fa-toolbox" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'postjob' %}" style="text-decoration: none;"><button id="post-job">Post a Job<i class="fa-solid fa-pencil" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    <a href="{% url 'signin' %}" style="text-decoration: none;"><button id="sign-up">Register<i class="fa-solid fa-user-plus" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    <a href="{% url 'signin' %}" style="text-decoration: none;"><button id="sign-in">Log In<i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                {% endif %}
+            </div>
+    </header>
+
+    <!-- Main Content Section -->
+    <main class="apply-main">
+        <div class="signin-container">
+            <!-- Job Information Card -->
+            <div class="signin-form-container">
+                <h1>Job Information</h1>
+                <div class="job-info">
+                    <h2>{{ job_posting.title }}</h2>
+                    <p><strong>Company:</strong> {{ job_posting.company_name }}</p>
+                    <p><strong>Location:</strong> {{ job_posting.location }}</p>
+                    <p><strong>Salary:</strong> {{ job_posting.salary }}</p>
+                    <p><strong>Description:</strong> {{ job_posting.description }}</p>
+                </div>
+            </div>
+        </div>
+            <!-- Application Form Card -->
+        <div class="signin-container">
+            <div class="signin-form-container">
+                <h1>Apply for Job</h1>
+                <p class="subtitle">Please fill in the details to apply for the job</p>
+                <form id="apply-form" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <!-- Name and Email Section -->
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" class="form-control" placeholder="Enter your name" value="{{ user.first_name }} {{ user.last_name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" value="{{ user.email }}" required>
+                        </div>
+                    </div>
+            </div>
+        </div>
+                    <!-- Resume Section -->
+            <div class="signin-container">
+                <div class="signin-form-container">
+                    <h1>Resume</h1>
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="resume">Resume</label>
+                            {% if user_profile and user_profile.resume %}
+                                <p>Current Resume: <a href="{{ user_profile.resume.url }}" target="_blank">View Resume</a></p>
+                            {% endif %}
+                            <input type="file" id="resume" name="resume" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+                    <!-- References Section -->
+            <div class="signin-container">
+                <div class="signin-form-container">
+                    <h1>References</h1>
+                    <div class="form-section">
+                            <div class="form-group">
+                                <label for="reference_name_{{ forloop.counter }}">Reference Name</label>
+                                <input type="text" id="reference_name_{{ forloop.counter }}" name="reference_name_{{ forloop.counter }}" class="form-control" value="{{ reference.name }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="reference_relation_{{ forloop.counter }}">Reference Relation</label>
+                                <input type="text" id="reference_relation_{{ forloop.counter }}" name="reference_relation_{{ forloop.counter }}" class="form-control" value="{{ reference.relation }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="reference_contact_{{ forloop.counter }}">Reference Contact</label>
+                                <input type="text" id="reference_contact_{{ forloop.counter }}" name="reference_contact_{{ forloop.counter }}" class="form-control" value="{{ reference.contact }}" required>
+                            </div>
+                    </div>
+                </div>
+            </div>
+                    <!-- Education Section -->
+            <div class="signin-container">
+                <div class="signin-form-container">
+                    <h1>Education</h1>
+                    <div class="form-section">
+                            <div class="form-group">
+                                <label for="school_name_{{ forloop.counter }}">School Name</label>
+                                <input type="text" id="school_name_{{ forloop.counter }}" name="school_name_{{ forloop.counter }}" class="form-control" value="{{ education.school_name }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="graduation_date_{{ forloop.counter }}">Graduation Date</label>
+                                <input type="date" id="graduation_date_{{ forloop.counter }}" name="graduation_date_{{ forloop.counter }}" class="form-control" value="{{ education.graduation_date|date:'Y-m-d' }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="gpa_{{ forloop.counter }}">GPA</label>
+                                <input type="number" id="gpa_{{ forloop.counter }}" name="gpa_{{ forloop.counter }}" class="form-control" value="{{ education.gpa }}" required>
+                            </div>
+                    </div>
+                </div>
+            </div>
+                    <!-- Custom Questions Section -->
+            <div class="signin-container">
+                <div class="signin-form-container">
+                    <h1>Custom Questions</h1>
+                    <div class="form-section">
+                        {% for question in custom_questions %}
+                            <div class="form-group">
+                                <label for="custom_question_{{ forloop.counter }}">{{ question }}</label>
+                                <input type="text" id="custom_question_{{ forloop.counter }}" name="custom_questions[]" class="form-control" required>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="apply-button">Submit Application</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="container">
+            <p>Developed by Jack and Mohnish</p>
+            <p>Terms of Service</p>
+            <p>Privacy Policy</p>
+            <p>Cookie Policy</p>
+            <p>Ads info</p>
+            <p>More</p>
+            <p>Job Portal Company Details</p>
+        </div>
+    </footer>
+    <script src="{% static 'js/apply.js' %}"></script>
+    <script src="{% static 'js/signin.js' %}"></script>
+    <script>
+        window.embeddedChatbotConfig = {
+            chatbotId: "K05nNPTlJnV2SiHKD-nqs",
+            domain: "www.chatbase.co"
+        }
+    </script>
+    <script
+        src="https://www.chatbase.co/embed.min.js"
+        chatbotId="K05nNPTlJnV2SiHKD-nqs"
+        domain="www.chatbase.co"
+        defer>
+    </script>
+</body>
+</html>
