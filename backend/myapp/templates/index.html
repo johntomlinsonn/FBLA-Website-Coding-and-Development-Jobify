@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jobify - Find Your Dream Job</title>
     {% load static %}
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
     <link rel="stylesheet" href="{% static 'css/globals.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/static/images/favicon.png">
@@ -16,7 +17,6 @@
         <div class="container">
             <!-- Website Title -->
             <div class="h2container">
-                
                 <i id="money-icon"class="fa-solid fa-money-bill-wave fa-2xl" style="color:#f83c20 ; margin: 10%;"></i>
                 
                 <h2>Jobify</h2>
@@ -41,33 +41,34 @@
     <!-- Main Content Section -->
     <main>
         <div class="hero-section">
-            <h1>Join the workforce now</h1>
+            
+            <h1>Helping Normal-
+                <br>Community students find 
+                <br> perfect job
+            </h1>
             <!-- Search Box -->
+            <div class="semi-circle">
             <div id="input-box" style="display: flex; align-items: center;">
                 <form action="{% url 'search' %}" method="get" class="search-form" style="display: flex; width: 100%;justify-content: center;">
                     <input type="search" id="search-bar" name="search" placeholder="Job title, company, or keywords" style="flex: 1;">
                     <button type="submit" id="search-button"><i class="fa-solid fa-magnifying-glass" style="color: #ffffff;margin-right: 15%;"></i>Search Jobs</button>
                 </form>
             </div>
-            <!-- Placeholder Text -->
-            <p class="description">Your Path to Local Jobs Starts Here - Empowering Normal Community Students to Kickstart Their Careers</p>
-        </div>
-        <div id="carousel-container">
-            <div class="carousel">
-                <div class="slide active">
-                    <img src="{% static 'images/carousel1.jpg' %}" alt="Carousel Image 1">
-                    <div class="carousel-caption">Helping employers find students for their jobs</div>
-                </div>
-                <div class="slide">
-                    <img src="{% static 'images/carousel2.jpg' %}" alt="Carousel Image 2">
-                    <div class="carousel-caption">Helping Students easily apply to Jobs</div>
-                </div>
-                <div class="slide">
-                    <img src="{% static 'images/carousel3.jpg' %}" alt="Carousel Image 3">
-                    <div class="carousel-caption">Getting Students into the workplace</div>
-                </div>
             </div>
         </div>
+
+        <div class = "oval">
+            <div class = "hero-section">
+                <h3>Even he got a job</h3>
+            </div>
+        </div>
+        <div class = "testimonials">
+            <div>
+                <img src="{% static 'images/placeholder.jpg' %}" alt="Testimonial 1">
+                <p>“I was able to find a job that I love within a week of using Jobify. I would recommend it to anyone looking for a job.”</p>
+            </div>
+        </div>
+    </div>
     </main>
 
     <!-- Footer Section -->
