@@ -82,6 +82,7 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',  # For global static files (optional)
+    BASE_DIR / "node_modules/aos/dist"
 ]
 
 # Media files configuration
