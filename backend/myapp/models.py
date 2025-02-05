@@ -37,3 +37,4 @@ class JobPosting(models.Model):
     custom_questions = models.TextField(blank=True, null=True)
     status = models.CharField(choices=[('pending', 'Pending'), ('approved', 'Approved'), ('denied', 'Denied')], default='pending', max_length=10)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    grade = models.IntegerField(blank = True, null = True)

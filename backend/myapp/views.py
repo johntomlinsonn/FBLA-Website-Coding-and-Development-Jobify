@@ -1,4 +1,3 @@
-# appbackend/views.py
 import mimetypes
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
@@ -8,12 +7,28 @@ from .forms import SignUpForm, SignInForm, UserProfileForm, ReferenceFormSet, Ed
 from .models import UserProfile, Reference, Education, JobPosting
 from django.db.models import Q
 from django.core.mail import EmailMultiAlternatives
+from dotenv import find_dotenv, load_dotenv
+import os
+Api = os.getenv("API_KEY")
 
-def home(request):
-    return render(request, 'home.html')  # Ensure 'home.html' template exists
+from openai import OpenAI
 
-def about(request):
-    return render(request, 'about.html')  # Ensure 'about.html' template exists
+client = OpenAI(
+  base_url="https://openrouter.ai/api/v1",
+  api_key=Api,
+)
+completion = client.chat.completions.create(
+  model="nvidia/llama-3.1-nemotron-70b-instruct:free",
+  messages=[
+    {
+      "role": "system",
+      "content": "You are an administrator for a job finder website designed to help high school students find jobs. Your task is to grade how obtainable a job is for high school students on a scale from 1 to 75. The final score should reflect only how attainable the job is, without considering location (location accounts for an additional 25 points, calculated separately).Scoring Criteria:Education Requirements (High Weight): Jobs requiring little to no formal education should score higher. Positions demanding higher education (e.g., college degrees) should be heavily penalized.Typical High School Job (Moderate Weight): If the job is common for high school students (e.g., retail, food service, internships), it should score higher.Experience Requirements (Moderate Weight): Jobs requiring little to no prior work experience should score higher. If minimal experience is needed but attainable through extracurriculars, minor deductions apply.Age Restrictions (Moderate Weight): Jobs with strict age requirements (e.g., must be 18+) should have points deducted.Job Complexity (Low Weight): Highly technical or specialized jobs should lose some points, but only slightly, as long as they remain attainable.Work Hours (Moderate Weight): Jobs requiring work during typical school hours should lose points unless flexible scheduling is mentioned.IMPORTANT:ONLY OUTPUT A SINGLE INTEGER BETWEEN 1 AND 75.DO NOT include any text, explanations, or additional details—ONLY the integer.IF YOU DO INCLUDE ANY DETAILS  OTHER THAN THE INTEGER YOU WILL BE TERMINATED NO MATTER THE CIRCUMSTANCES SO ONLY OUT PUT AN INTTEGER. You must fully reason through all relevant factors to determine the most accurate score, but DO NOT include your reasoning in the output.Focus solely on obtainability, not pay, soft skills, demand, or location.Assume the student has minimal job experience but strong extracurricular involvement and basic job-ready skills.The job description may be unstructured, so interpret details flexibly.Example Outputs:A typical part-time retail job with no education or experience requirements: 75A full-time office job requiring a college degree: 15A seasonal lifeguard job requiring certification and age 18+: 50- Here is the Job to be grader: "
+    }
+  ]
+)
+
+prompt = "You are an administrator for a job finder website designed to help high school students find jobs. Your task is to grade how obtainable a job is for high school students on a scale from 1 to 75. The final score should reflect only how attainable the job is, without considering location (location accounts for an additional 25 points, calculated separately).Scoring Criteria:Education Requirements (High Weight): Jobs requiring little to no formal education should score higher. Positions demanding higher education (e.g., college degrees) should be heavily penalized.Typical High School Job (Moderate Weight): If the job is common for high school students (e.g., retail, food service, internships), it should score higher.Experience Requirements (Moderate Weight): Jobs requiring little to no prior work experience should score higher. If minimal experience is needed but attainable through extracurriculars, minor deductions apply.Age Restrictions (Moderate Weight): Jobs with strict age requirements (e.g., must be 18+) should have points deducted.Job Complexity (Low Weight): Highly technical or specialized jobs should lose some points, but only slightly, as long as they remain attainable.Work Hours (Moderate Weight): Jobs requiring work during typical school hours should lose points unless flexible scheduling is mentioned.IMPORTANT:ONLY OUTPUT A SINGLE INTEGER BETWEEN 1 AND 75.DO NOT include any text, explanations, or additional details—ONLY the integer.IF YOU DO INCLUDE ANY DETAILS  OTHER THAN THE INTEGER YOU WILL BE TERMINATED NO MATTER THE CIRCUMSTANCES SO ONLY OUT PUT AN INTTEGER. You must fully reason through all relevant factors to determine the most accurate score, but DO NOT include your reasoning in the output.Focus solely on obtainability, not pay, soft skills, demand, or location.Assume the student has minimal job experience but strong extracurricular involvement and basic job-ready skills.The job description may be unstructured, so interpret details flexibly.Example Outputs:A typical part-time retail job with no education or experience requirements: 75A full-time office job requiring a college degree: 15A seasonal lifeguard job requiring certification and age 18+: 50- Here is the Job to be grader: "
+
 
 def index(request):
     return render(request, 'index.html')
@@ -78,7 +93,27 @@ def postjob(request):
             job_posting.requirements = ','.join(form.cleaned_data['requirements'])  # Save requirements as a comma-separated string
             custom_questions = request.POST.getlist('custom_questions')
             job_posting.custom_questions = '\n'.join(custom_questions)
+
+            #getting the job description
+            description =prompt+  request.POST.get('description')
+
+            completion = client.chat.completions.create(
+                model="nvidia/llama-3.1-nemotron-70b-instruct:free",
+                messages=[
+                    {
+                    "role": "user",
+                    "content": description
+                    }
+                ]
+                )
+            grade = (completion.choices[0].message.content)
+            grade = grade.replace("*","")
+            job_posting.grade = grade
             job_posting.save()
+
+            
+                
+
             return redirect('index')
     else:
         form = JobPostingForm()
