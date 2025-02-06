@@ -47,6 +47,10 @@
                         <h3>{{ job.title }}</h3>
                         <p><strong>Company:</strong> {{ job.company_name }}</p>
                         <p><strong>Location:</strong> {{ job.location }}</p>
+                        <p><strong>Salary:</strong> {{ job.salary }}</p>
+                        <p><strong>Job Grade:</strong> {{ job.grade}}</p>
+                        <button class="job-description-button" style="display: block; margin: 0 auto;">Show Job Description</button>
+                        <p class = "job-description">{{ job.description }}</p>
                         <p><strong>Status:</strong> {{ job.status }}</p>
                         <div class="actions center-buttons">
                             {% if job.status != 'approved' %}
@@ -75,6 +79,7 @@
             <p>Job Portal Company Details</p>
         </div>
     </footer>
+    <script src="{% static 'js/admin_panel.js' %}"></script>
     <script>
         window.embeddedChatbotConfig = {
             chatbotId: "K05nNPTlJnV2SiHKD-nqs",

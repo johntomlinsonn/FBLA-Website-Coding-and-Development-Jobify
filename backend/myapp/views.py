@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.core.mail import EmailMultiAlternatives
 from dotenv import find_dotenv, load_dotenv
 import os
+from .geo_apify import *
 Api = os.getenv("API_KEY")
 
 from openai import OpenAI
@@ -18,7 +19,7 @@ client = OpenAI(
   api_key=Api,
 )
 completion = client.chat.completions.create(
-  model="nvidia/llama-3.1-nemotron-70b-instruct:free",
+  model="microsoft/phi-3-medium-128k-instruct:free",
   messages=[
     {
       "role": "system",
@@ -98,7 +99,7 @@ def postjob(request):
             description =prompt+  request.POST.get('description')
 
             completion = client.chat.completions.create(
-                model="nvidia/llama-3.1-nemotron-70b-instruct:free",
+                model="microsoft/phi-3-medium-128k-instruct:free",
                 messages=[
                     {
                     "role": "user",
@@ -107,8 +108,16 @@ def postjob(request):
                 ]
                 )
             grade = (completion.choices[0].message.content)
-            grade = grade.replace("*","")
-            job_posting.grade = grade
+            grade = int(grade.replace("*",""))
+            travel_time = get_travel_time(job_posting.location, "3900 E Raab Rd, Normal, IL 61761")
+            travel_grade = 0
+            if travel_time > 15:
+                travel_grade += 25 - (2*(25 - travel_time))
+                if travel_grade < 0:
+                    travel_grade = 0
+            else:
+                travel_grade += 25
+            job_posting.grade = grade + travel_grade
             job_posting.save()
 
             
@@ -232,6 +241,16 @@ def apply(request, job_id):
         name = request.POST.get('name')
         email = request.POST.get('email')
         resume = request.FILES.get('resume') or user_profile.resume
+
+        #getting resume text 
+        """import pdfplumber
+
+def get_pdf_text(pdf_path):
+    with pdfplumber.open(pdf_path) as pdf:
+        text = ""
+        for page in pdf.pages:
+            text += page.extract_text()
+    return text"""
         custom_answers = request.POST.getlist('custom_questions[]')
         requirement_answers = {req: request.POST.get(req) for req in requirements}
         
