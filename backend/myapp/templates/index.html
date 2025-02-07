@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/static/images/favicon.png">
     <script src="https://kit.fontawesome.com/1eba5d9115.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{% static 'node_modules/aos/dist/aos.css' %}" />
+    <script src="{% static 'node_modules/aos/dist/aos.js' %}"></script>
 </head>
 <body>
     <!-- Header Section -->
@@ -58,22 +60,22 @@
         </div>
 
         <div class = "oval">
-            <div class = "hero-section" id = "image1">
-                <h3>Even he got a job</h3>
+            <div class = "hero-section" id = "image-1">
+                <h1>Helping NCHS Students Find Jobs</h3>
             </div>
-            <div class = "hero-section" id = "image2">
-                <h3>Even got a job</h3>
+            <div class = "hero-section" id = "image-2">
+                <h1>Helping Employers Find Empoyees</h3>
             </div>
-            <div class = "hero-section" id = "image3">
-                <h3>Even he got job</h3>
+            <div class = "hero-section" id = "image-3">
+                <h1>Quick and Easy Applications</h3>
             </div>
         </div>
         <div class = "testimonials">
-            <div class = "testimonial-left">
+            <div class = "testimonial-left" data-aos="fade-right" data-aos-duration="1000">
                 <img src="{% static 'images/placeholder.jpg' %}" alt="Testimonial 1">
                 <p>“I was able to find a job that I love within a week of using Jobify. I would recommend it to anyone looking for a job.”</p>
             </div>
-            <div class = "testimonial-right">
+            <div class = "testimonial-right" data-aos="fade-left" data-aos-duration="1000">
                 <p>“I was able to find a job that I love within a week of using Jobify. I would recommend it to anyone looking for a job.”</p>
                 <img src="{% static 'images/placeholder.jpg' %}" alt="Testimonial 2">
             </div>
@@ -106,6 +108,12 @@
         chatbotId="K05nNPTlJnV2SiHKD-nqs"
         domain="www.chatbase.co"
         defer>
+    </script>
+    <script>
+        AOS.init({
+            once: false,
+            offset: 200
+        });
     </script>
 </body>
 </html>

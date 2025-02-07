@@ -10,6 +10,7 @@ from django.core.mail import EmailMultiAlternatives
 from dotenv import find_dotenv, load_dotenv
 import os
 from .geo_apify import *
+from .applicant_checker import *
 Api = os.getenv("API_KEY")
 
 from openai import OpenAI
@@ -230,103 +231,44 @@ def apply(request, job_id):
     user_profile = None
     user_references = []
     user_education = []
-    #gathering users data to show on the application page
+    
     if request.user.is_authenticated:
         user_profile = UserProfile.objects.get(user=request.user)
         user_references = user_profile.references.all()
         user_education = user_profile.education.all()
     
     if request.method == 'POST':
-        # Handle form submission, on form submission getting user info for the email
+        # 1. Prepare email content
         name = request.POST.get('name')
         email = request.POST.get('email')
         resume = request.FILES.get('resume') or user_profile.resume
-
-        #getting resume text 
-        """import pdfplumber
-
-def get_pdf_text(pdf_path):
-    with pdfplumber.open(pdf_path) as pdf:
-        text = ""
-        for page in pdf.pages:
-            text += page.extract_text()
-    return text"""
         custom_answers = request.POST.getlist('custom_questions[]')
         requirement_answers = {req: request.POST.get(req) for req in requirements}
         
-        # Process the application (e.g., save to database, send email, etc.)
+        # Create email subject and content
         subject = f"New Application for {job_posting.title}"
-
-        #email formatting
-        text_content = f"""
-A new application has been submitted for {job_posting.title}.
-
-Full Name: {name}
-Email: {email}
-Resume Attached: {'Yes' if resume else 'No'}
-"""
-        #adding the custom questions and answers to the email
-        if custom_questions and custom_answers:
-            text_content += "\nCustom Questions and Answers:\n"
-            for question, answer in zip(custom_questions, custom_answers):
-                text_content += f"Q: {question}\nA: {answer}\n"
+        text_content, html_content = create_email_content(
+            job_posting, name, email, resume,
+            custom_questions, custom_answers,
+            user_references, user_education
+        )
         
-        # Add references and education to the email content
-        if user_references:
-            text_content += "\nReferences:\n"
-            for ref in user_references:
-                text_content += f"Name: {ref.name}, Relation: {ref.relation}, Contact: {ref.contact}\n"
-       
-        #adding the users education to the email
-        if user_education:
-            text_content += "\nEducation:\n"
-            for edu in user_education:
-                text_content += f"School: {edu.school_name}, Graduation Date: {edu.graduation_date}, GPA: {edu.gpa}\n"
-        #email formatting
-        html_content = f"""
-<html>
-<body>
-<h3>Application for {job_posting.title}</h3>
-<p><strong>Name:</strong> {name}</p>
-<p><strong>Email:</strong> {email}</p>
-<p><strong>Resume Attached:</strong> {'Yes' if resume else 'No'}</p>
-"""
-        #adding the custom questions and answers
-        if custom_questions and custom_answers:
-            html_content += "<h4>Custom Questions and Answers:</h4>"
-            for question, answer in zip(custom_questions, custom_answers):
-                html_content += f"<p><strong>Q:</strong> {question}<br><strong>A:</strong> {answer}</p>"
-        #adding refrences
-        if user_references:
-            html_content += "<h4>References:</h4>"
-            for ref in user_references:
-                html_content += f"<p>Name: {ref.name}, Relation: {ref.relation}, Contact: {ref.contact}</p>"
-        #adding user education
-        if user_education:
-            html_content += "<h4>Education:</h4>"
-            for edu in user_education:
-                html_content += f"<p>School: {edu.school_name}, Graduation Date: {edu.graduation_date}, GPA: {edu.gpa}</p>"
-        
-        html_content += "</body></html>"
-        
-        
+        # Prepare email object
         mail = EmailMultiAlternatives(subject, text_content, to=[job_posting.company_email])
         mail.attach_alternative(html_content, "text/html")
-        #adding resume to the email
+        
+        # Attach resume if present
         if resume:
-            if hasattr(resume, 'path'):
-                #finding the users resume
-                mime_type, _ = mimetypes.guess_type(resume.path)
-                with open(resume.path, 'rb') as f:
-                    mail.attach(resume.name, f.read(), mime_type)
-            else:
-                #finding resume
-                mime_type, _ = mimetypes.guess_type(resume.name)
-                mail.attach(resume.name, resume.read(), mime_type)
+            attach_resume_to_email(mail, resume)
+        
+        # 2. Redirect user immediately
+        response = redirect('index')
+        
+        # 3. Send email after redirect
         mail.send()
-
-        return redirect('index')
-    #reding the page
+        
+        return response
+        
     return render(request, 'apply.html', {
         'job_posting': job_posting,
         'custom_questions': custom_questions,
@@ -336,3 +278,69 @@ Resume Attached: {'Yes' if resume else 'No'}
         'user_references': user_references,
         'user_education': user_education
     })
+
+def create_email_content(job_posting, name, email, resume, custom_questions, custom_answers, user_references, user_education):
+    # Create text content
+    text_content = f"""
+A new application has been submitted for {job_posting.title}.
+
+Full Name: {name}
+Email: {email}
+Resume Attached: {'Yes' if resume else 'No'}
+"""
+    if custom_questions and custom_answers:
+        text_content += "\nCustom Questions and Answers:\n"
+        for question, answer in zip(custom_questions, custom_answers):
+            text_content += f"Q: {question}\nA: {answer}\n"
+    
+    if user_references:
+        text_content += "\nReferences:\n"
+        for ref in user_references:
+            text_content += f"Name: {ref.name}, Relation: {ref.relation}, Contact: {ref.contact}\n"
+    
+    if user_education:
+        text_content += "\nEducation:\n"
+        for edu in user_education:
+            text_content += f"School: {edu.school_name}, Graduation Date: {edu.graduation_date}, GPA: {edu.gpa}\n"
+
+    # Create HTML content
+    html_content = f"""
+<html>
+<body>
+<h3>Application for {job_posting.title}</h3>
+<p><strong>Name:</strong> {name}</p>
+<p><strong>Email:</strong> {email}</p>
+<p><strong>Resume Attached:</strong> {'Yes' if resume else 'No'}</p>
+"""
+    if custom_questions and custom_answers:
+        html_content += "<h4>Custom Questions and Answers:</h4>"
+        for question, answer in zip(custom_questions, custom_answers):
+            html_content += f"<p><strong>Q:</strong> {question}<br><strong>A:</strong> {answer}</p>"
+
+    if user_references:
+        html_content += "<h4>References:</h4>"
+        for ref in user_references:
+            html_content += f"<p>Name: {ref.name}, Relation: {ref.relation}, Contact: {ref.contact}</p>"
+
+    if user_education:
+        html_content += "<h4>Education:</h4>"
+        for edu in user_education:
+            html_content += f"<p>School: {edu.school_name}, Graduation Date: {edu.graduation_date}, GPA: {edu.gpa}</p>"
+
+    html_content += "<h4>Applicant Grade:</h4>"
+    grade, reason = clean_grade(check_applicant(resume, job_posting.description))
+    html_content += f"<p>{grade}</p>"
+    html_content += "<h6>Reason For Grade:</h6>"
+    html_content += f"<p>{reason}</p>"
+    html_content += "</body></html>"
+
+    return text_content, html_content
+
+def attach_resume_to_email(mail, resume):
+    if hasattr(resume, 'path'):
+        mime_type, _ = mimetypes.guess_type(resume.path)
+        with open(resume.path, 'rb') as f:
+            mail.attach(resume.name, f.read(), mime_type)
+    else:
+        mime_type, _ = mimetypes.guess_type(resume.name)
+        mail.attach(resume.name, resume.read(), mime_type)
