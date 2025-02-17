@@ -15,13 +15,22 @@ class SignUpForm(UserCreationForm):
         'placeholder': 'Enter your email',
         'id': 'email-input'
     }))
+    is_job_provider = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
+        'class': 'form-check-input',
+        'id': 'job-provider-checkbox'
+    }))
+    account_holder_name = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control custom-input',
+        'placeholder': 'Enter account holder name',
+        'id': 'account-holder-input'
+    }))
     username = forms.CharField(required=False)
     password1 = forms.CharField(required=False, widget=forms.PasswordInput())
     password2 = forms.CharField(required=False, widget=forms.PasswordInput())
 
     class Meta:
         model = User
-        fields = ('full_name', 'username', 'email', 'password1', 'password2')
+        fields = ('full_name', 'username', 'email', 'is_job_provider', 'account_holder_name', 'password1', 'password2')
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -29,8 +38,15 @@ class SignUpForm(UserCreationForm):
         first_name, last_name = full_name.split(' ', 1)
         user.first_name = first_name
         user.last_name = last_name
+        
         if commit:
             user.save()
+            # Create UserProfile with job provider fields
+            UserProfile.objects.create(
+                user=user,
+                is_job_provider=self.cleaned_data.get('is_job_provider', False),
+                account_holder_name=self.cleaned_data.get('account_holder_name', '')
+            )
         return user
 
 class SignInForm(AuthenticationForm):
@@ -52,7 +68,7 @@ class UserProfileForm(forms.ModelForm):
 
     def clean_resume(self):
         resume = self.cleaned_data.get('resume')
-        # Add any validation if needed, then return
+        
         return resume
 
     class Meta:
@@ -84,7 +100,7 @@ class EducationForm(forms.ModelForm):
         widgets = {
             'school_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'School Name'}),
             'graduation_date': forms.DateInput(attrs={'class': 'form-control', 'placeholder': 'Graduation Date', 'type': 'date'}),
-            'gpa': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'GPA'}),
+            'gpa': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'GPA','step':'0.01','min':'0'}),
         }
         required = {
             'school_name': False,

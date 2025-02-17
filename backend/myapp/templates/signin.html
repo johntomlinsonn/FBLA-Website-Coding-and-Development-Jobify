@@ -106,6 +106,21 @@
                             <div class="error">{{ signup_form.password2.errors }}</div>
                         {% endif %}
                     </div>
+                    <div class="form-group checkbox-group">
+                        <label for="{{ signup_form.is_job_provider.id_for_label }}">Are you a job provider?</label>
+                        {{ signup_form.is_job_provider }}
+                        {% if signup_form.is_job_provider.errors %}
+                            <div class="error">{{ signup_form.is_job_provider.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group" id="account-holder-group" style="display: none;">
+                        <label for="{{ signup_form.account_holder_name.id_for_label }}">Account Holder Name</label>
+                        {{ signup_form.account_holder_name }}
+                        {% if signup_form.account_holder_name.errors %}
+                            <div class="error">{{ signup_form.account_holder_name.errors }}</div>
+                        {% endif %}
+                    </div>
+
                     <button type="submit" name="signup" class="signin-button">Sign Up</button>
                 </form>
             </div>

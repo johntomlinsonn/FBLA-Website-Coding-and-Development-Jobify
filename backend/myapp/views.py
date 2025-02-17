@@ -20,7 +20,7 @@ client = OpenAI(
   api_key=Api,
 )
 completion = client.chat.completions.create(
-  model="microsoft/phi-3-medium-128k-instruct:free",
+  model="google/gemini-2.0-flash-lite-preview-02-05:free",
   messages=[
     {
       "role": "system",
@@ -91,6 +91,7 @@ def postjob(request):
         if form.is_valid():
             job_posting = form.save(commit=False)
             job_posting.user = request.user
+            job_posting.creator = request.user
             job_posting.status = 'pending'
             job_posting.requirements = ','.join(form.cleaned_data['requirements'])  # Save requirements as a comma-separated string
             custom_questions = request.POST.getlist('custom_questions')
@@ -100,7 +101,7 @@ def postjob(request):
             description =prompt+  request.POST.get('description')
 
             completion = client.chat.completions.create(
-                model="microsoft/phi-3-medium-128k-instruct:free",
+                model="google/gemini-2.0-flash-lite-preview-02-05:free",
                 messages=[
                     {
                     "role": "user",
@@ -286,8 +287,11 @@ A new application has been submitted for {job_posting.title}.
 
 Full Name: {name}
 Email: {email}
-Resume Attached: {'Yes' if resume else 'No'}
 """
+    # Only add resume info if resume exists
+    if resume:
+        text_content += "Resume Attached: Yes\n"
+    
     if custom_questions and custom_answers:
         text_content += "\nCustom Questions and Answers:\n"
         for question, answer in zip(custom_questions, custom_answers):
@@ -310,8 +314,11 @@ Resume Attached: {'Yes' if resume else 'No'}
 <h3>Application for {job_posting.title}</h3>
 <p><strong>Name:</strong> {name}</p>
 <p><strong>Email:</strong> {email}</p>
-<p><strong>Resume Attached:</strong> {'Yes' if resume else 'No'}</p>
 """
+    # Only add resume info if resume exists
+    if resume:
+        html_content += "<p><strong>Resume:</strong> Attached</p>"
+    
     if custom_questions and custom_answers:
         html_content += "<h4>Custom Questions and Answers:</h4>"
         for question, answer in zip(custom_questions, custom_answers):
@@ -327,11 +334,14 @@ Resume Attached: {'Yes' if resume else 'No'}
         for edu in user_education:
             html_content += f"<p>School: {edu.school_name}, Graduation Date: {edu.graduation_date}, GPA: {edu.gpa}</p>"
 
-    html_content += "<h4>Applicant Grade:</h4>"
-    grade, reason = clean_grade(check_applicant(resume, job_posting.description))
-    html_content += f"<p>{grade}</p>"
-    html_content += "<h6>Reason For Grade:</h6>"
-    html_content += f"<p>{reason}</p>"
+    if resume:
+        html_content += "<h4>Applicant Grade:</h4>"
+        grade, reason = clean_grade(check_applicant(resume, job_posting.description))
+    
+        html_content += f"<p>{grade}</p>"
+        html_content += "<h6>Reason For Grade:</h6>"
+        html_content += f"<p>{reason}</p>"
+    
     html_content += "</body></html>"
 
     return text_content, html_content

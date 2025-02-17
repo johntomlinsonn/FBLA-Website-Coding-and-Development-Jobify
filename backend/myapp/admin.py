@@ -30,16 +30,19 @@ class EducationInline(admin.TabularInline):
 # Register the UserProfile model with inlines for Reference and Education
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'resume', 'gpa')
-    search_fields = ('user__username',)
+    list_display = ('user', 'is_job_provider', 'account_holder_name')
+    list_filter = ('is_job_provider',)
+    search_fields = ('user__username', 'account_holder_name')
     inlines = [ReferenceInline, EducationInline]
 
 @admin.register(JobPosting)
 class JobPostingAdmin(admin.ModelAdmin):
-    list_display = ('title', 'company_name', 'location', 'status', 'user')
-    list_filter = ('status', 'job_type')
-    search_fields = ('title', 'company_name', 'location')
+    list_display = ('title', 'company_name', 'created_at', 'status','grade')
+    list_filter = ('status', 'created_at')
+    search_fields = ('title', 'company_name', 'description')
     actions = ['approve_jobs', 'deny_jobs']
+
+   
 
     def approve_jobs(self, request, queryset):
         queryset.update(status='approved')
