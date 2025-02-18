@@ -75,3 +75,50 @@ document.addEventListener('DOMContentLoaded', function() {
         customQuestionsContainer.appendChild(questionGroup);
     });
 });
+
+function debounce(func, wait) {
+    let timeout;
+    
+    return function executedFunction(...args) {
+        // Clear any existing timeout
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+        
+        // Set new timeout
+        timeout = setTimeout(() => {
+            func.apply(this, args);
+        }, wait);
+    };
+}
+
+function sendText() {
+    let description = document.getElementById("id_description").value;
+    let location = document.getElementById("id_location").value;
+
+    if (!description || !location) {
+        document.getElementById("output").innerText = "Both fields are required!";
+        return;
+    }
+
+    fetch(`/grade_job_live/?description=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.grade !== undefined) {
+                document.getElementById("output").innerText = `Job Grade: ${data.grade}`;
+            } else {
+                document.getElementById("output").innerText = "Unable to calculate grade";
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            document.getElementById("output").innerText = "Error calculating grade";
+        });
+}
+
+// Create debounced version with 2 second delay
+const debouncedSendText = debounce(sendText, 2000);
+
+// Add event listeners to both inputs
+document.getElementById("id_description").addEventListener("input", debouncedSendText);
+document.getElementById("id_location").addEventListener("input", debouncedSendText);

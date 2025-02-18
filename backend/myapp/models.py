@@ -51,7 +51,6 @@ class JobPosting(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         # Update the provider's posting counts
-        self.provider.update_posting_counts()
 
     def __str__(self):
         return f"{self.title} at {self.company_name}"
