@@ -387,7 +387,7 @@ footer p {
   padding: 20px;
 }
 
-.signin-container {
+.form-container {
   background: var(--container-background);
   padding: 40px;
   border-radius: 12px;
@@ -398,7 +398,7 @@ footer p {
   margin-bottom: 20px;
 }
 
-.signin-container h1 {
+.form-container h1 {
   margin-bottom: 10px;
   font-size: 24px;
   color: var(--primary-color);
@@ -498,7 +498,7 @@ footer p {
   background: var(--button-hover);
 }
 
-.signin-container .signin-button {
+.form-container .signin-button {
   color: var(--background); /* Button text color */
   background-color: var(--primary-color);
   border: none;
@@ -515,7 +515,7 @@ footer p {
   height: 45px;
 }
 
-.signin-container .signin-button:hover {
+.form-container .signin-button:hover {
   background-color: var(--button-hover); /* Hover effect */
 }
 
@@ -661,6 +661,7 @@ footer p {
 
 .checkbox-item input[type="checkbox"] {
   grid-column: 2;
+  grid-row: 1;
   margin-left: 0.5rem;
   position: static;
   opacity: 1;

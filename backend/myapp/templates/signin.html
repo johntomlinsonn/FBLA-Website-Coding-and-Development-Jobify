@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Jobify</title>
     {% load static %}
+    <link rel="stylesheet" href="{% static 'css/signin.css' %}">
     <link rel="stylesheet" href="{% static 'css/globals.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/static/images/favicon.png">
@@ -35,7 +36,7 @@
 
     <!-- Main Content Section -->
     <main class="signin-main">
-        <div class="signin-container">
+        <div class="form-container">
             <div id="sign-in-form-container">
                 <h1>Welcome Back</h1>
                 <p class="subtitle">Please enter your details to sign in</p>
@@ -79,47 +80,48 @@
                         {% endif %}
                     </div>
                     <div class="form-group">
-                        <label for="{{ signup_form.email.id_for_label }}">Email</label>
-                        {{ signup_form.email }}
-                        {% if signup_form.email.errors %}
-                            <div class="error">{{ signup_form.email.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
                         <label for="{{ signup_form.full_name.id_for_label }}">Full Name</label>
                         {{ signup_form.full_name }}
                         {% if signup_form.full_name.errors %}
                             <div class="error">{{ signup_form.full_name.errors }}</div>
                         {% endif %}
                     </div>
-                    <div class="form-group">
-                        <label for="{{ signup_form.password1.id_for_label }}">Password</label>
-                        {{ signup_form.password1 }}
-                        {% if signup_form.password1.errors %}
-                            <div class="error">{{ signup_form.password1.errors }}</div>
-                        {% endif %}
+                    <div id = "password-group">
+                        <div class="form-group">
+                            <label for="{{ signup_form.email.id_for_label }}">Email</label>
+                            {{ signup_form.email }}
+                            {% if signup_form.email.errors %}
+                                <div class="error">{{ signup_form.email.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="checkbox-group">
+                            <div class = "checkbox-item">
+                                <label for="{{ signup_form.is_job_provider.id_for_label }}">Are you a job provider?</label>
+                                {{ signup_form.is_job_provider }}
+                                {% if signup_form.is_job_provider.errors %}
+                                    <div class="error">{{ signup_form.is_job_provider.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
                     </div>
-                    <div class="form-group">
-                        <label for="{{ signup_form.password2.id_for_label }}">Confirm Password</label>
-                        {{ signup_form.password2 }}
-                        {% if signup_form.password2.errors %}
-                            <div class="error">{{ signup_form.password2.errors }}</div>
-                        {% endif %}
+                    <div id = "password-group">
+                        <div class="form-group">
+                            <label for="{{ signup_form.password1.id_for_label }}">Password</label>
+                            {{ signup_form.password1 }}
+                            {% if signup_form.password1.errors %}
+                                <div class="error">{{ signup_form.password1.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ signup_form.password2.id_for_label }}">Confirm Password</label>
+                            {{ signup_form.password2 }}
+                            {% if signup_form.password2.errors %}
+                                <div class="error">{{ signup_form.password2.errors }}</div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="form-group checkbox-group">
-                        <label for="{{ signup_form.is_job_provider.id_for_label }}">Are you a job provider?</label>
-                        {{ signup_form.is_job_provider }}
-                        {% if signup_form.is_job_provider.errors %}
-                            <div class="error">{{ signup_form.is_job_provider.errors }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="form-group" id="account-holder-group" style="display: none;">
-                        <label for="{{ signup_form.account_holder_name.id_for_label }}">Account Holder Name</label>
-                        {{ signup_form.account_holder_name }}
-                        {% if signup_form.account_holder_name.errors %}
-                            <div class="error">{{ signup_form.account_holder_name.errors }}</div>
-                        {% endif %}
-                    </div>
+        
 
                     <button type="submit" name="signup" class="signin-button">Sign Up</button>
                 </form>

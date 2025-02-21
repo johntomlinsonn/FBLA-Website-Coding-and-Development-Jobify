@@ -12,6 +12,9 @@ import os
 from .geo_apify import *
 from .applicant_checker import *
 from .job_grade import *
+from django.http import JsonResponse
+from django.conf import settings
+
 Api = os.getenv("API_KEY")
 
 from openai import OpenAI
@@ -117,12 +120,11 @@ def search(request):
         job_postings = JobPosting.objects.filter(
             Q(title__icontains=query) |
             Q(company_name__icontains=query) |
-            Q(location__icontains=query  ) |
+            Q(location__icontains=query) |
             Q(salary__icontains=query) |
             Q(description__icontains=query) |
             Q(requirements__icontains=query),
-            status='approved'  # Only show approved job postings
-        )
+            status='approved')
     else:
         job_postings = JobPosting.objects.filter(status='approved')
     return render(request, 'search.html', {'job_postings': job_postings})
@@ -336,3 +338,29 @@ def attach_resume_to_email(mail, resume):
 
 def grade_job_live(request):
     return grade_job_lv(request)
+
+def grade_applicant_live(request):
+    
+    resume_url = request.GET.get('resume_url')
+    if resume_url.startswith('/media/'):
+            resume_url = resume_url[len('/media/'):]
+    resume_path = os.path.join(settings.MEDIA_ROOT, resume_url)
+    
+    description = request.GET.get('description')
+    if not resume_url or not description:
+        return JsonResponse({'error': 'Both resume URL and description are required'}, status=400)
+
+    # Assuming you have a function to grade the applicant based on resume URL and description
+    grade = clean_grade(check_applicant(resume_path, description))
+    print(grade)
+    builder = ""
+    for i in grade[0]:
+        if i != ";":
+            builder +=i
+        else:
+            break
+            
+    print(builder)
+    grade = builder
+        
+    return JsonResponse({'grade': grade})

@@ -1,13 +1,3 @@
-.apply-container{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-content: center;
-    align-items: baseline;
-}
-.apply-container >div{
-    margin: 30px;
-}
 .progress-container {
     position: relative;
     width: 120px;
@@ -41,14 +31,22 @@ svg {
     font-size: 20px;
     font-weight: bold;
 }
-#percentage-holder{
+
+form#post-job-form {
     display: flex;
-    justify-content: space-around;
+    flex-wrap: wrap;
+    justify-content: space-between;
     align-items: center;
-    
 }
-#percentage-holder > div{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+
+@media (max-width: 356px) {
+    form#post-job-form {
+        justify-content: center;
+    }
+}
+.form-container{
+    max-width: 100% !important;
+}
+textarea#id_description{
+    font-family:'Roboto' ;
 }

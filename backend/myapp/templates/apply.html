@@ -23,8 +23,8 @@
             <!-- Buttons Container -->
             <div class="buttons-container">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'account' %}" style="text-decoration: none;"><button id="account">Account<i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button><i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button></a>
-                    <a href="{% url 'postjob' %}" style="text-decoration: none;"><button id="post-job">Post a Job<i class="fa-solid fa-pencil" style="color: #ffffff; margin-left: 15%;"></i></button</button></a>
+                    <a href="{% url 'account' %}" style="text-decoration: none;"><button id="account">Account<i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button></a>
+                    <a href="{% url 'postjob' %}" style="text-decoration: none;"><button id="post-job">Post a Job<i class="fa-solid fa-pencil" style="color: #ffffff; margin-left: 15%;"></i></button></a>
                     {% if user.is_staff or user.is_superuser %}
                         <a href="{% url 'admin_panel' %}" style="text-decoration: none;"><button id="admin-panel">Admin Panel <i class="fa-solid fa-toolbox" style="color: #ffffff; margin-left: 15%;"></i></button></a>
                     {% endif %}
@@ -34,12 +34,13 @@
                     <a href="{% url 'signin' %}" style="text-decoration: none;"><button id="sign-in">Log In<i class="fa-regular fa-user" style="color: #ffffff; margin-left: 15%;"></i></button></a>
                 {% endif %}
             </div>
+        </div>
     </header>
 
     <!-- Main Content Section -->
     <main class="apply-main">
-        <div class = "apply-container">
-            <div class="signin-container">
+        <div class="apply-container">
+            <div class="form-container">
                 <!-- Job Information Card -->
                 <div class="signin-form-container">
                     <h1>Job Information</h1>
@@ -48,12 +49,13 @@
                         <p><strong>Company:</strong> {{ job_posting.company_name }}</p>
                         <p><strong>Location:</strong> {{ job_posting.location }}</p>
                         <p><strong>Salary:</strong> {{ job_posting.salary }}</p>
-                        <p><strong>Description:</strong> {{ job_posting.description }}</p>
+                        <button class="job-description-button" style="display: block; margin: 0 auto;">Show Job Description</button>
+                        <p class="job-description"><strong>Description:</strong> {{ job_posting.description }}</p>
                     </div>
                 </div>
             </div>
-                <!-- Application Form Card -->
-            <div class="signin-container">
+            <!-- Application Form Card -->
+            <div class="form-container">
                 <div class="signin-form-container">
                     <h1>Apply for Job</h1>
                     <p class="subtitle">Please fill in the details to apply for the job</p>
@@ -70,72 +72,58 @@
                                 <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" value="{{ user.email }}" required>
                             </div>
                         </div>
-                </div>
-            </div>
+                        <!-- Progress Circle -->
+                        
                         <!-- Resume Section -->
-                <div class="signin-container">
-                    <div class="signin-form-container">
-                        <h1>Resume</h1>
                         <div class="form-section">
                             <div class="form-group">
                                 <label for="resume">Resume</label>
                                 {% if user_profile and user_profile.resume %}
+                                    <input type="hidden" id="resume-url" value="{{ user_profile.resume.url }}">
                                     <p>Current Resume: <a href="{{ user_profile.resume.url }}" target="_blank">View Resume</a></p>
+                                {% else %}
+                                    <p>No resume available. Please upload one in your account settings.</p>
                                 {% endif %}
-                                <input type="file" id="resume" name="resume" class="form-control">
                             </div>
                         </div>
-                    </div>
-                </div>
                         <!-- References Section -->
-                <div class="signin-container">
-        <div class="signin-form-container">
-            <h1>References</h1>
-            <div class="form-section">
-                {% for reference in user_references %}
-                <div class="form-group">
-                    <label for="reference_name_{{ forloop.counter }}">Reference Name</label>
-                    <input type="text" id="reference_name_{{ forloop.counter }}" name="reference_name_{{ forloop.counter }}" class="form-control" value="{{ reference.name }}" required>
-                    
-                    <label for="reference_relation_{{ forloop.counter }}">Reference Relation</label>
-                    <input type="text" id="reference_relation_{{ forloop.counter }}" name="reference_relation_{{ forloop.counter }}" class="form-control" value="{{ reference.relation }}" required>
-                    
-                    <label for="reference_contact_{{ forloop.counter }}">Reference Contact</label>
-                    <input type="text" id="reference_contact_{{ forloop.counter }}" name="reference_contact_{{ forloop.counter }}" class="form-control" value="{{ reference.contact }}" required>
-                </div>
-                {% endfor %}
-                <div id="additional-references"></div>
-                <button type="button" id="add-reference" class="btn btn-secondary">Add Reference</button>
-            </div>
-        </div>
-    </div>
-                        <!-- Education Section -->
-                <div class="signin-container">
-        <div class="signin-form-container">
-            <h1>Education</h1>
-            <div class="form-section">
-                {% for education in user_education %}
-                <div class="form-group">
-                    <label for="school_name_{{ forloop.counter }}">School Name</label>
-                    <input type="text" id="school_name_{{ forloop.counter }}" name="school_name_{{ forloop.counter }}" class="form-control" value="{{ education.school_name }}" required>
-                    
-                    <label for="graduation_date_{{ forloop.counter }}">Graduation Date</label>
-                    <input type="date" id="graduation_date_{{ forloop.counter }}" name="graduation_date_{{ forloop.counter }}" class="form-control" value="{{ education.graduation_date|date:'Y-m-d' }}" required>
-                    
-                    <label for="gpa_{{ forloop.counter }}">GPA</label>
-                    <input type="number" id="gpa_{{ forloop.counter }}" name="gpa_{{ forloop.counter }}" class="form-control" value="{{ education.gpa }}" required>
-                </div>
-                {% endfor %}
-                <div id="additional-education"></div>
-                <button type="button" id="add-education" class="btn btn-secondary">Add Education</button>
-            </div>
-        </div>
-    </div>
-                        <!-- Custom Questions Section -->
-                <div class="signin-container">
-                    <div class="signin-form-container">
-                        <h1>Custom Questions</h1>
                         <div class="form-section">
+                            <h1>References</h1>
+                            {% for reference in user_references %}
+                            <div class="form-group">
+                                <label for="reference_name_{{ forloop.counter }}">Reference Name</label>
+                                <input type="text" id="reference_name_{{ forloop.counter }}" name="reference_name_{{ forloop.counter }}" class="form-control" value="{{ reference.name }}" required>
+                                
+                                <label for="reference_relation_{{ forloop.counter }}">Reference Relation</label>
+                                <input type="text" id="reference_relation_{{ forloop.counter }}" name="reference_relation_{{ forloop.counter }}" class="form-control" value="{{ reference.relation }}" required>
+                                
+                                <label for="reference_contact_{{ forloop.counter }}">Reference Contact</label>
+                                <input type="text" id="reference_contact_{{ forloop.counter }}" name="reference_contact_{{ forloop.counter }}" class="form-control" value="{{ reference.contact }}" required>
+                            </div>
+                            {% endfor %}
+                            <div id="additional-references"></div>
+                            <button type="button" id="add-reference" class="btn btn-secondary">Add Reference</button>
+                        </div>
+                        <!-- Education Section -->
+                        <div class="form-section">
+                            <h1>Education</h1>
+                            {% for education in user_education %}
+                            <div class="form-group">
+                                <label for="school_name_{{ forloop.counter }}">School Name</label>
+                                <input type="text" id="school_name_{{ forloop.counter }}" name="school_name_{{ forloop.counter }}" class="form-control" value="{{ education.school_name }}" required>
+                                
+                                <label for="graduation_date_{{ forloop.counter }}">Graduation Date</label>
+                                <input type="date" id="graduation_date_{{ forloop.counter }}" name="graduation_date_{{ forloop.counter }}" class="form-control" value="{{ education.graduation_date|date:'Y-m-d' }}" required>
+                                
+                                <label for="gpa_{{ forloop.counter }}">GPA</label>
+                                <input type="number" id="gpa_{{ forloop.counter }}" name="gpa_{{ forloop.counter }}" class="form-control" value="{{ education.gpa }}" required>
+                            </div>
+                            {% endfor %}
+                            <div id="additional-education"></div>
+                            <button type="button" id="add-education" class="btn btn-secondary">Add Education</button>
+                        </div>
+                        <div class="form-section">
+                            <h1>Custom Questions</h1>
                             {% for question in custom_questions %}
                                 <div class="form-group">
                                     <label for="custom_question_{{ forloop.counter }}">{{ question }}</label>
@@ -143,7 +131,21 @@
                                 </div>
                             {% endfor %}
                         </div>
-                        <button type="submit" class="apply-button">Submit Application</button>
+                        <div id = "percentage-holder">
+                            <button type="submit" class="apply-button">Submit Application</button>
+                            <div>
+                                <h3 for="applicant-grade">Applicant Grade </h3>
+                                <div class="progress-container">
+                                    
+                                    <svg width="120" height="120">
+                                        <circle class="progress-ring" cx="60" cy="60" r="50"></circle>
+                                        <circle class="progress-bar" cx="60" cy="60" r="50" id="progress-bar"></circle>
+                                    </svg>
+                                    <div class="percentage-text" id="percentage">0%</div>
+                                </div>
+                            </div>
+                            
+                        </div>
                     </form>
                 </div>
             </div>
@@ -164,6 +166,7 @@
     </footer>
     <script src="{% static 'js/apply.js' %}"></script>
     <script src="{% static 'js/signin.js' %}"></script>
+    <script src="{% static 'js/jobdescription.js' %}"></script>
     <script>
         window.embeddedChatbotConfig = {
             chatbotId: "K05nNPTlJnV2SiHKD-nqs",

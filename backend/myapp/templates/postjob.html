@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Post a Job - Jobify</title>
     {% load static %}
+    <link rel="stylesheet" href="{% static 'css/postjob.css' %}">
     <link rel="stylesheet" href="{% static 'css/globals.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="/static/images/favicon.png">
@@ -33,12 +34,14 @@
 
     <!-- Main Content Section -->
     <main class="post-job-main">
-        <div class="signin-container">
-            <div class="sign-in-form-container">
-                <h1>Post a Job</h1>
-                <p class="subtitle">Please enter the details of the job you want to post</p>
-            </div>
+        <div class="form-container">
+            
             <form id="post-job-form" method="post">
+                <div style="width: 100%;">
+                    <h1 style = "margin-bottom: 40px;">Post a Job</h1>
+                </div>
+                
+                
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="title">Job Title</label>
@@ -52,7 +55,7 @@
                     <label for="company_email">Company Email</label>
                     {{ form.company_email }}
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="width: 60%;">
                     <label for="location">Location</label>
                     {{ form.location }}
                 </div>
@@ -63,6 +66,14 @@
                 <div class="form-group">
                     <label for="description">Job Description</label>
                     {{ form.description }}
+                </div>
+                <div class="progress-container">
+                    <h3 for="job-grade">Job Grade:</h3>
+                    <svg width="120" height="120">
+                        <circle class="progress-ring" cx="60" cy="60" r="50"></circle>
+                        <circle class="progress-bar" cx="60" cy="60" r="50" id = "progress-bar"></circle>
+                    </svg>
+                    <div class="percentage-text" id="percentage">0%</div>
                 </div>
                 <div class="form-group">
                     <label for="requirements">Application Requirements</label>
@@ -82,10 +93,14 @@
                     </div>
                     <button type="button" id="add-question" class="btn btn-secondary">Add Question</button>
                 </div>
+
+
                 <button type="submit" class="post-job-button">Post Job</button>
             </form>
         </div>
-        <p id = "output"></p>
+        
+        <!-- Progress Circle -->
+        
     </main>
 
     <!-- Footer Section -->

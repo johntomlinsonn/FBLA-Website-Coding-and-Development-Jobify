@@ -7,12 +7,12 @@ from django.forms import modelformset_factory
 class SignUpForm(UserCreationForm):
     full_name = forms.CharField(required=True, widget=forms.TextInput(attrs={
         'class': 'form-control custom-input',
-        'placeholder': 'Enter your full name',
+        'placeholder': 'John Doe',
         'id': 'full-name-input'
     }))
     email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={
         'class': 'form-control custom-input',
-        'placeholder': 'Enter your email',
+        'placeholder': 'johndoe@gmail.com',
         'id': 'email-input'
     }))
     is_job_provider = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={
@@ -21,10 +21,15 @@ class SignUpForm(UserCreationForm):
     }))
     account_holder_name = forms.CharField(required=False, widget=forms.TextInput(attrs={
         'class': 'form-control custom-input',
-        'placeholder': 'Enter account holder name',
+        'placeholder': 'John Doe',
         'id': 'account-holder-input'
     }))
-    username = forms.CharField(required=False)
+    username = forms.CharField(required=False, widget=forms.TextInput(attrs={
+        'class': 'form-control custom-input',
+        'placeholder': 'JohnDoe123',
+        'id': 'username-input'
+    }))
+    
     password1 = forms.CharField(required=False, widget=forms.PasswordInput())
     password2 = forms.CharField(required=False, widget=forms.PasswordInput())
 
@@ -131,10 +136,10 @@ class JobPostingForm(forms.ModelForm):
         model = JobPosting
         fields = ['title', 'company_name', 'company_email', 'location', 'salary', 'description', 'requirements', 'custom_questions']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter the job title'}),
-            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your company\'s name'}),
-            'company_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter your company\'s email'}),
-            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter the job location'}),
-            'salary': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter the salary'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter the job description'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Cashier, Server, etc.'}),
+            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'McDonald\'s, Walmart, etc.'}),
+            'company_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'name@company.com'}),
+            'location': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1234 Main St, City,State Postal Code'}),
+            'salary': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '15/hr'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'We are hiring a friendly Cashier!\nHelp customers, handle transactions, and keep things tidy.\nNo experience needed—just a great attitude!\n\nResponsibilities:\n- Greet customers & provide great service\n- Operate the register & handle cash\n- Keep checkout area clean & organized'}),
         }

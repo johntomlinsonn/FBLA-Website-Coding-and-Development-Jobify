@@ -93,11 +93,12 @@ function debounce(func, wait) {
 }
 
 function sendText() {
+    
     let description = document.getElementById("id_description").value;
     let location = document.getElementById("id_location").value;
 
     if (!description || !location) {
-        document.getElementById("output").innerText = "Both fields are required!";
+       
         return;
     }
 
@@ -105,14 +106,13 @@ function sendText() {
         .then(response => response.json())
         .then(data => {
             if (data && data.grade !== undefined) {
-                document.getElementById("output").innerText = `Job Grade: ${data.grade}`;
-            } else {
-                document.getElementById("output").innerText = "Unable to calculate grade";
+                
+                updateProgress(data.grade);
             }
         })
         .catch(error => {
             console.error("Error:", error);
-            document.getElementById("output").innerText = "Error calculating grade";
+        
         });
 }
 
@@ -122,3 +122,20 @@ const debouncedSendText = debounce(sendText, 2000);
 // Add event listeners to both inputs
 document.getElementById("id_description").addEventListener("input", debouncedSendText);
 document.getElementById("id_location").addEventListener("input", debouncedSendText);
+
+function updateProgress(percent) {
+    const circle = document.getElementById('progress-bar');
+    const text = document.getElementById('percentage');
+
+    const circumference = 314; // 2 * Math.PI * 50 (radius)
+    const offset = circumference - (percent / 100) * circumference;
+
+    // Dynamically calculate color from red (0%) to green (100%)
+    const hue = Math.round(120 * (percent / 100)); // 0 = Red, 120 = Green
+    const color = `hsl(${hue}, 100%, 50%)`; // HSL color transition
+
+    // Apply styles
+    circle.style.setProperty("stroke-dashoffset", -offset);
+    circle.style.setProperty("stroke", color);
+    text.textContent = percent + '%';
+}

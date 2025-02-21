@@ -4,6 +4,7 @@ document.querySelectorAll('.job-description-button').forEach(button => {
   description.style.display = 'none';
 
   button.addEventListener('click', () => {
+    event.preventDefault();
     if (description.style.display === 'none' || description.style.display === '') {
       description.style.display = 'block';
     } else {

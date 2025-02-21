@@ -65,6 +65,7 @@ completion = client.chat.completions.create(
 
 
 def get_pdf_text(pdf_path):
+    print(pdf_path)
     with pdfplumber.open(pdf_path) as pdf:
         text = ''
         for page in pdf.pages:

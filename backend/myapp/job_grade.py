@@ -13,7 +13,7 @@ client = OpenAI(
 def grade_job(job_posting):
     global prompt
     completion = client.chat.completions.create(
-                    model="google/gemini-2.0-flash-lite-preview-02-05:free",
+                    model="google/gemini-exp-1206:free",
                     messages=[
                         {
                         "role": "user",
@@ -38,7 +38,7 @@ def grade_job_lv(request):
     description = request.GET.get("description", "") 
     location = request.GET.get("location")
     completion = client.chat.completions.create(
-                    model="google/gemini-2.0-flash-lite-preview-02-05:free",
+                    model="google/gemini-exp-1206:free",
                     messages=[
                         {
                         "role": "user",

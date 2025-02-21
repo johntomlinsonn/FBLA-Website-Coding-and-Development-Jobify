@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import grade_job_live
+from .views import grade_job_live,grade_applicant_live
 urlpatterns = [
     path('', views.index, name='index'),
     path('account/', views.account, name='account'),
@@ -17,6 +17,7 @@ urlpatterns = [
     path('apply/<int:job_id>/', views.apply, name='apply'),
     path('admin_panel/', views.admin_panel, name='admin_panel'),
     path('grade_job_live/', grade_job_live, name='grade_job_live'),
+    path('grade_applicant_live/', grade_applicant_live, name='grade_applicant_live'),
 ]
 
 if settings.DEBUG:

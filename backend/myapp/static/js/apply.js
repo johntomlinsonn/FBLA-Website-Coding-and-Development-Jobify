@@ -96,4 +96,79 @@ document.addEventListener('DOMContentLoaded', function() {
 
         additionalEducation.appendChild(educationGroup);
     });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function sendText() {
+        let resumeUrl = document.getElementById("resume-url").value;
+        let description = document.querySelector(".job-description").innerText;
+        let csrfToken = getCookie('csrftoken');
+
+        const formData = new FormData();
+        formData.append("resume_url", resumeUrl);
+        formData.append("description", description);
+        formData.append("csrfmiddlewaretoken", csrfToken);
+
+        console.log("Sending data:", {
+            resume_url: resumeUrl,
+            description: description,
+            csrfmiddlewaretoken: csrfToken
+        });
+
+
+        fetch(`/grade_applicant_live/?resume_url=${encodeURIComponent(resumeUrl)}&description=${encodeURIComponent(description)}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.grade !== undefined) {
+                updateProgress(data.grade);
+            } 
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            
+        });
+    }
+
+    // Run sendText function when the page is loaded
+    sendText();
+
+    function updateProgress(percent) {
+        const circle = document.getElementById('progress-bar');
+        const text = document.getElementById('percentage');
+
+        const circumference = 314; // 2 * Math.PI * 50 (radius)
+        const offset = circumference - (percent / 100) * circumference;
+
+        // Dynamically calculate color from red (0%) to green (100%)
+        const hue = Math.round(120 * (percent / 100)); // 0 = Red, 120 = Green
+        const color = `hsl(${hue}, 100%, 50%)`; // HSL color transition
+
+        // Apply styles
+        circle.style.setProperty("stroke-dashoffset", -offset);
+        circle.style.setProperty("stroke", color);
+        text.textContent = percent + '%';
+    }
 });
+
