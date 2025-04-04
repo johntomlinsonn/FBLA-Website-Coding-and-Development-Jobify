@@ -94,15 +94,7 @@
                                 <div class="error">{{ signup_form.email.errors }}</div>
                             {% endif %}
                         </div>
-                        <div class="checkbox-group">
-                            <div class = "checkbox-item">
-                                <label for="{{ signup_form.is_job_provider.id_for_label }}">Are you a job provider?</label>
-                                {{ signup_form.is_job_provider }}
-                                {% if signup_form.is_job_provider.errors %}
-                                    <div class="error">{{ signup_form.is_job_provider.errors }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
+                       
                         
                     </div>
                     <div id = "password-group">

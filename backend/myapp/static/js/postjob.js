@@ -93,16 +93,18 @@ function debounce(func, wait) {
 }
 
 function sendText() {
-    
+    //getting infomration from the description and location
     let description = document.getElementById("id_description").value;
     let location = document.getElementById("id_location").value;
 
     if (!description || !location) {
-       
+        //if there is no description or location dont make the request
         return;
     }
 
+    //fetching the grade from the backend
     fetch(`/grade_job_live/?description=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`)
+        //interpreting the json from the backend
         .then(response => response.json())
         .then(data => {
             if (data && data.grade !== undefined) {
@@ -110,6 +112,7 @@ function sendText() {
                 updateProgress(data.grade);
             }
         })
+        //cathing any errors and showing them to the console
         .catch(error => {
             console.error("Error:", error);
         

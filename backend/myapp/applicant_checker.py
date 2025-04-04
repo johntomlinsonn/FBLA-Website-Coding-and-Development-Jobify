@@ -77,7 +77,7 @@ def check_applicant(pdf_path,job_description):
     
     text = get_pdf_text(pdf_path)
     completion = client.chat.completions.create(
-        model="microsoft/phi-3-medium-128k-instruct:free",
+        model="google/gemini-2.0-flash-lite-preview-02-05:free",
         messages=[
             {
             "role": "user",

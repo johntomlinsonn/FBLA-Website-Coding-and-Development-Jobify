@@ -286,6 +286,12 @@ h1 {
   max-width: 1200px;
   margin: 0 auto;
   text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  align-content: center;
+  align-items: center;
+
 }
 
 .search-results-section h1 {
@@ -296,10 +302,11 @@ h1 {
 
 /* Job Results Styles */
 #job-results {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
   gap: 2rem;
   padding: 2rem 0;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .job-card {

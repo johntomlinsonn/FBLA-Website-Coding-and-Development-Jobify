@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Percentage Circle</title>
+    <style>
+        .progress-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        svg {
+            transform: rotate(-90deg); /* Rotates so 0% starts at the top */
+        }
+
+        .progress-ring {
+            fill: none;
+            stroke: #e0e0e0; /* Background circle color */
+            stroke-width: 10;
+        }
+
+        .progress-bar {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 314; /* Circumference of the circle */
+            stroke-dashoffset: 314; /* Initially empty */
+            transition: stroke-dashoffset 1s ease-in-out, stroke 0.5s ease-in-out;
+        }
+
+        .percentage-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="progress-container">
+    <svg width="120" height="120">
+        <circle class="progress-ring" cx="60" cy="60" r="50"></circle>
+        <circle class="progress-bar" cx="60" cy="60" r="50"></circle>
+    </svg>
+    <div class="percentage-text" id="percentage">0%</div>
+</div>
+
+<script>
+    function updateProgress(percent) {
+        const circle = document.querySelector('.progress-bar');
+        const text = document.getElementById('percentage');
+
+        const circumference = 314; // 2 * Math.PI * 50 (radius)
+        const offset = circumference - (percent / 100) * circumference;
+
+        // Dynamically calculate color from red (0%) to green (100%)
+        const hue = Math.round(120 * (percent / 100)); // 0 = Red, 120 = Green
+        const color = `hsl(${hue}, 100%, 50%)`; // HSL color transition
+
+        // Apply styles
+        circle.style.setProperty("stroke-dashoffset", -offset);
+        circle.style.setProperty("stroke", color);
+        text.textContent = percent + '%';
+    }
+
+    // Example: Set the progress to 95%
+    updateProgress(65);
+</script>
+
+</body>
+</html>

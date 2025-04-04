@@ -89,18 +89,24 @@ def account(request):
     })
 
 def postjob(request):
+    #Checking if the request is a post request
     if request.method == 'POST':
+
         form = JobPostingForm(request.POST)
+        #Checking if the form is valid
         if form.is_valid():
+            #Saving all of the info from the form
             job_posting = form.save(commit=False)
             job_posting.user = request.user
             job_posting.status = 'pending'
-            job_posting.requirements = ','.join(form.cleaned_data['requirements'])  # Save requirements as a comma-separated string
+            job_posting.requirements = ','.join(form.cleaned_data['requirements'])  
             custom_questions = request.POST.getlist('custom_questions')
             job_posting.custom_questions = '\n'.join(custom_questions)
 
             #getting the job description
             description =request.POST.get('description')
+
+            #grading the job based on if its attainable to high school students and how close it is to highschoolers
             job_posting.grade = grade_job(job_posting)
             job_posting.save()
 
@@ -109,6 +115,7 @@ def postjob(request):
 
             return redirect('index')
     else:
+        #If the request is not a post request then it will render the form as empty
         form = JobPostingForm()
     return render(request, 'postjob.html', {'form': form})
 

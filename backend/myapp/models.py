@@ -28,6 +28,7 @@ class Education(models.Model):
     gpa = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
 
 class JobPosting(models.Model):
+    #Saving all of the fields
     title = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255)
     company_email = models.EmailField()
@@ -37,23 +38,25 @@ class JobPosting(models.Model):
     description = models.TextField()
     requirements = models.TextField()
     custom_questions = models.TextField(blank=True, null=True)
-    null=True,  # Allow null temporarily
-    blank=True  # Allow blank temporarily
+  
+    #Adding the options ot wether if the job is active on the website or not
     status = models.CharField(
         choices=[('pending', 'Pending'), ('approved', 'Approved'), ('denied', 'Denied')], 
         default='pending', 
         max_length=10
     )
+    #job grade and date it was made on
     grade = models.IntegerField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    null = True
+    empty = True
+
+    #saving the job posing
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # Update the provider's posting counts
-
-    def __str__(self):
-        return f"{self.title} at {self.company_name}"
+    
 
     class Meta:
         ordering = ['-created_at']
