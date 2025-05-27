@@ -1,6 +1,7 @@
 import pdfplumber,os
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
+from openai import RateLimitError, APIError, APIConnectionError
 
 api_key = os.getenv('API_KEY')
 #Giving the AI a role
@@ -9,7 +10,7 @@ role = """You are an AI recruiter. Your task is to evaluate candidates based sol
 <Grade>;<Explanation>
 Evaluation Criteria:
 
-Grade 100: The candidate’s qualifications, experience, and skills perfectly or exceptionally match the job requirements.
+Grade 100: The candidate's qualifications, experience, and skills perfectly or exceptionally match the job requirements.
 Example: '100;The candidate's extensive experience, advanced skills, and relevant certifications make them an ideal match for the position.'
 
 Grade 85: The candidate meets most of the key requirements but may be missing one or two critical aspects.
@@ -25,17 +26,17 @@ Instructions:
 
 Input Analysis:
 
-Resume: Carefully analyze the candidate’s education, work experience, skills, and certifications.
+Resume: Carefully analyze the candidate's education, work experience, skills, and certifications.
 Job Description: Understand the primary responsibilities and required qualifications for the role.
 Multiple Pass Evaluation:
 
-First Pass: Quickly scan the application to get an initial understanding of the candidate’s qualifications.
+First Pass: Quickly scan the application to get an initial understanding of the candidate's qualifications.
 Second Pass: Re-read the resume and job description more thoroughly to capture any details that may have been overlooked initially.
 Final Pass: Review your findings once more to ensure accuracy and consistency in your evaluation.
 Evaluation Process:
 
 Compare the resume against the job description over these multiple passes.
-Determine which grade (100, 85, 75, or 0) best reflects the candidate’s fit for the role based on the criteria above.
+Determine which grade (100, 85, 75, or 0) best reflects the candidate's fit for the role based on the criteria above.
 Provide a concise explanation justifying your grading decision in a single sentence.
 Output Format:
 
@@ -46,23 +47,27 @@ Begin your evaluation by analyzing the provided resume and job description now.
 Your response must be in this format: <Grade>;<Explanation>.
 Here is the job desctiption and the resume
 """
+
 #setting up client
-
-
 client = OpenAI(
   base_url='https://openrouter.ai/api/v1',
   api_key=api_key,
 )
-completion = client.chat.completions.create(
-  model="google/gemini-2.0-flash-exp:free",
-  messages=[
-    {
-      "role": "system",
-      "content": role
-    }
-  ]
-)
 
+# Initialize with a default response in case of API failure
+try:
+    completion = client.chat.completions.create(
+        model="qwen/qwen3-235b-a22b:free",
+        messages=[
+            {
+                "role": "system",
+                "content": role
+            }
+        ]
+    )
+except (RateLimitError, APIError, APIConnectionError) as e:
+    print(f"Warning: Initial API call failed: {str(e)}")
+    completion = None
 
 def get_pdf_text(pdf_path):
     print(pdf_path)
@@ -72,21 +77,33 @@ def get_pdf_text(pdf_path):
             text += page.extract_text()
     return text
 
-def check_applicant(pdf_path,job_description):
+def check_applicant(pdf_path, job_description):
     global client
     
     text = get_pdf_text(pdf_path)
-    completion = client.chat.completions.create(
-        model="google/gemini-2.0-flash-exp:free",
-        messages=[
-            {
-            "role": "user",
-            "content": role + f"The job description is as follows: {job_description} and here is the canidates job application: {text}"
-            }
-        ]
+    try:
+        completion = client.chat.completions.create(
+            model="qwen/qwen3-235b-a22b:free",
+            messages=[
+                {
+                    "role": "user",
+                    "content": role + f"The job description is as follows: {job_description} and here is the canidates job application: {text}"
+                }
+            ]
         )
-
-    return completion.choices[0].message.content
+        return completion.choices[0].message.content
+    except RateLimitError as e:
+        print(f"Rate limit exceeded: {str(e)}")
+        return "75;Rate limit exceeded. Please try again later or contact support."
+    except APIError as e:
+        print(f"API error occurred: {str(e)}")
+        return "75;API error occurred. Please try again later or contact support."
+    except APIConnectionError as e:
+        print(f"Connection error: {str(e)}")
+        return "75;Connection error. Please check your internet connection and try again."
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return "75;An unexpected error occurred. Please try again later or contact support."
 
 def clean_grade(grade_response):
     grade = ""

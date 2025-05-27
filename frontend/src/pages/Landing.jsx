@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Grid, Card, CardContent, AppBar, Toolbar, Container, InputBase, Paper, IconButton, Avatar, Link as MuiLink } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FacebookIcon from '@mui/icons-material/Facebook';
@@ -111,6 +113,15 @@ const socialLinks = [
 
 const Landing = () => {
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (search.trim()) {
+      navigate(`/jobs?search=${encodeURIComponent(search.trim())}`);
+    }
+  };
 
   return (
     <Box sx={{ minHeight: '100vh', width: '100vw', position: 'relative', overflow: 'hidden' }}>
@@ -134,8 +145,20 @@ const Landing = () => {
           </Typography>
           <Box>
             <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} href="#features">Features</Button>
-            <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} href="/login">Login</Button>
-            <Button variant="contained" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 600, boxShadow: 2 }} href="/register">Get Started</Button>
+            {isAuthenticated ? (
+              <>
+                <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/jobs')}>Browse Jobs</Button>
+                <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/account')}>My Account</Button>
+                {user?.is_staff && (
+                  <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/admin')}>Admin Panel</Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/login')}>Login</Button>
+                <Button variant="contained" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 600, boxShadow: 2 }} onClick={() => navigate('/register')}>Get Started</Button>
+              </>
+            )}
           </Box>
         </Toolbar>
       </AppBar>
@@ -170,7 +193,7 @@ const Landing = () => {
         <Paper
           component="form"
           sx={{ p: '2px 8px', display: 'flex', alignItems: 'center', maxWidth: 400, mx: 'auto', mb: 3, borderRadius: 4, boxShadow: 2 }}
-          onSubmit={e => { e.preventDefault(); }}
+          onSubmit={handleSearch}
         >
           <InputBase
             sx={{ ml: 1, flex: 1 }}
@@ -183,9 +206,11 @@ const Landing = () => {
             <SearchIcon />
           </IconButton>
         </Paper>
-        <Button variant="contained" size="large" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 700, px: 5, py: 1.5, borderRadius: 8, fontSize: '1.2rem', boxShadow: 3 }} href="/register">
-          Get Started
-        </Button>
+        {!isAuthenticated && (
+          <Button variant="contained" size="large" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 700, px: 5, py: 1.5, borderRadius: 8, fontSize: '1.2rem', boxShadow: 3 }} onClick={() => navigate('/register')}>
+            Get Started
+          </Button>
+        )}
       </Container>
 
       {/* Features Section */}

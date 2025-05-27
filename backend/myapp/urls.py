@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -38,6 +38,12 @@ urlpatterns = [
     path('api/login/', api_login, name='api_login'),
     path('api/logout/', api_logout, name='api_logout'),
     path('api/my-applications/', api_user_applications, name='api_user_applications'),
+    path('api/profile/references/', views.api_references, name='api_references'),
+    path('api/profile/references/add/', views.api_add_reference, name='api_add_reference'),
+    path('api/profile/references/<int:reference_id>/', views.api_delete_reference, name='api_delete_reference'),
+    path('api/profile/education/', views.api_education, name='api_education'),
+    path('api/profile/education/add/', views.api_add_education, name='api_add_education'),
+    path('api/profile/education/<int:education_id>/', views.api_delete_education, name='api_delete_education'),
     
     # Frontend routes - redirect to appropriate existing views or API endpoints
     # Fixed routes to address 404 errors
@@ -45,6 +51,8 @@ urlpatterns = [
     path('jobs/<int:job_id>/', views.apply, name='frontend_job_detail'),  # Redirect to apply view
     path('profile/', views.account, name='frontend_profile'),  # Direct mapping to account view
     path('logout/', views.signout_view, name='frontend_logout'),  # Direct mapping to signout view
+    # Include API router URLs (for JWT and DRF ViewSets)
+    path('api/', include('myapp.api.urls')),
 ]
 
 if settings.DEBUG:

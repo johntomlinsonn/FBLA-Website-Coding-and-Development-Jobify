@@ -1,0 +1,16 @@
+INFO 2025-05-27 17:32:04,991 autoreload 11368 5108 Watching for file changes with StatReloader
+INFO 2025-05-27 17:32:22,718 autoreload 11368 5108 C:\Users\bobtt\OneDrive\Desktop\Documents\JackCS\state_jobify\backend\myapp\api\urls.py changed, reloading.
+INFO 2025-05-27 17:32:24,712 autoreload 11536 19968 Watching for file changes with StatReloader
+INFO 2025-05-27 17:32:56,236 autoreload 11536 19968 C:\Users\bobtt\OneDrive\Desktop\Documents\JackCS\state_jobify\backend\myapp\applicant_checker.py changed, reloading.
+INFO 2025-05-27 17:32:58,595 autoreload 14568 9664 Watching for file changes with StatReloader
+INFO 2025-05-27 17:34:32,648 autoreload 9124 19776 Watching for file changes with StatReloader
+INFO 2025-05-27 17:35:22,849 autoreload 9124 19776 C:\Users\bobtt\OneDrive\Desktop\Documents\JackCS\state_jobify\backend\myapp\applicant_checker.py changed, reloading.
+INFO 2025-05-27 17:35:25,780 autoreload 15476 18480 Watching for file changes with StatReloader
+INFO 2025-05-27 17:35:50,975 autoreload 19120 20152 Watching for file changes with StatReloader
+INFO 2025-05-27 17:36:10,034 autoreload 19120 20152 C:\Users\bobtt\OneDrive\Desktop\Documents\JackCS\state_jobify\backend\myapp\applicant_checker.py changed, reloading.
+INFO 2025-05-27 17:36:12,440 autoreload 18648 14092 Watching for file changes with StatReloader
+INFO 2025-05-27 17:36:45,641 autoreload 18648 14092 C:\Users\bobtt\OneDrive\Desktop\Documents\JackCS\state_jobify\backend\myapp\api\views.py changed, reloading.
+INFO 2025-05-27 17:36:47,618 autoreload 18420 10808 Watching for file changes with StatReloader
+INFO 2025-05-27 17:37:37,874 autoreload 10816 16816 Watching for file changes with StatReloader
+INFO 2025-05-27 17:38:38,013 autoreload 10816 16816 C:\Users\bobtt\OneDrive\Desktop\Documents\JackCS\state_jobify\backend\myapp\models.py changed, reloading.
+INFO 2025-05-27 17:38:40,110 autoreload 16476 20024 Watching for file changes with StatReloader

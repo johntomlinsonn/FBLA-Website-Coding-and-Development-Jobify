@@ -9,74 +9,51 @@ const api = axios.create({
   },
 });
 
-// Request interceptor
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+// Attach JWT token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
-
-// Response interceptor
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-
-        const response = await axios.post(`${API_URL}/token/refresh/`, {
-          refresh: refreshToken,
-        });
-
-        const { access } = response.data;
-        localStorage.setItem('access_token', access);
-
-        originalRequest.headers.Authorization = `Bearer ${access}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
+  return config;
+});
 
 // Auth API
 export const authAPI = {
   login: async (credentials) => {
-    const response = await api.post('/auth/login/', credentials);
+    // JWT login
+    const response = await api.post('/token/', credentials);
+    // Save tokens
+    localStorage.setItem('access', response.data.access);
+    localStorage.setItem('refresh', response.data.refresh);
     return response.data;
   },
 
   register: async (userData) => {
-    const response = await api.post('/auth/register/', userData);
+    const response = await api.post('/register/', userData);
     return response.data;
   },
 
   logout: () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('access');
+    localStorage.removeItem('refresh');
   },
 
   getCurrentUser: async () => {
-    const response = await api.get('/auth/user/');
+    const response = await api.get('/profile/');
+    return response.data;
+  },
+
+  updateProfile: async (profileData) => {
+    const response = await api.put('/profile/', profileData);
+    return response.data;
+  },
+
+  refreshToken: async () => {
+    const refresh = localStorage.getItem('refresh');
+    if (!refresh) throw new Error('No refresh token');
+    const response = await api.post('/token/refresh/', { refresh });
+    localStorage.setItem('access', response.data.access);
     return response.data;
   },
 };
@@ -111,11 +88,13 @@ export const jobsAPI = {
 // Profile API
 export const profileAPI = {
   get: () => api.get('/profile/'),
-  update: (data) => api.put('/profile/', data),
+  update: (profileData) => api.put('/profile/update/', profileData),
   getReferences: () => api.get('/profile/references/'),
-  addReference: (data) => api.post('/profile/references/', data),
+  addReference: (referenceData) => api.post('/profile/references/add/', referenceData),
+  deleteReference: (referenceId) => api.delete(`/profile/references/${referenceId}/`),
   getEducation: () => api.get('/profile/education/'),
-  addEducation: (data) => api.post('/profile/education/', data),
+  addEducation: (educationData) => api.post('/profile/education/add/', educationData),
+  deleteEducation: (educationId) => api.delete(`/profile/education/${educationId}/`),
 };
 
 export default api; 

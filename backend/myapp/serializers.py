@@ -12,7 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ReferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reference
-        fields = ['id', 'name', 'contact', 'relation']
+        fields = ['id', 'name', 'relation', 'contact']
 
 class EducationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,10 +34,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     def get_resume_url(self, obj):
         if obj.resume:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.resume.url)
-            return obj.resume.url
+            return self.context['request'].build_absolute_uri(obj.resume.url)
         return None
 
 class JobPostingSerializer(serializers.ModelSerializer):

@@ -16,6 +16,7 @@ import JobDetails from './pages/JobDetails';
 import CreateJob from './pages/CreateJob';
 import EditJob from './pages/EditJob';
 import Landing from './pages/Landing';
+import Account from './pages/Account';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -45,6 +46,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <EditJob />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <ProtectedRoute>
+                  <Account />
                 </ProtectedRoute>
               }
             />

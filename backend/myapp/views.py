@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import UserProfileSerializer, JobPostingSerializer, UserSerializer
+from .serializers import UserProfileSerializer, JobPostingSerializer, UserSerializer, ReferenceSerializer, EducationSerializer
 import mimetypes
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
@@ -20,24 +20,31 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.core.serializers import serialize
 import json
+from openai import OpenAI, RateLimitError, APIError, APIConnectionError
 
 Api = os.getenv("API_KEY")
-
-from openai import OpenAI
 
 client = OpenAI(
   base_url="https://openrouter.ai/api/v1",
   api_key=Api,
 )
-completion = client.chat.completions.create(
-  model="google/gemini-2.0-flash-exp:free",
-  messages=[
-    {
-      "role": "system",
-      "content": "You are an administrator for a job finder website designed to help high school students find jobs. Your task is to grade how obtainable a job is for high school students on a scale from 1 to 75. The final score should reflect only how attainable the job is, without considering location (location accounts for an additional 25 points, calculated separately).Scoring Criteria:Education Requirements (High Weight): Jobs requiring little to no formal education should score higher. Positions demanding higher education (e.g., college degrees) should be heavily penalized.Typical High School Job (Moderate Weight): If the job is common for high school students (e.g., retail, food service, internships), it should score higher.Experience Requirements (Moderate Weight): Jobs requiring little to no prior work experience should score higher. If minimal experience is needed but attainable through extracurriculars, minor deductions apply.Age Restrictions (Moderate Weight): Jobs with strict age requirements (e.g., must be 18+) should have points deducted.Job Complexity (Low Weight): Highly technical or specialized jobs should lose some points, but only slightly, as long as they remain attainable.Work Hours (Moderate Weight): Jobs requiring work during typical school hours should lose points unless flexible scheduling is mentioned.IMPORTANT:ONLY OUTPUT A SINGLE INTEGER BETWEEN 1 AND 75.DO NOT include any text, explanations, or additional details—ONLY the integer.IF YOU DO INCLUDE ANY DETAILS  OTHER THAN THE INTEGER YOU WILL BE TERMINATED NO MATTER THE CIRCUMSTANCES SO ONLY OUT PUT AN INTTEGER. You must fully reason through all relevant factors to determine the most accurate score, but DO NOT include your reasoning in the output.Focus solely on obtainability, not pay, soft skills, demand, or location.Assume the student has minimal job experience but strong extracurricular involvement and basic job-ready skills.The job description may be unstructured, so interpret details flexibly.Example Outputs:A typical part-time retail job with no education or experience requirements: 75A full-time office job requiring a college degree: 15A seasonal lifeguard job requiring certification and age 18+: 50- Here is the Job to be grader: "
-    }
-  ]
-)
+
+try:
+    completion = client.chat.completions.create(
+        model="qwen/qwen3-235b-a22b:free",
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an administrator for a job finder website designed to help high school students find jobs. Your task is to grade how obtainable a job is for high school students on a scale from 1 to 75. The final score should reflect only how attainable the job is, without considering location (location accounts for an additional 25 points, calculated separately).Scoring Criteria:Education Requirements (High Weight): Jobs requiring little to no formal education should score higher. Positions demanding higher education (e.g., college degrees) should be heavily penalized.Typical High School Job (Moderate Weight): If the job is common for high school students (e.g., retail, food service, internships), it should score higher.Experience Requirements (Moderate Weight): Jobs requiring little to no prior work experience should score higher. If minimal experience is needed but attainable through extracurriculars, minor deductions apply.Age Restrictions (Moderate Weight): Jobs with strict age requirements (e.g., must be 18+) should have points deducted.Job Complexity (Low Weight): Highly technical or specialized jobs should lose some points, but only slightly, as long as they remain attainable.Work Hours (Moderate Weight): Jobs requiring work during typical school hours should lose points unless flexible scheduling is mentioned.IMPORTANT:ONLY OUTPUT A SINGLE INTEGER BETWEEN 1 AND 75.DO NOT include any text, explanations, or additional details—ONLY the integer.IF YOU DO INCLUDE ANY DETAILS  OTHER THAN THE INTEGER YOU WILL BE TERMINATED NO MATTER THE CIRCUMSTANCES SO ONLY OUT PUT AN INTTEGER. You must fully reason through all relevant factors to determine the most accurate score, but DO NOT include your reasoning in the output.Focus solely on obtainability, not pay, soft skills, demand, or location.Assume the student has minimal job experience but strong extracurricular involvement and basic job-ready skills.The job description may be unstructured, so interpret details flexibly.Example Outputs:A typical part-time retail job with no education or experience requirements: 75A full-time office job requiring a college degree: 15A seasonal lifeguard job requiring certification and age 18+: 50- Here is the Job to be grader: "
+            }
+        ]
+    )
+except (RateLimitError, APIError, APIConnectionError) as e:
+    print(f"Warning: Initial API call failed: {str(e)}")
+    completion = None
+except Exception as e:
+    print(f"Warning: Unexpected error in initial API call: {str(e)}")
+    completion = None
 
 def index(request):
     return render(request, 'index.html')
@@ -381,7 +388,7 @@ Email: {email}
 
 def attach_resume_to_email(mail, resume):
     if hasattr(resume, 'path'):
-        mime_type, _ = mimettypes.guess_type(resume.path)
+        mime_type, _ = mimetypes.guess_type(resume.path)
         with open(resume.path, 'rb') as f:
             mail.attach(resume.name, f.read(), mime_type)
     else:
@@ -506,7 +513,7 @@ def api_user_profile(request):
         profile = UserProfile(user=request.user)
         profile.save()
     
-    serializer = UserProfileSerializer(profile)
+    serializer = UserProfileSerializer(profile, context={'request': request})
     return Response(serializer.data)
 
 @api_view(['PUT', 'PATCH'])
@@ -580,3 +587,79 @@ def api_user_applications(request):
         return Response(serializer.data)
     except UserProfile.DoesNotExist:
         return Response([], status=200)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_references(request):
+    """Get all references for the current user"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        references = profile.references.all()
+        serializer = ReferenceSerializer(references, many=True)
+        return Response(serializer.data)
+    except UserProfile.DoesNotExist:
+        return Response([], status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_add_reference(request):
+    """Add a new reference for the current user"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        serializer = ReferenceSerializer(data=request.data)
+        if serializer.is_valid():
+            reference = serializer.save(user_profile=profile)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User profile not found'}, status=400)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def api_delete_reference(request, reference_id):
+    """Delete a reference"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        reference = profile.references.get(id=reference_id)
+        reference.delete()
+        return Response(status=204)
+    except (UserProfile.DoesNotExist, Reference.DoesNotExist):
+        return Response({'error': 'Reference not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_education(request):
+    """Get all education entries for the current user"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        education = profile.education.all()
+        serializer = EducationSerializer(education, many=True)
+        return Response(serializer.data)
+    except UserProfile.DoesNotExist:
+        return Response([], status=200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_add_education(request):
+    """Add a new education entry for the current user"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        serializer = EducationSerializer(data=request.data)
+        if serializer.is_valid():
+            education = serializer.save(user_profile=profile)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User profile not found'}, status=400)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def api_delete_education(request, education_id):
+    """Delete an education entry"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        education = profile.education.get(id=education_id)
+        education.delete()
+        return Response(status=204)
+    except (UserProfile.DoesNotExist, Education.DoesNotExist):
+        return Response({'error': 'Education entry not found'}, status=404)
