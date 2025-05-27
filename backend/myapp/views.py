@@ -1,3 +1,7 @@
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .serializers import UserProfileSerializer, JobPostingSerializer, UserSerializer
 import mimetypes
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
@@ -14,6 +18,8 @@ from .applicant_checker import *
 from .job_grade import *
 from django.http import JsonResponse
 from django.conf import settings
+from django.core.serializers import serialize
+import json
 
 Api = os.getenv("API_KEY")
 
@@ -24,7 +30,7 @@ client = OpenAI(
   api_key=Api,
 )
 completion = client.chat.completions.create(
-  model="google/gemini-2.0-flash-lite-preview-02-05:free",
+  model="google/gemini-2.0-flash-exp:free",
   messages=[
     {
       "role": "system",
@@ -32,8 +38,6 @@ completion = client.chat.completions.create(
     }
   ]
 )
-
-
 
 def index(request):
     return render(request, 'index.html')
@@ -121,9 +125,13 @@ def postjob(request):
 
 def search(request):
     query = request.GET.get('search')
-    if query:
+    sort_by = request.GET.get('sort', '-created_at')  # Default sort by newest
+    
+    # Map 'date_posted' to 'created_at' since that's the field we have in our model
+    if 'date_posted' in sort_by:
+        sort_by = sort_by.replace('date_posted', 'created_at')
 
-        #never change these lines of code these are set in place
+    if query:
         job_postings = JobPosting.objects.filter(
             Q(title__icontains=query) |
             Q(company_name__icontains=query) |
@@ -131,41 +139,78 @@ def search(request):
             Q(salary__icontains=query) |
             Q(description__icontains=query) |
             Q(requirements__icontains=query),
-            status='approved')
+            status='approved'
+        )
     else:
         job_postings = JobPosting.objects.filter(status='approved')
-    return render(request, 'search.html', {'job_postings': job_postings})
+    
+    # Sort the results
+    if sort_by == 'salary':
+        job_postings = sorted(job_postings, key=lambda x: float(''.join(filter(str.isdigit, x.salary or '0'))) if x.salary else 0, reverse=True)
+    else:
+        job_postings = job_postings.order_by(sort_by)
+
+    return render(request, 'search.html', {
+        'job_postings': job_postings,
+        'current_sort': sort_by,
+        'current_search': query or '',
+    })
+
+def search_api(request):
+    """API endpoint for job search"""
+    query = request.GET.get('search', '')
+    sort_by = request.GET.get('sort', '-created_at')
+    
+    # Map 'date_posted' to 'created_at' since that's the field we have in our model
+    if 'date_posted' in sort_by:
+        sort_by = sort_by.replace('date_posted', 'created_at')
+    
+    job_postings = JobPosting.objects.filter(status='approved')
+    
+    if query:
+        job_postings = job_postings.filter(
+            Q(title__icontains=query) |
+            Q(company_name__icontains=query) |
+            Q(location__icontains=query) |
+            Q(description__icontains=query) |
+            Q(requirements__icontains=query),
+            status='approved'
+        )
+    
+    # Sort results
+    job_postings = job_postings.order_by(sort_by)
+    
+    serializer = JobPostingSerializer(job_postings, many=True, context={'request': request})
+    return JsonResponse(serializer.data, safe=False)
 
 def signin_view(request):
+    signin_form = SignInForm()
+    signup_form = SignUpForm()
+
     if request.method == 'POST':
         if 'signup' in request.POST:
             signup_form = SignUpForm(request.POST)
-            signin_form = SignInForm()
             if signup_form.is_valid():
                 user = signup_form.save()
                 login(request, user)
                 return redirect('account')
-            else:
-                print(signup_form.errors)  # Debug statement to print form errors
         elif 'signin' in request.POST:
             signin_form = SignInForm(data=request.POST)
-            signup_form = SignUpForm()
             if signin_form.is_valid():
-                user = authenticate(username=signin_form.cleaned_data['username'], password=signin_form.cleaned_data['password'])
+                user = authenticate(username=signin_form.cleaned_data['username'], 
+                                 password=signin_form.cleaned_data['password'])
                 if user is not None:
                     login(request, user)
                     if user.is_staff or user.is_superuser:
                         return redirect('admin_panel')
                     return redirect('account')
                 else:
-                    signin_form.add_error(None,signin_form.errors)
-            else:
-               print(signin_form.errors) # Debug statement to print form errors
-    else:
-        signup_form = SignUpForm()
-        signin_form = SignInForm()
-    
-    return render(request, 'signin.html', {'signup_form': signup_form, 'signin_form': signin_form})
+                    signin_form.add_error(None, 'Invalid username or password')
+
+    return render(request, 'signin.html', {
+        'signup_form': signup_form,
+        'signin_form': signin_form
+    })
 
 def signout_view(request):
     logout(request)
@@ -336,7 +381,7 @@ Email: {email}
 
 def attach_resume_to_email(mail, resume):
     if hasattr(resume, 'path'):
-        mime_type, _ = mimetypes.guess_type(resume.path)
+        mime_type, _ = mimettypes.guess_type(resume.path)
         with open(resume.path, 'rb') as f:
             mail.attach(resume.name, f.read(), mime_type)
     else:
@@ -371,3 +416,167 @@ def grade_applicant_live(request):
     grade = builder
         
     return JsonResponse({'grade': grade})
+
+# REST API endpoints
+@api_view(['GET'])
+def api_job_list(request):
+    """List all job postings or filter by search query"""
+    query = request.GET.get('search', '')
+    sort_by = request.GET.get('sort', '-created_at')  # changed from date_posted to created_at
+    
+    # Map 'date_posted' to 'created_at' since that's the field we have in our model
+    if 'date_posted' in sort_by:
+        sort_by = sort_by.replace('date_posted', 'created_at')
+    
+    job_postings = JobPosting.objects.filter(status='approved')  # changed is_approved to status='approved'
+    
+    if query:
+        job_postings = job_postings.filter(
+            Q(title__icontains=query) |
+            Q(company_name__icontains=query) |  # fixed incorrect function call
+            Q(location__icontains=query) |
+            Q(description__icontains=query) |
+            Q(requirements__icontains=query),
+              status='approved'
+        )
+    
+    # Sort results
+    job_postings = job_postings.order_by(sort_by)
+    
+    serializer = JobPostingSerializer(job_postings, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def api_job_detail(request, pk):
+    """Get details of a specific job posting"""
+    job = get_object_or_404(JobPosting, pk=pk, status='approved')  # changed is_approved to status='approved'
+    serializer = JobPostingSerializer(job, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_apply_job(request, job_id):
+    """Apply to a job (API version)"""
+    job_posting = get_object_or_404(JobPosting, id=job_id, is_approved=True)
+    
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User profile not found'}, status=400)
+    
+    # Add job to user's applications if it's not already there
+    if not profile.job_applications.filter(id=job_id).exists():
+        profile.job_applications.add(job_posting)
+    
+    # Process custom answers
+    custom_questions = job_posting.custom_questions.split('\n') if job_posting.custom_questions else []
+    custom_answers = request.data.get('answers', [])
+    
+    # Prepare and send email
+    subject = f"New Application for {job_posting.title}"
+    text_content, html_content = create_email_content(
+        job_posting, 
+        f"{request.user.first_name} {request.user.last_name}", 
+        request.user.email,
+        profile.resume,
+        custom_questions, 
+        custom_answers,
+        profile.references.all(), 
+        profile.education.all()
+    )
+    
+    mail = EmailMultiAlternatives(subject, text_content, to=[job_posting.contact_email])
+    mail.attach_alternative(html_content, "text/html")
+    
+    # Attach resume if present
+    if profile.resume:
+        attach_resume_to_email(mail, profile.resume)
+    
+    mail.send()
+    
+    return Response({'status': 'application submitted'})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_user_profile(request):
+    """Get the current user's profile"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        profile = UserProfile(user=request.user)
+        profile.save()
+    
+    serializer = UserProfileSerializer(profile)
+    return Response(serializer.data)
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def api_update_profile(request):
+    """Update the current user's profile"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        profile = UserProfile(user=request.user)
+        profile.save()
+    
+    serializer = UserProfileSerializer(profile, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=400)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_register(request):
+    """Register a new user"""
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        user.set_password(request.data.get('password'))
+        user.save()
+        
+        # Create user profile
+        UserProfile.objects.create(user=user)
+        
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_login(request):
+    """Login and get auth token"""
+    username = request.data.get('username')
+    password = request.data.get('password')
+    
+    user = authenticate(username=username, password=password)
+    
+    if user:
+        login(request, user)
+        return Response({
+            'user_id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_staff': user.is_staff,
+        })
+    return Response({'error': 'Invalid credentials'}, status=400)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_logout(request):
+    """Logout the current user"""
+    logout(request)
+    return Response({'status': 'logged out'})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_user_applications(request):
+    """Get all jobs the user has applied to"""
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+        applications = profile.job_applications.all()
+        serializer = JobPostingSerializer(applications, many=True, context={'request': request})
+        return Response(serializer.data)
+    except UserProfile.DoesNotExist:
+        return Response([], status=200)

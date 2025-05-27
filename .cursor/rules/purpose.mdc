@@ -1,0 +1,304 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to
+This  is a job positng website, its colors are orange and white and black/ You must stick to around these colors. This website is for the fbla website and coding development competition. We want hte website to be built in react wiht django as the backend. However there is no react frontend right now. All of hte funcitons for the website is in the views file and any other files refrenced by django. We currently have a front end with dajngo hwoever it should be forgotten. YOur goal is to help me convert the front end to django while having the front end point back to my current backend. Here is the rubric for the fbla competition to ensure this website is the best
+
+"
+2024-25 Competitive Events Guidelines
+Website Coding & Development
+Website Coding & Development - Page 1 of 7 – Updated August 2024
+Website Coding & Development provides members with the opportunity to code a website based on a specific topic. This competitive event consists of a presentation component where the website is shown to the judges. The focus of this event is the backend coding and development of the website.
+Event Overview
+Division: High School
+Event Type: Team of 1, 2 or 3 members
+Event Category: Presentation
+Event Elements: Presentation with a Topic
+Presentation Time: 3-minute set-up, 7-minute presentation time, 3-minute question & answer time
+NACE Connections: Career & Self-Development, Communication, Critical Thinking, Leadership, Professionalism, Teamwork, Technology
+2024-25 Topic
+Create a website for your school’s guidance department so students can easily search job postings and employers can easily submit them.
+Your website must include the following functionalities:
+• A page for employers to submit postings
+• A backend panel to approve or delete postings
+• A page displaying the approved postings
+• A page for students to apply for the posting
+Note: Website does not have to be live. If partnering with your school, permission must be received from the school to make the website public.
+This topic was created in partnership with code.org. Learn more about code.org, resources available, and expanding computer science in your school or district at this link.
+District/Region/Section
+Check with your District/Region/Section leadership for District/Region/Section-specific competition information.
+State
+Check with your State Leader for state-specific competition information.
+2024-25 Competitive Events Guidelines
+Website Coding & Development
+Website Coding & Development - Page 2 of 7 – Updated August 2024
+National
+Required Competition Items
+Important FBLA Documents
+• Competitors should be familiar with the Competitive Events Policy & Procedures Manual, Honor Code, Code of Conduct, and Dress Code.
+Eligibility
+• FBLA membership dues are paid by 11:59 pm Eastern Time on March 1 of the current school year.
+• Members may compete in an event at NLC more than once if they have not previously placed in the top ten of that event at NLC. If a member places in the top ten of an event at NLC, they are no longer eligible to compete in that event.
+• Members must be registered for the NLC and pay the national conference registration fee to participate in competitive events.
+• Members must stay in an official FBLA hotel block to compete.
+• Each state may submit four entries.
+• Each competitor can only compete in one individual/team event and one chapter event (American Enterprise Project, Community Service Project, Local Chapter Annual Business Report, Partnership with Business Project).
+• Only competitors are allowed to plan, research, prepare, and set up their presentations.
+• Each competitor must compete in all parts of an event for award eligibility.
+• All members of a team must consist of individuals from the same chapter.
+• Picture identification (physical or digital: driver’s license, passport, state-issued identification, or school-issued identification) matching the conference nametag is required when checking in for competitive events.
+• If competitors are late for their assigned presentation time, they will be allowed to compete with a five-point penalty until such time that results are finalized, or the accommodation would impact the fairness and integrity of the event.
+• Some competitive events start in the morning before the Opening Session of NLC. The schedules for competitive events are displayed in the local time of the NLC location. Competitive event schedules cannot be changed.
+Items Competitor Must Provide
+Items FBLA Provides
+Preliminary Presentation
+• Technology and presentation items
+• Conference-provided nametag
+• Photo identification
+• Attire that meets the FBLA Dress Code
+• Table
+• Internet access
+Final Presentation
+• Technology and presentation items
+• Conference-provided nametag
+• Photo identification
+• Attire that meets the FBLA Dress Code
+• Table Internet access
+• Power
+• Projector with HDMI cord
+• Projector screen
+2024-25 Competitive Events Guidelines
+Website Coding & Development
+Website Coding & Development - Page 3 of 7 – Updated August 2024
+Recognition
+• The number of competitors will determine the number of winners. The maximum number of winners for each competitive event is 10.
+Event Administration
+• This event has two parts: preliminary presentation and final presentation
+• Preliminary Presentation Information
+o Equipment Set-up Time: 3 minutes
+o Presentation Time: 7 minutes (one-minute warning)
+o Question & Answer Time: 3 minutes
+o Internet Access: Provided (Please note that internet reliability at any conference venue cannot be guaranteed. Always have a backup plan in case internet connections are lost or are unable to connect to your device.)
+o The presentation is judged at the NLC. Preliminary presentations are not open to conference attendees. The presentation will take place in a large, open area, with a booth size of approximately 12’ x 12’.
+o Competitors/teams are randomly assigned to sections.
+o Timing: The presentation time is exclusive to the allotted times. Once the set-up time has been reached, the presentation time automatically begins. The presentation time shall not exceed the stated time, meaning that the set-up and Q&A time cannot be used as presentation time.
+o Technology
+ Competitors present directly from a device which includes a laptop, tablet, mobile phone, or external monitor (approximately the size of a laptop screen). Competitors can present with one or two devices. If presenting with two devices, one device must face the judges and one device must face the competitors.
+ Projectors and projector screens are not allowed for use, and competitors are not allowed to bring their own.
+ Wireless slide advancers (such as a presentation clicker or mouse) are allowed.
+ External speakers are not allowed. Only device audio can be used.
+ Power is not available.
+o Non-technology Items: Materials, notecards, visual aids, and samples related to the project may be used during the presentation; however, no items may be left with the judges or audience.
+o Restricted Items: Animals (except authorized service animals), Food (for display only; may not be consumed by judges during the presentation), Links and QR codes (for display only; cannot be clicked or scanned by judges before, during, or after the presentation)
+o Teamwork: If performing as a team, all team members are expected to actively participate in the presentation.
+o Presentation should cover the following aspects of the website:
+ The development, usability and functionality of the website must be demonstrated and explained to the judges.
+ The coding used, with the code shown to the judges.
+2024-25 Competitive Events Guidelines
+Website Coding & Development
+Website Coding & Development - Page 4 of 7 – Updated August 2024
+ Websites should be designed to allow for viewing on as many different platforms as possible.
+ Competitors must show the judges any of the following that are applicable: source code, documentation of copyrighted material and sources used. No templates are allowed.
+• Final Presentation Information
+o Equipment Set-up Time: 3 minutes
+o Presentation Time: 7 minutes (one-minute warning)
+o Question & Answer Time: 3 minutes
+o Internet Access: Provided (Please note that internet reliability at any conference venue cannot be guaranteed. Always have a backup plan in case internet connections are lost or are unable to connect to your device.)
+o An equal number of top scoring competitors/teams from each section in the preliminary round will advance to the final round. When there are more than five sections of preliminary presentations for an event, two competitors/teams from each section will advance to the final round.
+o Final presentations may be open to conference attendees, space permitting. Finalists may not view other competitors’ presentation in their event.
+o Timing: The presentation time is exclusive to the allotted times. Once the set-up time has been reached, the presentation time automatically begins. The presentation time shall not exceed the stated time, meaning that the set-up and Q&A time cannot be used as presentation time.
+o Technology
+ Competitors can present with one or two devices which includes a laptop, tablet, mobile phone, or external monitor (approximately the size of a laptop screen). If presenting with two devices, one device must be connected to the projector or facing the judges and one device must face the competitors.
+ The following will be provided for the final round if it occurs in a conference room: Projector, projector screen, power, and table.
+ Competitors using laptops or other devices that do not have an HDMI port will need to provide their own adapters.
+ It is up to final-round competitors to determine if they wish to use the technology provided.
+ Wireless slide advancers (such as a presentation clicker or mouse) are allowed.
+o Non-technology Items: Materials, notecards, visual aids, and samples related to the project may be used during the presentation; however, no items may be left with the judges or audience.
+o Restricted Items: Animals (except authorized service animals), Food (for display only; may not be consumed by judges during the presentation), Links and QR codes (for display only; cannot be clicked or scanned by judges before, during, or after the presentation)
+o Teamwork: If performing as a team, all team members are expected to actively participate in the presentation.
+o Presentation should cover the following aspects of the website:
+2024-25 Competitive Events Guidelines
+Website Coding & Development
+Website Coding & Development - Page 5 of 7 – Updated August 2024
+ The development, usability and functionality of the website must be demonstrated and explained to the judges.
+ The coding used, with the code shown to the judges.
+ Websites should be designed to allow for viewing on as many different platforms as possible.
+ Competitors must show the judges any of the following that are applicable: source code, documentation of copyrighted material and sources used. No templates are allowed.
+Scoring
+• The preliminary presentation score will determine the finalists.
+• The final presentation score will determine the winners.
+• Judges must break ties.
+• The decision of the judges is considered final. All announced results are final upon the conclusion of the National Leadership Conference.
+Americans with Disabilities Act (ADA)
+• FBLA meets the criteria specified in the Americans with Disabilities Act for all competitors with accommodations submitted through the conference registration system by the registration deadline.
+Recording of Presentations
+• No unauthorized audio or video recording devices will be allowed in any competitive event.
+• Competitors in the events should be aware FBLA reserves the right to record any presentation for use in study or training materials.
+Penalty Points
+• Competitors may be disqualified if they violate the Code of Conduct or the Honor Code.
+• Five points are deducted if competitors do not follow the Dress Code or are late to their assigned presentation time.
+2024-25 Competitive Events Guidelines
+Website Coding & Development
+Website Coding & Development - Page 6 of 7 – Updated August 2024
+Website Coding & Development Presentation Rating Sheet
+Expectation Item
+Not Demonstrated
+Below Expectations
+Meets Expectations
+Exceeds Expectations
+Points Earned
+Website Coding
+Style
+Code spacing is not available. Style sheets and scripts are not used.
+Script & style sheets are used, but not separated. Code includes some comments.
+Appropriately uses files and separates all languages.
+Code spacing is well thought out.
+0 points
+1-9 points
+10-16 points
+17-20 points
+Website Usability
+Website usability and navigation
+Website is not usable
+Website usable but does not follow event guidelines
+Website usable and meets all guidelines
+Website contains more features than what is required in the guidelines
+0 points
+1-9 points
+10-16 points
+17-20 points
+Color/contrast, background, and font are appropriate for the topic
+No design principles applied
+Color/contrast, font, or design choice is distracting
+Color/contrast, font, and design choice are appropriate for the concept/topic
+Color/contrast, font, and design choice enhance the experience for the user
+0 points
+1-6 points
+7-8 points
+9-10 points
+Graphics appropriate for topic
+No graphic design principles applied
+Graphics are distracting
+Graphics are appropriate for the concept/topic
+Graphics enhance the experience for the user
+0 points
+1-6 points
+7-8 points
+9-10 points
+Website Content
+Fully addresses the topic
+Topic is not followed
+Topic is not fully addressed
+Topic is fully addressed
+User with no knowledge of the topic can identity based on site
+0 points
+1-6 points
+7-8 points
+9-10 points
+Site contains multiple elements providing evidence of coding skills
+No evidence of website coding skill demonstrated
+Website is coded using limited features
+Website contains use of multiple coding skills
+Website contains advanced coding skills
+0 points
+1-9 points
+10-16 points
+17-20 points
+Grammar, spelling, and punctuation
+Website contains grammar or spelling errors
+Website contains 3 or less spelling or grammar errors
+Website contains one grammar and no spelling errors
+Website is free of grammar and spelling errors
+0 points
+1-6 points
+7-8 points
+9-10 points
+Substantiates and cites sources used while conducting research
+Sources are not cited
+Sources/References are seldom cited to support statements
+Professionally legitimate sources & resources that support statements are generally present
+Compelling evidence from professionally legitimate sources & resources is given to support statements
+0 points
+1-6 points
+7-8 points
+9-10 points
+Project Evaluation
+Website is compatible with multiple platforms
+Website is not compatible with any platforms
+Website is only compatible with one platform
+Website opens appropriately on at least 2 platforms
+Website is fully functional on multiple devices, including mobile phones, tablets, and computers
+0 points
+1-9 points
+10-16 points
+17-20 points
+Website interactivity functions and is error free
+Website interactivity contains errors that prevent the execution
+Website interactivity contains errors that did not prevent execution
+Website interactivity is error free
+Website interactivity is error free and enhances the experience for the user
+0 points
+1-9 points
+10-16 points
+17-20 points
+Website elements are consistent across all pages
+Only one page is presented
+Pages are not consistent
+Pages are consistent
+Pages are consistent and elements enhance the experience for the user
+0 points
+1-9 points
+10-16 points
+17-20 points
+2024-25 Competitive Events Guidelines
+Website Coding & Development
+Website Coding & Development - Page 7 of 7 – Updated August 2024
+Expectation Item
+Not Demonstrated
+Below Expectations
+Meets Expectations
+Exceeds Expectations
+Points Earned
+Presentation Delivery
+Statements are well-organized and clearly stated
+Competitor(s) did not appear prepared
+Competitor(s) were prepared, but flow was not logical
+Presentation flowed in logical sequence
+Presentation flowed in a logical sequence; statements were well organized
+0 points
+1-6 points
+7-8 points
+9-10 points
+Demonstrates self-confidence, poise, assertiveness, and good voice projection
+Competitor(s) did not demonstrate self-confidence
+Competitor(s) demonstrated self-confidence and poise
+Competitor(s) demonstrated self-confidence, poise, and good voice projection
+Competitor(s) demonstrated self-confidence, poise, good voice projection, and assertiveness
+0 points
+1-6 points
+7-8 points
+9-10 points
+Demonstrates the ability to effectively answer questions
+Unable to answer questions
+Does not completely answer questions
+Completely answers questions
+Interacted with the judges in the process of completely answering questions
+0 points
+1-6 points
+7-8 points
+9-10 points
+Staff Only: Penalty Points (5 points for dress code penalty and/or 5 points for late arrival penalty)
+Presentation Total (200 points)
+Name(s):
+School:
+Judge Signature:
+Date:
+Comments:
+"
+Always ask as many questions as possible to make this website the best

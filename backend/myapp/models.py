@@ -38,6 +38,7 @@ class JobPosting(models.Model):
     description = models.TextField()
     requirements = models.TextField()
     custom_questions = models.TextField(blank=True, null=True)
+    featured = models.BooleanField(default=False)  # Added featured field
   
     #Adding the options ot wether if the job is active on the website or not
     status = models.CharField(
