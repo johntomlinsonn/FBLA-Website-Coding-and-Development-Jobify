@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Box,
@@ -144,13 +144,14 @@ const AnimatedLogo = () => {
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, signup } = useAuth(); // Assuming signup function exists in AuthContext
+  const location = useLocation();
+  const { login, signup } = useAuth();
   const theme = useTheme();
   // const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Keep for responsive adjustments if needed
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    username: '',
     password: '',
     confirmPassword: '',
   });
@@ -168,19 +169,18 @@ const Login = () => {
 
     try {
       if (isLogin) {
-        await login(formData.email, formData.password);
-        navigate('/');
+        await login(formData.username, formData.password);
+        // The redirect will be handled by the login function in AuthContext
       } else {
         if (formData.password !== formData.confirmPassword) {
           setError('Passwords do not match');
           return;
         }
         // Replace with actual signup logic from AuthContext if available
-        // await signup(formData.name, formData.email, formData.password);
+        // await signup(formData.name, formData.username, formData.password);
         console.log('Registering...', formData); 
         alert('Registration successful! Please login.'); // Placeholder
         setIsLogin(true); // Switch to login form after registration
-        // navigate('/login'); // Or navigate to login, but setIsLogin might be enough
       }
     } catch (err) {
       setError(err.response?.data?.detail || 'An error occurred. Please check your credentials.');
@@ -190,7 +190,7 @@ const Login = () => {
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setError('');
-    setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+    setFormData({ name: '', username: '', password: '', confirmPassword: '' });
   };
 
   // Password strength logic can be kept if desired for signup
@@ -271,17 +271,17 @@ const Login = () => {
           )}
 
           <StyledTextField
-            name="email"
-            label="Email"
-            type="email"
-            value={formData.email}
+            name="username"
+            label="Username"
+            type="text"
+            value={formData.username}
             onChange={handleChange}
             required
             InputLabelProps={{ shrink: true }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Email sx={{ color: theme.palette.text.secondary }} /> {/* Adjusted for light theme */}
+                  <PersonOutline sx={{ color: theme.palette.text.secondary }} /> {/* Changed from Email to PersonOutline icon */}
                 </InputAdornment>
               ),
             }}

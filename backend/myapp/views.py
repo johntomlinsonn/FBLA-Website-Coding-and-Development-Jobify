@@ -21,6 +21,9 @@ from django.conf import settings
 from django.core.serializers import serialize
 import json
 from openai import OpenAI, RateLimitError, APIError, APIConnectionError
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 Api = os.getenv("API_KEY")
 
@@ -558,14 +561,18 @@ def api_login(request):
     user = authenticate(username=username, password=password)
     
     if user:
-        login(request, user)
+        refresh = RefreshToken.for_user(user)
         return Response({
-            'user_id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'is_staff': user.is_staff,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_staff': user.is_staff,
+            }
         })
     return Response({'error': 'Invalid credentials'}, status=400)
 

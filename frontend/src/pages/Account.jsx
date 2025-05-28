@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 import {
   Container,
   Paper,
@@ -15,13 +14,14 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { authAPI, profileAPI } from '../services/api';
+import { profileAPI } from '../services/api';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { useAuth } from '../contexts/AuthContext';
 
 const Account = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,39 +39,46 @@ const Account = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      try {
-        const [profileResponse, referencesResponse, educationResponse] = await Promise.all([
-          profileAPI.get(),
-          profileAPI.getReferences(),
-          profileAPI.getEducation(),
-        ]);
+      if (!authLoading && user) {
+        try {
+          const [profileResponse, referencesResponse, educationResponse] = await Promise.all([
+            profileAPI.get(),
+            profileAPI.getReferences(),
+            profileAPI.getEducation(),
+          ]);
 
-        // Ensure we have valid data before setting state
-        const profileData = profileResponse?.data || {};
-        const referencesData = Array.isArray(referencesResponse?.data) ? referencesResponse.data : [];
-        const educationData = Array.isArray(educationResponse?.data) ? educationResponse.data : [];
+          const profileData = profileResponse?.data || {};
+          const referencesData = Array.isArray(referencesResponse?.data) ? referencesResponse.data : [];
+          const educationData = Array.isArray(educationResponse?.data) ? educationResponse.data : [];
 
-        setProfile(profileData);
-        setReferences(referencesData);
-        setEducation(educationData);
-        setFormData({
-          resume: null,
-          gpa: profileData.gpa || '',
-          is_job_provider: profileData.is_job_provider || false,
-          account_holder_name: profileData.account_holder_name || '',
-        });
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching profile data:', err);
-        setError('Failed to load profile data');
-        setLoading(false);
+          setProfile(profileData);
+          setReferences(referencesData);
+          setEducation(educationData);
+          setFormData({
+            resume: null,
+            gpa: profileData.gpa || '',
+            is_job_provider: profileData.is_job_provider || false,
+            account_holder_name: profileData.account_holder_name || '',
+          });
+          setLoading(false);
+        } catch (err) {
+          console.error('Error fetching profile data:', err);
+          setError('Failed to load profile data');
+          setLoading(false);
+          setReferences([]);
+          setEducation([]);
+        }
+      } else if (!authLoading && !user) {
+        setProfile(null);
         setReferences([]);
         setEducation([]);
+        setFormData({ resume: null, gpa: '', is_job_provider: false, account_holder_name: '' });
+        setLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [user, authLoading]);
 
   const handleResumeChange = (e) => {
     setFormData({
