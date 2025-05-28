@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Grid, Card, CardContent, AppBar, Toolbar, Container, InputBase, Paper, IconButton, Avatar, Link as MuiLink } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
@@ -7,7 +6,9 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 
 const features = [
   {
@@ -100,8 +101,6 @@ const testimonialHover = {
 const footerLinks = [
   { label: 'Home', href: '/' },
   { label: 'Features', href: '#features' },
-  { label: 'Login', href: '/login' },
-  { label: 'Register', href: '/register' },
 ];
 
 const socialLinks = [
@@ -114,7 +113,7 @@ const socialLinks = [
 const Landing = () => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { user } = useAuth();
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -144,11 +143,26 @@ const Landing = () => {
             Jobify
           </Typography>
           <Box>
-            <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} href="#features">Features</Button>
-            {isAuthenticated ? (
+            {/* Post a Job button - always visible, redirects if not logged in */}
+            <Button
+              color="inherit"
+              sx={{ color: '#222', fontWeight: 600, mr: 2 }}
+              onClick={() => { user ? navigate('/postjob') : navigate('/login'); }}
+            >
+              Post a Job
+            </Button>
+            {/* Conditionally render buttons based on user object presence */}
+            {user ? (
               <>
+                <Button
+                  color="inherit"
+                  sx={{ color: '#222', fontWeight: 600, mr: 1 }}
+                  onClick={() => navigate('/account')}
+                  startIcon={<SettingsIcon />}
+                >
+                  Account
+                </Button>
                 <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/jobs')}>Browse Jobs</Button>
-                <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/account')}>My Account</Button>
                 {user?.is_staff && (
                   <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/admin')}>Admin Panel</Button>
                 )}
@@ -156,7 +170,7 @@ const Landing = () => {
             ) : (
               <>
                 <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/login')}>Login</Button>
-                <Button variant="contained" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 600, boxShadow: 2 }} onClick={() => navigate('/register')}>Get Started</Button>
+                <Button variant="contained" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 600, boxShadow: 2 }} onClick={() => navigate('/signup')}>Get Started</Button>
               </>
             )}
           </Box>
@@ -206,8 +220,8 @@ const Landing = () => {
             <SearchIcon />
           </IconButton>
         </Paper>
-        {!isAuthenticated && (
-          <Button variant="contained" size="large" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 700, px: 5, py: 1.5, borderRadius: 8, fontSize: '1.2rem', boxShadow: 3 }} onClick={() => navigate('/register')}>
+        {!user && (
+          <Button variant="contained" size="large" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 700, px: 5, py: 1.5, borderRadius: 8, fontSize: '1.2rem', boxShadow: 3 }} onClick={() => navigate('/signup')}>
             Get Started
           </Button>
         )}

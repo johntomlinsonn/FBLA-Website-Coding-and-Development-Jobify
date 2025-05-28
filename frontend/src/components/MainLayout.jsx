@@ -1,6 +1,5 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
 import {
   AppBar,
   Box,
@@ -13,12 +12,11 @@ import {
   MenuItem,
 } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import { logout } from '../store/slices/authSlice';
+import { useAuth } from '../contexts/AuthContext';
 
 const MainLayout = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { user, logout, loading: authLoading } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleMenu = (event) => {
@@ -30,9 +28,8 @@ const MainLayout = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    logout();
     handleClose();
-    navigate('/login');
   };
 
   return (
@@ -48,7 +45,7 @@ const MainLayout = () => {
             Jobify
           </Typography>
 
-          {isAuthenticated ? (
+          {user ? (
             <div>
               <IconButton
                 size="large"
@@ -77,7 +74,7 @@ const MainLayout = () => {
               >
                 <MenuItem onClick={() => {
                   handleClose();
-                  navigate('/profile');
+                  navigate('/account');
                 }}>
                   Profile
                 </MenuItem>
@@ -89,7 +86,7 @@ const MainLayout = () => {
               <Button color="inherit" onClick={() => navigate('/login')}>
                 Login
               </Button>
-              <Button color="inherit" onClick={() => navigate('/register')}>
+              <Button color="inherit" onClick={() => navigate('/signup')}>
                 Register
               </Button>
             </Box>
