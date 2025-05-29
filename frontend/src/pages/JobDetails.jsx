@@ -11,10 +11,12 @@ import {
   Divider,
 } from '@mui/material';
 import { jobsAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const JobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +35,14 @@ const JobDetails = () => {
 
     fetchJob();
   }, [id]);
+
+  const handleApply = () => {
+    if (!user) {
+      navigate('/login', { state: { from: `/jobs/${id}/apply` } });
+    } else {
+      navigate(`/jobs/${id}/apply`);
+    }
+  };
 
   if (loading) {
     return (
@@ -111,6 +121,18 @@ const JobDetails = () => {
             onClick={() => navigate(`/jobs/${id}/edit`)}
           >
             Edit Job
+          </Button>
+        </Box>
+
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={handleApply}
+            sx={{ px: 4, py: 1.5 }}
+          >
+            Apply Now
           </Button>
         </Box>
       </Paper>

@@ -16,7 +16,6 @@ urlpatterns = [
     path('account/', views.account, name='account'),
     path('postjob/', views.postjob, name='postjob'),
     path('search/', views.search, name='search'),
-    path('api/search/', views.search_api, name='search_api'),
     path('signin/', views.signin_view, name='signin'),
     path('signup/', views.signup_view, name='signup'),  
     path('signout/', views.signout_view, name='signout'),
@@ -26,7 +25,6 @@ urlpatterns = [
     path('apply/<int:job_id>/', views.apply, name='apply'),
     path('admin_panel/', views.admin_panel, name='admin_panel'),
     path('grade_job_live/', grade_job_live, name='grade_job_live'),
-    path('grade_applicant_live/', grade_applicant_live, name='grade_applicant_live'),
     
     # REST API endpoints
     path('api/jobs/', api_job_list, name='api_job_list'),
@@ -44,6 +42,7 @@ urlpatterns = [
     path('api/profile/education/', views.api_education, name='api_education'),
     path('api/profile/education/add/', views.api_add_education, name='api_add_education'),
     path('api/profile/education/<int:education_id>/', views.api_delete_education, name='api_delete_education'),
+    path('api/grade_applicant_live/', grade_applicant_live, name='grade_applicant_live'),
     
     # Frontend routes - redirect to appropriate existing views or API endpoints
     # Fixed routes to address 404 errors

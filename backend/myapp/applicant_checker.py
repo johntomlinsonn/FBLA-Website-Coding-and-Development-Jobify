@@ -2,8 +2,13 @@ import pdfplumber,os
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 from openai import RateLimitError, APIError, APIConnectionError
+import requests
+from urllib.parse import urlparse
+from io import BytesIO
+import PyPDF2
 
-api_key = os.getenv('API_KEY')
+
+api_key_me = os.getenv('API_KEY')
 #Giving the AI a role
 role = """You are an AI recruiter. Your task is to evaluate candidates based solely on their submitted resume and the provided job description for an open role. Your evaluation must produce a single output that consists of a numerical grade and a concise explanation, formatted as follows:
 
@@ -49,49 +54,94 @@ Here is the job desctiption and the resume
 """
 
 #setting up client
-client = OpenAI(
-  base_url='https://openrouter.ai/api/v1',
-  api_key=api_key,
+
+from cerebras.cloud.sdk import Cerebras
+client = Cerebras(
+    api_key=api_key_me,  # This is the default and can be omitted
 )
 
 # Initialize with a default response in case of API failure
 try:
-    completion = client.chat.completions.create(
-        model="qwen/qwen3-235b-a22b:free",
-        messages=[
-            {
-                "role": "system",
-                "content": role
-            }
-        ]
-    )
+    stream = client.chat.completions.create(
+    messages=[
+        {
+            "role": "system",
+            "content": role
+        }
+    ],
+    model="llama-4-scout-17b-16e-instruct",
+    stream=True,
+    max_completion_tokens=16382,
+    temperature=0.7,
+    top_p=0.95
+)
 except (RateLimitError, APIError, APIConnectionError) as e:
     print(f"Warning: Initial API call failed: {str(e)}")
     completion = None
 
 def get_pdf_text(pdf_path):
-    print(pdf_path)
-    with pdfplumber.open(pdf_path) as pdf:
-        text = ''
-        for page in pdf.pages:
-            text += page.extract_text()
-    return text
+    try:
+        # Handle Django FieldFile object
+        if hasattr(pdf_path, 'path'):
+            pdf_path = pdf_path.path
+        elif hasattr(pdf_path, 'url'):
+            pdf_path = pdf_path.url
+        elif hasattr(pdf_path, 'file'):
+            pdf_path = pdf_path.file
 
+        # If it's a URL, download it first
+        if isinstance(pdf_path, str) and pdf_path.startswith(('http://', 'https://')):
+            response = requests.get(pdf_path)
+            pdf_file = BytesIO(response.content)
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+        elif isinstance(pdf_path, str):
+            if not os.path.exists(pdf_path):
+                raise FileNotFoundError(f"PDF file not found at {pdf_path}")
+            pdf_reader = PyPDF2.PdfReader(pdf_path)
+        elif isinstance(pdf_path, BytesIO):
+            pdf_reader = PyPDF2.PdfReader(pdf_path)
+        else:
+            raise ValueError(f"Unsupported PDF path type: {type(pdf_path)}")
+
+        # Extract text from PDF
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text()
+        return text
+
+    except Exception as e:
+        print(f"Error reading PDF: {str(e)}")
+        return ""
+
+import functools
+
+@functools.cache
 def check_applicant(pdf_path, job_description):
     global client
     
     text = get_pdf_text(pdf_path)
     try:
-        completion = client.chat.completions.create(
-            model="qwen/qwen3-235b-a22b:free",
+        stream = client.chat.completions.create(
             messages=[
                 {
                     "role": "user",
                     "content": role + f"The job description is as follows: {job_description} and here is the canidates job application: {text}"
                 }
-            ]
+            ],
+            model="llama-4-scout-17b-16e-instruct",
+            stream=True,
+            max_completion_tokens=16382,
+            temperature=0.7,
+            top_p=0.95
         )
-        return completion.choices[0].message.content
+        
+        # Collect the streamed response
+        full_response = ""
+        for chunk in stream:
+            if chunk.choices[0].delta.content:
+                full_response += chunk.choices[0].delta.content
+        
+        return full_response
     except RateLimitError as e:
         print(f"Rate limit exceeded: {str(e)}")
         return "75;Rate limit exceeded. Please try again later or contact support."

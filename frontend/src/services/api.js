@@ -69,46 +69,219 @@ export const authAPI = {
 
 // Jobs API
 export const jobsAPI = {
-  getAll: async () => {
-    // Use the imported api instance
-    const response = await api.get('/jobs/');
-    return response.data;
+  getAll: async (filters = {}) => {
+    try {
+      const params = new URLSearchParams();
+
+      if (filters.searchTerm) {
+        params.append('search', filters.searchTerm);
+      }
+
+      if (filters.jobTypes && filters.jobTypes.length > 0) {
+        filters.jobTypes.forEach(type => params.append('job_type', type));
+      }
+
+      if (filters.salaryRange) {
+        params.append('min_salary', filters.salaryRange[0]);
+        params.append('max_salary', filters.salaryRange[1]);
+      }
+
+      if (filters.companies && filters.companies.length > 0) {
+        filters.companies.forEach(company => params.append('company', company));
+      }
+
+      const url = `/jobs/?${params.toString()}`;
+      const response = await api.get(url);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+      throw error;
+    }
   },
 
   getById: async (id) => {
-    // Use the imported api instance
-    const response = await api.get(`/jobs/${id}/`);
-    return response.data;
+    try {
+      const response = await api.get(`/jobs/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching job with id ${id}:`, error);
+      throw error;
+    }
   },
 
   create: async (jobData) => {
-    // Use the imported api instance
-    const response = await api.post('/jobs/', jobData);
-    return response.data;
+    try {
+      const response = await api.post('/jobs/', jobData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating job:', error);
+      throw error;
+    }
   },
 
   update: async (id, jobData) => {
-    // Use the imported api instance
-    const response = await api.put(`/jobs/${id}/`, jobData);
-    return response.data;
+    try {
+      const response = await api.put(`/jobs/${id}/`, jobData);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating job with id ${id}:`, error);
+      throw error;
+    }
   },
 
   delete: async (id) => {
-    // Use the imported api instance
-    await api.delete(`/jobs/${id}/`);
+    try {
+      const response = await api.delete(`/jobs/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting job with id ${id}:`, error);
+      throw error;
+    }
+  },
+
+  apply: async (jobId, formData) => {
+    try {
+      const response = await api.post(`/jobs/${jobId}/apply/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      throw error;
+    }
   },
 };
 
 // Profile API
 export const profileAPI = {
-  get: () => api.get('/profile/'),
-  update: (profileData) => api.put('/profile/update/', profileData),
-  getReferences: () => api.get('/profile/references/'),
-  addReference: (referenceData) => api.post('/profile/references/add/', referenceData),
-  deleteReference: (referenceId) => api.delete(`/profile/references/${referenceId}/`),
-  getEducation: () => api.get('/profile/education/'),
-  addEducation: (educationData) => api.post('/profile/education/add/', educationData),
-  deleteEducation: (educationId) => api.delete(`/profile/education/${educationId}/`),
+  get: async () => {
+    try {
+      const response = await api.get('/profile/');
+      return response;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      throw error;
+    }
+  },
+
+  update: async (profileData) => {
+    try {
+      const response = await api.put('/profile/update/', profileData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  },
+
+  getReferences: async () => {
+    try {
+      const response = await api.get('/profile/references/');
+      return response;
+    } catch (error) {
+      console.error('Error fetching references:', error);
+      throw error;
+    }
+  },
+
+  addReference: async (referenceData) => {
+    try {
+      const response = await api.post('/profile/references/add/', referenceData);
+      return response;
+    } catch (error) {
+      console.error('Error adding reference:', error);
+      throw error;
+    }
+  },
+
+  deleteReference: async (referenceId) => {
+    try {
+      const response = await api.delete(`/profile/references/${referenceId}/`);
+      return response;
+    } catch (error) {
+      console.error(`Error deleting reference with id ${referenceId}:`, error);
+      throw error;
+    }
+  },
+
+  getEducation: async () => {
+    try {
+      const response = await api.get('/profile/education/');
+      return response;
+    } catch (error) {
+      console.error('Error fetching education:', error);
+      throw error;
+    }
+  },
+
+  addEducation: async (educationData) => {
+    try {
+      const response = await api.post('/profile/education/add/', educationData);
+      return response;
+    } catch (error) {
+      console.error('Error adding education:', error);
+      throw error;
+    }
+  },
+
+  deleteEducation: async (educationId) => {
+    try {
+      const response = await api.delete(`/profile/education/${educationId}/`);
+      return response;
+    } catch (error) {
+      console.error(`Error deleting education with id ${educationId}:`, error);
+      throw error;
+    }
+  },
+};
+
+// Admin API (example - assuming you have admin related endpoints)
+export const adminAPI = {
+  getPendingJobs: async () => {
+    try {
+      const response = await api.get('/admin/jobs/pending/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching pending jobs:', error);
+      throw error;
+    }
+  },
+
+  approveJob: async (jobId) => {
+    try {
+      const response = await api.post(`/admin/jobs/${jobId}/approve/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error approving job with id ${jobId}:`, error);
+      throw error;
+    }
+  },
+
+  denyJob: async (jobId) => {
+    try {
+      const response = await api.post(`/admin/jobs/${jobId}/deny/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error denying job with id ${jobId}:`, error);
+      throw error;
+    }
+  },
+
+  deleteJob: async (jobId) => {
+    try {
+      const response = await api.delete(`/admin/jobs/${jobId}/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting job with id ${jobId}:`, error);
+      throw error;
+    }
+  },
 };
 
 // Remove default export of the local api instance

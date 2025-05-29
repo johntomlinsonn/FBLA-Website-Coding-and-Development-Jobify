@@ -57,9 +57,36 @@ class JobPostingViewSet(viewsets.ModelViewSet):
 class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'put', 'patch', 'delete']  # Explicitly define allowed methods
 
     def get_object(self):
         return get_object_or_404(UserProfile, user=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        
+        # Handle file upload
+        if 'resume' in request.FILES:
+            # Delete old resume if it exists
+            if instance.resume:
+                instance.resume.delete()
+            instance.resume = request.FILES['resume']
+            instance.save()
+        
+        # Handle other fields
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        serializer.save()
 
     @action(detail=True, methods=['get', 'post'])
     def references(self, request, pk=None):

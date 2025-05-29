@@ -24,23 +24,30 @@ from openai import OpenAI, RateLimitError, APIError, APIConnectionError
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import permissions
+from cerebras.cloud.sdk import Cerebras
 
 Api = os.getenv("API_KEY")
 
-client = OpenAI(
-  base_url="https://openrouter.ai/api/v1",
-  api_key=Api,
+# Initialize Cerebras client
+client = Cerebras(
+    api_key=Api,
 )
 
+# Initialize with a default response in case of API failure
 try:
-    completion = client.chat.completions.create(
-        model="qwen/qwen3-235b-a22b:free",
+    stream = client.chat.completions.create(
         messages=[
             {
                 "role": "system",
                 "content": "You are an administrator for a job finder website designed to help high school students find jobs. Your task is to grade how obtainable a job is for high school students on a scale from 1 to 75. The final score should reflect only how attainable the job is, without considering location (location accounts for an additional 25 points, calculated separately).Scoring Criteria:Education Requirements (High Weight): Jobs requiring little to no formal education should score higher. Positions demanding higher education (e.g., college degrees) should be heavily penalized.Typical High School Job (Moderate Weight): If the job is common for high school students (e.g., retail, food service, internships), it should score higher.Experience Requirements (Moderate Weight): Jobs requiring little to no prior work experience should score higher. If minimal experience is needed but attainable through extracurriculars, minor deductions apply.Age Restrictions (Moderate Weight): Jobs with strict age requirements (e.g., must be 18+) should have points deducted.Job Complexity (Low Weight): Highly technical or specialized jobs should lose some points, but only slightly, as long as they remain attainable.Work Hours (Moderate Weight): Jobs requiring work during typical school hours should lose points unless flexible scheduling is mentioned.IMPORTANT:ONLY OUTPUT A SINGLE INTEGER BETWEEN 1 AND 75.DO NOT include any text, explanations, or additional details—ONLY the integer.IF YOU DO INCLUDE ANY DETAILS  OTHER THAN THE INTEGER YOU WILL BE TERMINATED NO MATTER THE CIRCUMSTANCES SO ONLY OUT PUT AN INTTEGER. You must fully reason through all relevant factors to determine the most accurate score, but DO NOT include your reasoning in the output.Focus solely on obtainability, not pay, soft skills, demand, or location.Assume the student has minimal job experience but strong extracurricular involvement and basic job-ready skills.The job description may be unstructured, so interpret details flexibly.Example Outputs:A typical part-time retail job with no education or experience requirements: 75A full-time office job requiring a college degree: 15A seasonal lifeguard job requiring certification and age 18+: 50- Here is the Job to be grader: "
             }
-        ]
+        ],
+        model="llama-4-scout-17b-16e-instruct",
+        stream=True,
+        max_completion_tokens=16382,
+        temperature=0.7,
+        top_p=0.95
     )
 except (RateLimitError, APIError, APIConnectionError) as e:
     print(f"Warning: Initial API call failed: {str(e)}")
@@ -166,30 +173,64 @@ def search(request):
         'current_search': query or '',
     })
 
-def search_api(request):
-    """API endpoint for job search"""
+@api_view(['GET'])
+def api_job_list(request):
+    """API endpoint for job search with filtering and sorting"""
     query = request.GET.get('search', '')
     sort_by = request.GET.get('sort', '-created_at')
-    
-    # Map 'date_posted' to 'created_at' since that's the field we have in our model
-    if 'date_posted' in sort_by:
-        sort_by = sort_by.replace('date_posted', 'created_at')
-    
+    job_types = request.GET.getlist('job_type') # Get list of job types
+    min_salary = request.GET.get('min_salary')
+    max_salary = request.GET.get('max_salary')
+    companies = request.GET.getlist('company') # Get list of companies
+
+    # Start with all approved job postings
     job_postings = JobPosting.objects.filter(status='approved')
-    
+
+    # Apply search query
     if query:
         job_postings = job_postings.filter(
             Q(title__icontains=query) |
             Q(company_name__icontains=query) |
             Q(location__icontains=query) |
             Q(description__icontains=query) |
-            Q(requirements__icontains=query),
-            status='approved'
+            Q(requirements__icontains=query) 
         )
-    
+
+    # Apply filters
+    if job_types:
+        job_postings = job_postings.filter(job_type__in=job_types) 
+
+    if min_salary:
+        try:
+            min_salary = int(min_salary)
+            job_postings = job_postings.filter(salary__gte=min_salary)
+        except ValueError:
+            pass # Ignore invalid salary values
+
+    if max_salary:
+        try:
+            max_salary = int(max_salary)
+            job_postings = job_postings.filter(salary__lte=max_salary)
+        except ValueError:
+            pass # Ignore invalid salary values
+
+    if companies:
+        job_postings = job_postings.filter(company_name__in=companies)
+
     # Sort results
-    job_postings = job_postings.order_by(sort_by)
-    
+    # Map 'date_posted' to 'created_at' since that's the field we have in our model
+    if 'date_posted' in sort_by:
+        sort_by = sort_by.replace('date_posted', 'created_at')
+        
+    # Handle potential sorting by salary (assuming salary is a numeric field now or can be cast)
+    # Check if the requested sort_by field exists in the model to prevent errors
+    allowed_sort_fields = ['created_at', '-created_at', 'salary', '-salary', 'title', '-title', 'company_name', '-company_name'] # Add other sortable fields
+    if sort_by in allowed_sort_fields:
+         job_postings = job_postings.order_by(sort_by)
+    else:
+         # Default sort if provided sort_by is invalid
+         job_postings = job_postings.order_by('-created_at')
+
     serializer = JobPostingSerializer(job_postings, many=True, context={'request': request})
     return JsonResponse(serializer.data, safe=False)
 
@@ -264,8 +305,10 @@ def delete_job(request, job_id):
 
 @user_passes_test(is_staff_or_admin)
 def admin_panel(request):
-    job_postings = JobPosting.objects.all()
-    return render(request, 'admin_panel.html', {'job_postings': job_postings})
+    pending_jobs = JobPosting.objects.filter(status='pending')
+    approved_jobs = JobPosting.objects.filter(status='approved')
+    denied_jobs = JobPosting.objects.filter(status='denied')
+    return render(request, 'admin_panel.html', {'pending_jobs': pending_jobs, 'approved_jobs': approved_jobs, 'denied_jobs': denied_jobs})
 
 def apply(request, job_id):
     job_posting = get_object_or_404(JobPosting, id=job_id)
@@ -323,7 +366,7 @@ def apply(request, job_id):
         'user_education': user_education
     })
 
-def create_email_content(job_posting, name, email, resume, custom_questions, custom_answers, user_references, user_education):
+def create_email_content(job_posting, name, email, resume, custom_questions, custom_answers, references, education):
     # Create text content
     text_content = f"""
 A new application has been submitted for {job_posting.title}.
@@ -340,15 +383,23 @@ Email: {email}
         for question, answer in zip(custom_questions, custom_answers):
             text_content += f"Q: {question}\nA: {answer}\n"
     
-    if user_references:
+    if references:
         text_content += "\nReferences:\n"
-        for ref in user_references:
-            text_content += f"Name: {ref.name}, Relation: {ref.relation}, Contact: {ref.contact}\n"
+        for ref in references:
+            # Handle both dictionary and QueryDict formats
+            ref_name = ref.get('name') if isinstance(ref, dict) else ref
+            ref_relation = ref.get('relation') if isinstance(ref, dict) else ''
+            ref_contact = ref.get('contact') if isinstance(ref, dict) else ''
+            text_content += f"Name: {ref_name}, Relation: {ref_relation}, Contact: {ref_contact}\n"
     
-    if user_education:
+    if education:
         text_content += "\nEducation:\n"
-        for edu in user_education:
-            text_content += f"School: {edu.school_name}, Graduation Date: {edu.graduation_date}, GPA: {edu.gpa}\n"
+        for edu in education:
+            # Handle both dictionary and QueryDict formats
+            school = edu.get('school') if isinstance(edu, dict) else edu
+            grad_date = edu.get('graduationDate') if isinstance(edu, dict) else ''
+            gpa = edu.get('gpa') if isinstance(edu, dict) else ''
+            text_content += f"School: {school}, Graduation Date: {grad_date}, GPA: {gpa}\n"
 
     # Create HTML content
     html_content = f"""
@@ -367,15 +418,23 @@ Email: {email}
         for question, answer in zip(custom_questions, custom_answers):
             html_content += f"<p><strong>Q:</strong> {question}<br><strong>A:</strong> {answer}</p>"
 
-    if user_references:
+    if references:
         html_content += "<h4>References:</h4>"
-        for ref in user_references:
-            html_content += f"<p>Name: {ref.name}, Relation: {ref.relation}, Contact: {ref.contact}</p>"
+        for ref in references:
+            # Handle both dictionary and QueryDict formats
+            ref_name = ref.get('name') if isinstance(ref, dict) else ref
+            ref_relation = ref.get('relation') if isinstance(ref, dict) else ''
+            ref_contact = ref.get('contact') if isinstance(ref, dict) else ''
+            html_content += f"<p>Name: {ref_name}, Relation: {ref_relation}, Contact: {ref_contact}</p>"
 
-    if user_education:
+    if education:
         html_content += "<h4>Education:</h4>"
-        for edu in user_education:
-            html_content += f"<p>School: {edu.school_name}, Graduation Date: {edu.graduation_date}, GPA: {edu.gpa}</p>"
+        for edu in education:
+            # Handle both dictionary and QueryDict formats
+            school = edu.get('school') if isinstance(edu, dict) else edu
+            grad_date = edu.get('graduationDate') if isinstance(edu, dict) else ''
+            gpa = edu.get('gpa') if isinstance(edu, dict) else ''
+            html_content += f"<p>School: {school}, Graduation Date: {grad_date}, GPA: {gpa}</p>"
 
     if resume:
         html_content += "<h4>Applicant Grade:</h4>"
@@ -401,135 +460,141 @@ def attach_resume_to_email(mail, resume):
 def grade_job_live(request):
     return grade_job_lv(request)
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def grade_applicant_live(request):
-    
-    resume_url = request.GET.get('resume_url')
-    if resume_url.startswith('/media/'):
-            resume_url = resume_url[len('/media/'):]
-    resume_path = os.path.join(settings.MEDIA_ROOT, resume_url)
-    
-    description = request.GET.get('description')
-    if not resume_url or not description:
-        return JsonResponse({'error': 'Both resume URL and description are required'}, status=400)
+    """API endpoint for grading an applicant's resume against a job description"""
+    try:
+        resume_url = request.data.get('resume_url')
+        description = request.data.get('description')
 
-    # Assuming you have a function to grade the applicant based on resume URL and description
-    grade = clean_grade(check_applicant(resume_path, description))
-    print(grade)
-    builder = ""
-    for i in grade[0]:
-        if i != ";":
-            builder +=i
-        else:
-            break
-            
-    print(builder)
-    grade = builder
+        if not resume_url or not description:
+            return Response({'error': 'Resume URL and job description are required'}, status=400)
+
+        # Get the grade
+        grade = clean_grade(check_applicant(resume_url, description))
         
-    return JsonResponse({'grade': grade})
-
-# REST API endpoints
-@api_view(['GET'])
-def api_job_list(request):
-    """List all job postings or filter by search query"""
-    query = request.GET.get('search', '')
-    sort_by = request.GET.get('sort', '-created_at')  # changed from date_posted to created_at
-    
-    # Map 'date_posted' to 'created_at' since that's the field we have in our model
-    if 'date_posted' in sort_by:
-        sort_by = sort_by.replace('date_posted', 'created_at')
-    
-    job_postings = JobPosting.objects.filter(status='approved')  # changed is_approved to status='approved'
-    
-    if query:
-        job_postings = job_postings.filter(
-            Q(title__icontains=query) |
-            Q(company_name__icontains=query) |  # fixed incorrect function call
-            Q(location__icontains=query) |
-            Q(description__icontains=query) |
-            Q(requirements__icontains=query),
-              status='approved'
-        )
-    
-    # Sort results
-    job_postings = job_postings.order_by(sort_by)
-    
-    serializer = JobPostingSerializer(job_postings, many=True, context={'request': request})
-    return Response(serializer.data)
+        return Response({'grade': grade})
+    except Exception as e:
+        print(f"Error in grade_applicant_live: {str(e)}")
+        return Response({'error': 'Failed to grade applicant'}, status=500)
 
 @api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
 def api_job_detail(request, pk):
-    """Get details of a specific job posting"""
-    job = get_object_or_404(JobPosting, pk=pk, status='approved')  # changed is_approved to status='approved'
-    serializer = JobPostingSerializer(job, context={'request': request})
-    return Response(serializer.data)
+    """API endpoint for single job posting details"""
+    try:
+        job_posting = JobPosting.objects.get(pk=pk, status='approved')
+        serializer = JobPostingSerializer(job_posting, context={'request': request})
+        return Response(serializer.data)
+    except JobPosting.DoesNotExist:
+        return Response({'error': 'Job posting not found'}, status=404)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def api_apply_job(request, job_id):
-    """Apply to a job (API version)"""
-    job_posting = get_object_or_404(JobPosting, id=job_id, is_approved=True)
-    
+    """API endpoint for applying to a job"""
     try:
-        profile = UserProfile.objects.get(user=request.user)
+        job_posting = get_object_or_404(JobPosting, id=job_id, status='approved')
+        user = request.user
+        user_profile = UserProfile.objects.get(user=user)
+
+        # Get application data from request
+        form_data = request.data
+        name = form_data.get('name')  # Get the full name
+        email = form_data.get('email')  # Get the full email
+        resume = request.FILES.get('resume') or user_profile.resume
+
+        # Get references from request data
+        references = []
+        index = 1
+        while f'reference_name_{index}' in form_data:
+            references.append({
+                'name': form_data.get(f'reference_name_{index}'),
+                'relation': form_data.get(f'reference_relation_{index}'),
+                'contact': form_data.get(f'reference_contact_{index}')
+            })
+            index += 1
+
+        # Get education from request data
+        education = []
+        index = 1
+        while f'school_name_{index}' in form_data:
+            education.append({
+                'school': form_data.get(f'school_name_{index}'),
+                'graduationDate': form_data.get(f'graduation_date_{index}'),
+                'gpa': form_data.get(f'gpa_{index}')
+            })
+            index += 1
+
+        # Get custom answers
+        custom_answers = form_data.getlist('custom_questions[]', [])  # Use getlist for QueryDict
+
+        # Create email content
+        subject = f"New Application for {job_posting.title}"
+        text_content, html_content = create_email_content(
+            job_posting, name, email, resume,
+            job_posting.custom_questions.split('\n') if job_posting.custom_questions else [],
+            custom_answers,
+            references,
+            education
+        )
+
+        # Prepare email
+        mail = EmailMultiAlternatives(subject, text_content, to=[job_posting.company_email])
+        mail.attach_alternative(html_content, "text/html")
+
+        # Attach resume if present
+        if resume:
+            attach_resume_to_email(mail, resume)
+
+        # Send email
+        mail.send()
+
+        # Calculate grade if resume is present
+        grade = None
+        if resume:
+            try:
+                grade_response = check_applicant(resume, job_posting.description)
+                grade = clean_grade(grade_response)
+            except Exception as e:
+                print(f"Error calculating grade: {str(e)}")
+                grade = "75;Error calculating grade"
+
+        return Response({
+            'message': 'Application submitted successfully',
+            'grade': grade
+        }, status=200)
+
     except UserProfile.DoesNotExist:
-        return Response({'error': 'User profile not found'}, status=400)
-    
-    # Add job to user's applications if it's not already there
-    if not profile.job_applications.filter(id=job_id).exists():
-        profile.job_applications.add(job_posting)
-    
-    # Process custom answers
-    custom_questions = job_posting.custom_questions.split('\n') if job_posting.custom_questions else []
-    custom_answers = request.data.get('answers', [])
-    
-    # Prepare and send email
-    subject = f"New Application for {job_posting.title}"
-    text_content, html_content = create_email_content(
-        job_posting, 
-        f"{request.user.first_name} {request.user.last_name}", 
-        request.user.email,
-        profile.resume,
-        custom_questions, 
-        custom_answers,
-        profile.references.all(), 
-        profile.education.all()
-    )
-    
-    mail = EmailMultiAlternatives(subject, text_content, to=[job_posting.contact_email])
-    mail.attach_alternative(html_content, "text/html")
-    
-    # Attach resume if present
-    if profile.resume:
-        attach_resume_to_email(mail, profile.resume)
-    
-    mail.send()
-    
-    return Response({'status': 'application submitted'})
+        return Response({'error': 'User profile not found'}, status=404)
+    except Exception as e:
+        print(f"Error in api_apply_job: {str(e)}")
+        print(f"Request data: {request.data}")  # Debug print
+        print(f"Request FILES: {request.FILES}")  # Debug print
+        return Response({'error': f'Failed to submit application: {str(e)}'}, status=500)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def api_user_profile(request):
-    """Get the current user's profile"""
+    """API endpoint for fetching user profile"""
     try:
         profile = UserProfile.objects.get(user=request.user)
+        serializer = UserProfileSerializer(profile, context={'request': request})
+        return Response(serializer.data)
     except UserProfile.DoesNotExist:
-        profile = UserProfile(user=request.user)
-        profile.save()
-    
-    serializer = UserProfileSerializer(profile, context={'request': request})
-    return Response(serializer.data)
+        return Response({'error': 'User profile not found'}, status=404)
 
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def api_update_profile(request):
-    """Update the current user's profile"""
+    """API endpoint for updating user profile"""
     try:
         profile = UserProfile.objects.get(user=request.user)
     except UserProfile.DoesNotExist:
-        profile = UserProfile(user=request.user)
-        profile.save()
-    
-    serializer = UserProfileSerializer(profile, data=request.data, partial=True)
+        return Response({'error': 'User profile not found'}, status=404)
+
+    serializer = UserProfileSerializer(profile, data=request.data, partial=True, context={'request': request})
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
@@ -538,17 +603,18 @@ def api_update_profile(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def api_register(request):
-    """Register a new user"""
+    """API endpoint for user registration"""
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        user.set_password(request.data.get('password'))
-        user.save()
-        
-        # Create user profile
+        # Create UserProfile for the new user
         UserProfile.objects.create(user=user)
-        
-        return Response(serializer.data, status=201)
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': UserSerializer(user).data
+        }, status=201)
     return Response(serializer.errors, status=400)
 
 @api_view(['POST'])
@@ -579,94 +645,95 @@ def api_login(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def api_logout(request):
-    """Logout the current user"""
-    logout(request)
-    return Response({'status': 'logged out'})
+    """API endpoint for user logout"""
+    try:
+        refresh_token = request.data["refresh_token"]
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response({'message': 'Successfully logged out.'}, status=205)
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def api_user_applications(request):
-    """Get all jobs the user has applied to"""
-    try:
-        profile = UserProfile.objects.get(user=request.user)
-        applications = profile.job_applications.all()
-        serializer = JobPostingSerializer(applications, many=True, context={'request': request})
-        return Response(serializer.data)
-    except UserProfile.DoesNotExist:
-        return Response([], status=200)
+    """API endpoint for fetching a user's job applications"""
+    # This assumes you have a model for tracking applications
+    # For now, returning an empty list or a placeholder
+    return Response([]) # Replace with actual data if application tracking is implemented
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def api_references(request):
-    """Get all references for the current user"""
+    """API endpoint for fetching user references"""
     try:
-        profile = UserProfile.objects.get(user=request.user)
-        references = profile.references.all()
+        user_profile = UserProfile.objects.get(user=request.user)
+        references = Reference.objects.filter(user_profile=user_profile)
         serializer = ReferenceSerializer(references, many=True)
         return Response(serializer.data)
     except UserProfile.DoesNotExist:
-        return Response([], status=200)
+         return Response([], status=200) # Return empty list if profile doesn't exist
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def api_add_reference(request):
-    """Add a new reference for the current user"""
+    """API endpoint for adding a reference"""
     try:
-        profile = UserProfile.objects.get(user=request.user)
-        serializer = ReferenceSerializer(data=request.data)
-        if serializer.is_valid():
-            reference = serializer.save(user_profile=profile)
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
+        user_profile = UserProfile.objects.get(user=request.user)
     except UserProfile.DoesNotExist:
-        return Response({'error': 'User profile not found'}, status=400)
+        return Response({'error': 'User profile not found'}, status=404)
+
+    serializer = ReferenceSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user_profile=user_profile)
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def api_delete_reference(request, reference_id):
-    """Delete a reference"""
+    """API endpoint for deleting a reference"""
     try:
-        profile = UserProfile.objects.get(user=request.user)
-        reference = profile.references.get(id=reference_id)
+        reference = Reference.objects.get(id=reference_id, user_profile__user=request.user)
         reference.delete()
-        return Response(status=204)
-    except (UserProfile.DoesNotExist, Reference.DoesNotExist):
+        return Response(status=204) # No content status
+    except Reference.DoesNotExist:
         return Response({'error': 'Reference not found'}, status=404)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def api_education(request):
-    """Get all education entries for the current user"""
+    """API endpoint for fetching user education"""
     try:
-        profile = UserProfile.objects.get(user=request.user)
-        education = profile.education.all()
+        user_profile = UserProfile.objects.get(user=request.user)
+        education = Education.objects.filter(user_profile=user_profile)
         serializer = EducationSerializer(education, many=True)
         return Response(serializer.data)
     except UserProfile.DoesNotExist:
-        return Response([], status=200)
+        return Response([], status=200) # Return empty list if profile doesn't exist
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def api_add_education(request):
-    """Add a new education entry for the current user"""
+    """API endpoint for adding education"""
     try:
-        profile = UserProfile.objects.get(user=request.user)
-        serializer = EducationSerializer(data=request.data)
-        if serializer.is_valid():
-            education = serializer.save(user_profile=profile)
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
+        user_profile = UserProfile.objects.get(user=request.user)
     except UserProfile.DoesNotExist:
-        return Response({'error': 'User profile not found'}, status=400)
+        return Response({'error': 'User profile not found'}, status=404)
+
+    serializer = EducationSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user_profile=user_profile)
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def api_delete_education(request, education_id):
-    """Delete an education entry"""
+    """API endpoint for deleting education"""
     try:
-        profile = UserProfile.objects.get(user=request.user)
-        education = profile.education.get(id=education_id)
+        education = Education.objects.get(id=education_id, user_profile__user=request.user)
         education.delete()
-        return Response(status=204)
-    except (UserProfile.DoesNotExist, Education.DoesNotExist):
-        return Response({'error': 'Education entry not found'}, status=404)
+        return Response(status=204) # No content status
+    except Education.DoesNotExist:
+        return Response({'error': 'Education not found'}, status=404)

@@ -9,6 +9,7 @@ import CreateJob from './pages/CreateJob';
 import EditJob from './pages/EditJob';
 import Landing from './pages/Landing';
 import Account from './pages/Account';
+import JobApplication from './pages/JobApplication';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -20,6 +21,14 @@ const AppRoutes = () => {
       <Route element={<MainLayout />}>
         <Route path="/jobs" element={<JobsList />} />
         <Route path="/jobs/:id" element={<JobDetails />} />
+        <Route
+          path="/jobs/:id/apply"
+          element={
+            <ProtectedRoute>
+              <JobApplication />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/jobs/create"
           element={

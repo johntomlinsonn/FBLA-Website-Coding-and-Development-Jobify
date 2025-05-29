@@ -7,90 +7,57 @@ import {
   Typography,
   Button,
   Container,
-  IconButton,
-  Menu,
-  MenuItem,
 } from '@mui/material';
-import AccountCircle from '@mui/icons-material/AccountCircle';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useAuth } from '../contexts/AuthContext';
 
 const MainLayout = () => {
   const navigate = useNavigate();
-  const { user, logout, loading: authLoading } = useAuth();
-  const [anchorEl, setAnchorEl] = React.useState(null);
-
-  const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    logout();
-    handleClose();
-  };
+  const { user } = useAuth();
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="static" color="primary">
-        <Toolbar>
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{ flexGrow: 1, cursor: 'pointer' }}
-            onClick={() => navigate('/')}
-          >
+      <AppBar position="static" color="default" elevation={0} sx={{ 
+        background: 'rgba(255,255,255,0.95)', 
+        boxShadow: '0 2px 8px 0 rgba(0,0,0,0.03)', 
+        pt: 2,
+        position: 'relative',
+        zIndex: 1200 
+      }}>
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: '#FF6B00', letterSpacing: 2 }}>
             Jobify
           </Typography>
-
-          {user ? (
-            <div>
-              <IconButton
-                size="large"
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={handleMenu}
-                color="inherit"
-              >
-                <AccountCircle />
-              </IconButton>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-              >
-                <MenuItem onClick={() => {
-                  handleClose();
-                  navigate('/account');
-                }}>
-                  Profile
-                </MenuItem>
-                <MenuItem onClick={handleLogout}>Logout</MenuItem>
-              </Menu>
-            </div>
-          ) : (
-            <Box>
-              <Button color="inherit" onClick={() => navigate('/login')}>
-                Login
-              </Button>
-              <Button color="inherit" onClick={() => navigate('/signup')}>
-                Register
-              </Button>
-            </Box>
-          )}
+          <Box>
+            <Button
+              color="inherit"
+              sx={{ color: '#222', fontWeight: 600, mr: 2 }}
+              onClick={() => { user ? navigate('/jobs/create') : navigate('/login'); }}
+            >
+              Post a Job
+            </Button>
+            {user ? (
+              <>
+                <Button
+                  color="inherit"
+                  sx={{ color: '#222', fontWeight: 600, mr: 1 }}
+                  onClick={() => navigate('/account')}
+                  startIcon={<SettingsIcon />}
+                >
+                  Account
+                </Button>
+                <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/jobs')}>Browse Jobs</Button>
+                {user?.is_staff && (
+                  <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/admin')}>Admin Panel</Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/login')}>Login</Button>
+                <Button variant="contained" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 600, boxShadow: 2 }} onClick={() => navigate('/signup')}>Get Started</Button>
+              </>
+            )}
+          </Box>
         </Toolbar>
       </AppBar>
 
