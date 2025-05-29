@@ -38,28 +38,44 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return None
 
 class JobPostingSerializer(serializers.ModelSerializer):
-    days_since_posting = serializers.SerializerMethodField()
-    is_new = serializers.SerializerMethodField()
-    
+    requirements = serializers.ListField(required=False)
+    custom_questions = serializers.ListField(required=False)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    status = serializers.CharField(read_only=True)
+
     class Meta:
         model = JobPosting
-        fields = [
-            'id', 'title', 'company_name', 'company_email', 'location',
-            'salary', 'job_type', 'description', 'requirements',
-            'custom_questions', 'status', 'grade', 'featured',
-            'created_at', 'updated_at', 'days_since_posting', 'is_new'
-        ]
-    
-    def get_days_since_posting(self, obj):
-        now = datetime.now(timezone.utc)
-        time_diff = now - obj.created_at
-        return time_diff.days
-    
-    def get_is_new(self, obj):
-        # Mark jobs as new if they're less than 3 days old
-        now = datetime.now(timezone.utc)
-        time_diff = now - obj.created_at
-        return time_diff.days < 3
+        fields = ['id', 'title', 'company_name', 'company_email', 'description', 'salary', 'location', 'job_type', 'requirements', 'custom_questions', 'user', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        # Debug print to inspect validated_data
+        print("Validated Data in create (final attempt to exclude user keyword):", validated_data)
+
+        # Construct the dictionary of arguments for JobPosting.objects.create()
+        # This dictionary will contain fields from validated_data, explicitly excluding 'user'.
+        create_args_excluding_user = {}
+        for key, value in validated_data.items():
+            if key != 'user': # Explicitly exclude the 'user' key
+                create_args_excluding_user[key] = value
+
+        # Debug print the final arguments for create
+        print("Arguments for JobPosting.objects.create() (user excluded):", create_args_excluding_user)
+
+        # Create the job posting instance using the carefully constructed arguments
+        # This dictionary should now NOT have the 'user' key
+        job_posting = JobPosting.objects.create(**create_args_excluding_user)
+
+        # Set status to pending (assuming this is desired)
+        job_posting.status = 'pending'
+
+        # Save the instance to persist changes (status)
+        job_posting.save()
+
+        # Debug print the created object
+        print("Created Job Posting object (user not set via create args):", job_posting)
+
+        return job_posting
 
 class JobSearchSerializer(serializers.Serializer):
     """

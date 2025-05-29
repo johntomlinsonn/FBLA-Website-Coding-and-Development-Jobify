@@ -26,6 +26,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import permissions
 from cerebras.cloud.sdk import Cerebras
+from rest_framework import status
 
 Api = os.getenv("API_KEY")
 
@@ -173,66 +174,57 @@ def search(request):
         'current_search': query or '',
     })
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated]) # Require authentication for both GET and POST
 def api_job_list(request):
-    """API endpoint for job search with filtering and sorting"""
-    query = request.GET.get('search', '')
-    sort_by = request.GET.get('sort', '-created_at')
-    job_types = request.GET.getlist('job_type') # Get list of job types
-    min_salary = request.GET.get('min_salary')
-    max_salary = request.GET.get('max_salary')
-    companies = request.GET.getlist('company') # Get list of companies
+    """API endpoint for job search and creation"""
+    if request.method == 'GET':
+        job_postings = JobPosting.objects.filter(status='approved').order_by('-created_at')
+        serializer = JobPostingSerializer(job_postings, many=True, context={'request': request})
+        return Response(serializer.data)
 
-    # Start with all approved job postings
-    job_postings = JobPosting.objects.filter(status='approved')
+    elif request.method == 'POST':
+        serializer = JobPostingSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            # Save the serializer. The create method will handle user and status from context
+            job_posting = serializer.save()
 
-    # Apply search query
-    if query:
-        job_postings = job_postings.filter(
-            Q(title__icontains=query) |
-            Q(company_name__icontains=query) |
-            Q(location__icontains=query) |
-            Q(description__icontains=query) |
-            Q(requirements__icontains=query) 
-        )
+            # Calculate and save the job grade after initial creation
+            try:
+                # Call grade_job_lv with the request object
+                # grade_response = grade_job(description, location)
+                grade_response = grade_job_lv(request)
+                
+                # grade_job_lv is expected to return a JsonResponse or similar. 
+                # We need to check its structure to get the grade.
+                # Assuming it returns a Response object with JSON data
+                if hasattr(grade_response, 'data') and 'grade' in grade_response.data:
+                     # Convert grade to int if it exists and is not None
+                    grade_value = grade_response.data['grade']
+                    if grade_value is not None:
+                        job_posting.grade = int(grade_value)
+                        job_posting.save()
+                elif hasattr(grade_response, 'content'):
+                    # Fallback for HttpResponse or JsonResponse without .data attribute
+                    try:
+                        grade_data = json.loads(grade_response.content)
+                        if 'grade' in grade_data and grade_data['grade'] is not None:
+                             job_posting.grade = int(grade_data['grade'])
+                             job_posting.save()
+                    except json.JSONDecodeError:
+                        print("Could not decode JSON from grade_job_lv response.")
+                else:
+                    print("Unexpected response format from grade_job_lv.")
 
-    # Apply filters
-    if job_types:
-        job_postings = job_postings.filter(job_type__in=job_types) 
 
-    if min_salary:
-        try:
-            min_salary = int(min_salary)
-            job_postings = job_postings.filter(salary__gte=min_salary)
-        except ValueError:
-            pass # Ignore invalid salary values
+            except Exception as e:
+                # Log the error but don't prevent job creation
+                print(f"Error calculating job grade: {e}")
 
-    if max_salary:
-        try:
-            max_salary = int(max_salary)
-            job_postings = job_postings.filter(salary__lte=max_salary)
-        except ValueError:
-            pass # Ignore invalid salary values
-
-    if companies:
-        job_postings = job_postings.filter(company_name__in=companies)
-
-    # Sort results
-    # Map 'date_posted' to 'created_at' since that's the field we have in our model
-    if 'date_posted' in sort_by:
-        sort_by = sort_by.replace('date_posted', 'created_at')
-        
-    # Handle potential sorting by salary (assuming salary is a numeric field now or can be cast)
-    # Check if the requested sort_by field exists in the model to prevent errors
-    allowed_sort_fields = ['created_at', '-created_at', 'salary', '-salary', 'title', '-title', 'company_name', '-company_name'] # Add other sortable fields
-    if sort_by in allowed_sort_fields:
-         job_postings = job_postings.order_by(sort_by)
-    else:
-         # Default sort if provided sort_by is invalid
-         job_postings = job_postings.order_by('-created_at')
-
-    serializer = JobPostingSerializer(job_postings, many=True, context={'request': request})
-    return JsonResponse(serializer.data, safe=False)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            print("Serializer Errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def signin_view(request):
     signin_form = SignInForm()

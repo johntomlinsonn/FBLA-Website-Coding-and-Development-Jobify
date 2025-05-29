@@ -147,7 +147,7 @@ const Landing = () => {
             <Button
               color="inherit"
               sx={{ color: '#222', fontWeight: 600, mr: 2 }}
-              onClick={() => { user ? navigate('/postjob') : navigate('/login'); }}
+              onClick={() => { user ? navigate('/jobs/create') : navigate('/login'); }}
             >
               Post a Job
             </Button>
