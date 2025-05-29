@@ -32,7 +32,7 @@ Api = os.getenv("API_KEY")
 
 # Initialize Cerebras client
 client = Cerebras(
-    api_key=Api,
+  api_key=Api,
 )
 
 # Initialize with a default response in case of API failure
@@ -531,18 +531,18 @@ def api_apply_job(request, job_id):
             references,
             education
         )
-
+        
         # Prepare email
         mail = EmailMultiAlternatives(subject, text_content, to=[job_posting.company_email])
         mail.attach_alternative(html_content, "text/html")
-
+        
         # Attach resume if present
         if resume:
             attach_resume_to_email(mail, resume)
-
+        
         # Send email
         mail.send()
-
+        
         # Calculate grade if resume is present
         grade = None
         if resume:
@@ -585,7 +585,7 @@ def api_update_profile(request):
         profile = UserProfile.objects.get(user=request.user)
     except UserProfile.DoesNotExist:
         return Response({'error': 'User profile not found'}, status=404)
-
+    
     serializer = UserProfileSerializer(profile, data=request.data, partial=True, context={'request': request})
     if serializer.is_valid():
         serializer.save()
@@ -625,11 +625,11 @@ def api_login(request):
             'refresh': str(refresh),
             'user': {
                 'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'is_staff': user.is_staff,
+            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'is_staff': user.is_staff,
             }
         })
     return Response({'error': 'Invalid credentials'}, status=400)
@@ -674,7 +674,7 @@ def api_add_reference(request):
         user_profile = UserProfile.objects.get(user=request.user)
     except UserProfile.DoesNotExist:
         return Response({'error': 'User profile not found'}, status=404)
-
+    
     serializer = ReferenceSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save(user_profile=user_profile)
@@ -712,7 +712,7 @@ def api_add_education(request):
         user_profile = UserProfile.objects.get(user=request.user)
     except UserProfile.DoesNotExist:
         return Response({'error': 'User profile not found'}, status=404)
-
+    
     serializer = EducationSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save(user_profile=user_profile)

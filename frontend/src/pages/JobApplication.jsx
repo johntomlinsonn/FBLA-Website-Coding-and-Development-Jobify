@@ -568,29 +568,52 @@ const JobApplication = () => {
               margin: '0 auto'
             }}>
               <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>Custom Questions</Typography>
-              {jobDetails.custom_questions?.split('\n').map((question, index) => (
-                <Box key={index} sx={{ width: '100%', mb: 4 }}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ mb: 2 }}>
-                    {question}
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    value={formData.customAnswers[question] || ''}
-                    onChange={(e) => handleInputChange('customAnswers', null, question, e.target.value)}
-                    multiline
-                    minRows={3}
-                    maxRows={20}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '& textarea': {
-                          resize: 'vertical',
-                          minHeight: '100px'
+              {(() => {
+                // Parse the questions into an array of full questions
+                const parseQuestions = (input) => {
+                  if (!input) return [];
+                  
+                  if (Array.isArray(input)) {
+                    // If it's already an array, join the characters and clean it
+                    const fullQuestion = input.join('').replace(/^\[|\]$/g, '').replace(/^'|'$/g, '');
+                    return [fullQuestion];
+                  }
+                  
+                  if (typeof input === 'string') {
+                    // If it's a string, clean it
+                    const cleanStr = input.replace(/^\[|\]$/g, '').replace(/^'|'$/g, '');
+                    return [cleanStr];
+                  }
+                  
+                  return [];
+                };
+
+                const questions = parseQuestions(jobDetails.custom_questions);
+                
+                return questions.map((question, index) => (
+                  <Box key={index} sx={{ width: '100%', mb: 4 }}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ mb: 2 }}>
+                      {question}
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      value={formData.customAnswers[question] || ''}
+                      onChange={(e) => handleInputChange('customAnswers', null, question, e.target.value)}
+                      multiline
+                      minRows={3}
+                      maxRows={20}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& textarea': {
+                            resize: 'vertical',
+                            minHeight: '100px'
+                          }
                         }
-                      }
-                    }}
-                  />
-                </Box>
-              ))}
+                      }}
+                    />
+                  </Box>
+                ));
+              })()}
             </Box>
           </motion.div>
         );

@@ -11,6 +11,7 @@ import {
   Link as MuiLink,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -32,7 +33,12 @@ const socialLinks = [
 
 const MainLayout = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -81,6 +87,7 @@ const MainLayout = () => {
               </svg>
             </motion.div>
           </Box>
+          
           <Box>
             <Button
               color="inherit"
@@ -99,15 +106,62 @@ const MainLayout = () => {
                 >
                   Account
                 </Button>
-                <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/jobs')}>Browse Jobs</Button>
+                <Button 
+                  color="inherit" 
+                  sx={{ color: '#222', fontWeight: 600, mr: 2 }} 
+                  onClick={() => navigate('/jobs')}
+                >
+                  Browse Jobs
+                </Button>
                 {user?.is_staff && (
-                  <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/admin')}>Admin Panel</Button>
+                  <Button 
+                    color="inherit" 
+                    sx={{ color: '#222', fontWeight: 600, mr: 2 }} 
+                    onClick={() => navigate('/admin')}
+                  >
+                    Admin Panel
+                  </Button>
                 )}
+                <Button
+                  color="inherit"
+                  sx={{ 
+                    color: '#222', 
+                    fontWeight: 600,
+                    '&:hover': {
+                      color: '#FF6B00',
+                      backgroundColor: 'rgba(255, 107, 0, 0.08)'
+                    }
+                  }}
+                  onClick={handleLogout}
+                  startIcon={<LogoutIcon />}
+                >
+                  Logout
+                </Button>
               </>
             ) : (
               <>
-                <Button color="inherit" sx={{ color: '#222', fontWeight: 600, mr: 2 }} onClick={() => navigate('/login')}>Login</Button>
-                <Button variant="contained" sx={{ background: '#FF6B00', color: '#fff', fontWeight: 600, boxShadow: 2 }} onClick={() => navigate('/signup')}>Get Started</Button>
+                <Button 
+                  color="inherit" 
+                  sx={{ color: '#222', fontWeight: 600, mr: 2 }} 
+                  onClick={() => navigate('/login')}
+                >
+                  Login
+                </Button>
+                <Button 
+                  variant="contained" 
+                  sx={{ 
+                    background: '#FF6B00', 
+                    color: '#fff', 
+                    fontWeight: 600, 
+                    boxShadow: 2,
+                    '&:hover': {
+                      backgroundColor: '#E65C00'
+                    }
+                  }} 
+                  onClick={() => navigate('/signup')}
+                >
+                  Get Started
+                </Button>
               </>
             )}
           </Box>
@@ -119,7 +173,7 @@ const MainLayout = () => {
       </Container>
 
       {/* Footer */}
-      <Box 
+      <Box
         sx={{ 
           width: '100%', 
           background: '#fff', 
@@ -174,7 +228,7 @@ const MainLayout = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  sx={{ 
+                  sx={{
                     color: '#222', 
                     transition: 'color 0.2s', 
                     '&:hover': { 

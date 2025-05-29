@@ -15,6 +15,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { register } from '../store/slices/authSlice';
+import MainLayout from '../layouts/MainLayout';
 
 const validationSchema = Yup.object({
   username: Yup.string()
@@ -55,96 +56,98 @@ const Register = () => {
   });
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Register
-        </Typography>
+    <MainLayout>
+      <Container maxWidth="sm" sx={{ py: 4 }}>
+        <Paper sx={{ p: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            Register
+          </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-        <form onSubmit={formik.handleSubmit}>
-          <Box sx={{ mb: 3 }}>
-            <TextField
+          <form onSubmit={formik.handleSubmit}>
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                id="username"
+                name="username"
+                label="Username"
+                value={formik.values.username}
+                onChange={formik.handleChange}
+                error={formik.touched.username && Boolean(formik.errors.username)}
+                helperText={formik.touched.username && formik.errors.username}
+              />
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                id="email"
+                name="email"
+                label="Email"
+                type="email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                error={formik.touched.email && Boolean(formik.errors.email)}
+                helperText={formik.touched.email && formik.errors.email}
+              />
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                id="password"
+                name="password"
+                label="Password"
+                type="password"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                error={formik.touched.password && Boolean(formik.errors.password)}
+                helperText={formik.touched.password && formik.errors.password}
+              />
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                fullWidth
+                id="password2"
+                name="password2"
+                label="Confirm Password"
+                type="password"
+                value={formik.values.password2}
+                onChange={formik.handleChange}
+                error={formik.touched.password2 && Boolean(formik.errors.password2)}
+                helperText={formik.touched.password2 && formik.errors.password2}
+              />
+            </Box>
+
+            <Button
               fullWidth
-              id="username"
-              name="username"
-              label="Username"
-              value={formik.values.username}
-              onChange={formik.handleChange}
-              error={formik.touched.username && Boolean(formik.errors.username)}
-              helperText={formik.touched.username && formik.errors.username}
-            />
-          </Box>
+              variant="contained"
+              color="primary"
+              type="submit"
+              disabled={loading}
+              sx={{ mb: 2 }}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Register'}
+            </Button>
 
-          <Box sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              id="email"
-              name="email"
-              label="Email"
-              type="email"
-              value={formik.values.email}
-              onChange={formik.handleChange}
-              error={formik.touched.email && Boolean(formik.errors.email)}
-              helperText={formik.touched.email && formik.errors.email}
-            />
-          </Box>
-
-          <Box sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              id="password"
-              name="password"
-              label="Password"
-              type="password"
-              value={formik.values.password}
-              onChange={formik.handleChange}
-              error={formik.touched.password && Boolean(formik.errors.password)}
-              helperText={formik.touched.password && formik.errors.password}
-            />
-          </Box>
-
-          <Box sx={{ mb: 3 }}>
-            <TextField
-              fullWidth
-              id="password2"
-              name="password2"
-              label="Confirm Password"
-              type="password"
-              value={formik.values.password2}
-              onChange={formik.handleChange}
-              error={formik.touched.password2 && Boolean(formik.errors.password2)}
-              helperText={formik.touched.password2 && formik.errors.password2}
-            />
-          </Box>
-
-          <Button
-            fullWidth
-            variant="contained"
-            color="primary"
-            type="submit"
-            disabled={loading}
-            sx={{ mb: 2 }}
-          >
-            {loading ? <CircularProgress size={24} /> : 'Register'}
-          </Button>
-
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="body2">
-              Already have an account?{' '}
-              <Link component={RouterLink} to="/login">
-                Login here
-              </Link>
-            </Typography>
-          </Box>
-        </form>
-      </Paper>
-    </Container>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2">
+                Already have an account?{' '}
+                <Link component={RouterLink} to="/login">
+                  Login here
+                </Link>
+              </Typography>
+            </Box>
+          </form>
+        </Paper>
+      </Container>
+    </MainLayout>
   );
 };
 
