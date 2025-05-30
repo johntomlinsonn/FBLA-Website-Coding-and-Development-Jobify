@@ -32,6 +32,8 @@ const AdminPanel = () => {
         status: currentStatusFilter,
         search: currentSearchTerm,
       });
+      console.log('Raw job data from backend:', response); // Log raw response
+      console.log('Job grades:', response.map(job => ({ id: job.id, grade: job.grade }))); // Log just the grades
       setJobs(response);
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -92,6 +94,25 @@ const AdminPanel = () => {
   const rowVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
+  };
+
+  // Add a function to get grade color
+  const getGradeColor = (grade) => {
+    if (!grade) return '#757575'; // Gray for N/A
+    const numGrade = Number(grade);
+    if (numGrade >= 90) return '#4CAF50';      // Green
+    if (numGrade >= 80) return '#8BC34A';      // Light Green
+    if (numGrade >= 70) return '#FFEB3B';      // Yellow
+    if (numGrade >= 60) return '#FF9800';      // Orange
+    if (numGrade >= 50) return '#FF5722';      // Deep Orange
+    return '#F44336';                          // Red
+  };
+
+  // Add a function to format the grade
+  const formatGrade = (grade) => {
+    console.log('Formatting grade:', grade, 'Type:', typeof grade);
+    if (!grade) return 'N/A';
+    return String(grade);
   };
 
   return (
@@ -163,7 +184,11 @@ const AdminPanel = () => {
                       }}>
                         {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
                       </TableCell>
-                      <TableCell padding="normal">{job.grade}</TableCell>
+                      <TableCell padding="normal" sx={{ fontWeight: 500 }}>
+                        <Typography sx={{ color: getGradeColor(job.grade) }}>
+                          {formatGrade(job.grade)}
+                        </Typography>
+                      </TableCell>
                     </motion.tr>
                     <TableRow>
                       <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
@@ -173,7 +198,10 @@ const AdminPanel = () => {
                               Details
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                              Salary: {job.salary || 'N/A'}
+                              Salary: ${job.salary?.toLocaleString() || 'N/A'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                              Grade: <span style={{ color: getGradeColor(job.grade) }}>{formatGrade(job.grade)}</span>
                             </Typography>
                             <Typography variant="body2">
                               **Description:** {job.description || 'No description provided'}

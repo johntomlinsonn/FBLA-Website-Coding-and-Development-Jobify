@@ -95,7 +95,7 @@ export const jobsAPI = {
     try {
       // Use the imported api instance which already handles URL construction and params
       const response = await api.get('/jobs/', { params: filters });
-      return response.data;
+    return response.data;
     } catch (error) {
       console.error('Error fetching jobs:', error);
       throw error;
@@ -104,8 +104,8 @@ export const jobsAPI = {
 
   getById: async (id) => {
     try {
-      const response = await api.get(`/jobs/${id}/`);
-      return response.data;
+    const response = await api.get(`/jobs/${id}/`);
+    return response.data;
     } catch (error) {
       console.error(`Error fetching job with id ${id}:`, error);
       throw error;
@@ -114,8 +114,8 @@ export const jobsAPI = {
 
   create: async (jobData) => {
     try {
-      const response = await api.post('/jobs/', jobData);
-      return response.data;
+    const response = await api.post('/jobs/', jobData);
+    return response.data;
     } catch (error) {
       console.error('Error creating job:', error);
       throw error;
@@ -124,8 +124,8 @@ export const jobsAPI = {
 
   update: async (id, jobData) => {
     try {
-      const response = await api.put(`/jobs/${id}/`, jobData);
-      return response.data;
+    const response = await api.put(`/jobs/${id}/`, jobData);
+    return response.data;
     } catch (error) {
       console.error(`Error updating job with id ${id}:`, error);
       throw error;

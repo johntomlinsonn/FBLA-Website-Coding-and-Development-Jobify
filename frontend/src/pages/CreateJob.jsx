@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -49,6 +49,10 @@ const CreateJob = () => {
   const [loading, setLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [jobGrade, setJobGrade] = useState(0);
+  const [descriptionStable, setDescriptionStable] = useState(false);
+  const [locationStable, setLocationStable] = useState(false);
+  const descriptionTimerRef = useRef(null);
+  const locationTimerRef = useRef(null);
 
   const jobTypes = [
     'Part-time',
@@ -73,33 +77,30 @@ const CreateJob = () => {
       job_type: '',
       requirements: [],
       custom_questions: [''],
+      grade: 0,
     },
     validationSchema,
     onSubmit: async (values) => {
       setLoading(true);
       try {
-        await jobsAPI.create(values);
+        // Create job data with the current jobGrade
+        const jobData = {
+          ...values,
+          grade: jobGrade,
+          requirements: values.requirements.filter(req => req.trim() !== ''),
+          custom_questions: values.custom_questions.filter(q => q.trim() !== ''),
+        };
+        console.log('Submitting job with data:', jobData);
+        await jobsAPI.create(jobData);
         navigate('/');
       } catch (err) {
+        console.error('Error creating job:', err);
         setError(err.response?.data?.message || 'Failed to create job posting');
       } finally {
         setLoading(false);
       }
     },
   });
-
-  // Debounce function for grade calculation
-  const debounce = (func, wait) => {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  };
 
   // Function to calculate job grade
   const calculateJobGrade = async (description, location) => {
@@ -117,13 +118,54 @@ const CreateJob = () => {
     }
   };
 
-  // Debounced version of calculateJobGrade
-  const debouncedCalculateGrade = debounce(calculateJobGrade, 2000);
+  // Handle description changes
+  const handleDescriptionChange = (e) => {
+    formik.handleChange(e);
+    setDescriptionStable(false);
+    
+    if (descriptionTimerRef.current) {
+      clearTimeout(descriptionTimerRef.current);
+    }
+    
+    descriptionTimerRef.current = setTimeout(() => {
+      setDescriptionStable(true);
+    }, 3000);
+  };
 
-  // Effect to update grade when description or location changes
+  // Handle location changes
+  const handleLocationChange = (e) => {
+    formik.handleChange(e);
+    setLocationStable(false);
+    
+    if (locationTimerRef.current) {
+      clearTimeout(locationTimerRef.current);
+    }
+    
+    locationTimerRef.current = setTimeout(() => {
+      setLocationStable(true);
+    }, 3000);
+  };
+
+  // Effect to update grade when both fields are stable
   useEffect(() => {
-    debouncedCalculateGrade(formik.values.description, formik.values.location);
-  }, [formik.values.description, formik.values.location]);
+    if (descriptionStable && locationStable && 
+        formik.values.description.trim() && 
+        formik.values.location.trim()) {
+      calculateJobGrade(formik.values.description, formik.values.location);
+    }
+  }, [descriptionStable, locationStable]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (descriptionTimerRef.current) {
+        clearTimeout(descriptionTimerRef.current);
+      }
+      if (locationTimerRef.current) {
+        clearTimeout(locationTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleNext = () => {
     // Validate current step before proceeding
@@ -270,7 +312,7 @@ const CreateJob = () => {
                 label="Job Description"
               name="description"
               value={formik.values.description}
-              onChange={formik.handleChange}
+              onChange={handleDescriptionChange}
               error={formik.touched.description && Boolean(formik.errors.description)}
               helperText={formik.touched.description && formik.errors.description}
                 multiline
@@ -282,7 +324,7 @@ const CreateJob = () => {
                 label="Location"
                 name="location"
                 value={formik.values.location}
-                onChange={formik.handleChange}
+                onChange={handleLocationChange}
                 error={formik.touched.location && Boolean(formik.errors.location)}
                 helperText={formik.touched.location && formik.errors.location}
                 margin="normal"

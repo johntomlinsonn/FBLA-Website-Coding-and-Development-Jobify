@@ -8,6 +8,19 @@ from .serializers import UserSerializer, JobPostingSerializer, UserProfileSerial
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from ..models import JobPosting, UserProfile, Reference, Education
+import logging
+import sys
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -39,14 +52,44 @@ class JobPostingViewSet(viewsets.ModelViewSet):
     serializer_class = JobPostingSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    def create(self, request, *args, **kwargs):
+        print("Received job creation request with data:", request.data)
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print("Validation errors:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        # Save the job with the provided grade
+        serializer.save(provider=self.request.user)
+
     def get_queryset(self):
         queryset = JobPosting.objects.all()
         if not self.request.user.is_staff:
             queryset = queryset.filter(status='approved')
         return queryset
 
-    def perform_create(self, serializer):
-        serializer.save(provider=self.request.user)
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        logger.info("=== Job List API Response ===")
+        logger.info(f"Number of jobs: {len(serializer.data)}")
+        for job in serializer.data:
+            logger.info(f"Job ID: {job.get('id')}, Grade: {job.get('grade')}")
+            print(f"Job ID: {job.get('id')}, Grade: {job.get('grade')}")
+        logger.info("=== End Job List Response ===")
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        logger.info("=== Single Job API Response ===")
+        logger.info(f"Job ID: {instance.id}")
+        logger.info(f"Raw grade from model: {instance.grade}")
+        logger.info(f"Serialized data: {serializer.data}")
+        logger.info("=== End Single Job Response ===")
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def apply(self, request, pk=None):

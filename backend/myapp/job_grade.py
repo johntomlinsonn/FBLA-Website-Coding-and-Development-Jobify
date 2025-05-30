@@ -70,7 +70,7 @@ def grade_job(job_posting):
         travel_time = get_travel_time(job_posting.location, "3900 E Raab Rd, Normal, IL 61761")
         travel_grade = 0
         if travel_time > 15:
-            travel_grade += 25 - (2*(25 - travel_time))
+            travel_grade = 25 - (travel_time - 15)
             if travel_grade < 0:
                 travel_grade = 0
         else:
@@ -119,7 +119,7 @@ def grade_job_lv(request):
         travel_time = get_travel_time(location, "3900 E Raab Rd, Normal, IL 61761")
         travel_grade = 0
         if travel_time > 15:
-            travel_grade += 25 - (2*(25 - travel_time))
+            travel_grade = 25 - (travel_time - 15)
             if travel_grade < 0:
                 travel_grade = 0
         else:

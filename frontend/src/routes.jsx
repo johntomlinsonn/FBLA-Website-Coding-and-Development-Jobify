@@ -15,8 +15,8 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/jobs" element={<JobsList />} />
-      <Route path="/jobs/:id" element={<JobDetails />} />
+        <Route path="/jobs" element={<JobsList />} />
+        <Route path="/jobs/:id" element={<JobDetails />} />
       <Route
         path="/jobs/:id/apply"
         element={
@@ -25,30 +25,30 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/jobs/create"
-        element={
-          <ProtectedRoute>
-            <CreateJob />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/jobs/:id/edit"
-        element={
-          <ProtectedRoute>
-            <EditJob />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/account"
-        element={
-          <ProtectedRoute>
-            <Account />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/jobs/create"
+          element={
+            <ProtectedRoute>
+              <CreateJob />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/jobs/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EditJob />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <Account />
+            </ProtectedRoute>
+          }
+        />
     </Routes>
   );
 };

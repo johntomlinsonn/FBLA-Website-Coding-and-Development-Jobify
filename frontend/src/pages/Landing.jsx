@@ -113,7 +113,7 @@ const Landing = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    navigate(`/jobs?search=${encodeURIComponent(search.trim())}`);
+      navigate(`/jobs?search=${encodeURIComponent(search.trim())}`);
   };
 
   return (
@@ -141,22 +141,22 @@ const Landing = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <motion.div
-            variants={heroSvgVariants}
-            animate="animate"
-            style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}
-          >
-            <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="orangeGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#FF6B00" />
-                  <stop offset="1" stopColor="#FFD6B0" />
-                </linearGradient>
-              </defs>
-              <circle cx="60" cy="60" r="50" fill="url(#orangeGrad)" />
+        <motion.div
+          variants={heroSvgVariants}
+          animate="animate"
+          style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}
+        >
+          <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="orangeGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#FF6B00" />
+                <stop offset="1" stopColor="#FFD6B0" />
+              </linearGradient>
+            </defs>
+            <circle cx="60" cy="60" r="50" fill="url(#orangeGrad)" />
               <rect x="35" y="35" width="50" height="50" rx="12" fill="rgba(255,255,255,0.7)" stroke="rgba(255,255,255,0.5)" strokeWidth="2"/>
               <rect x="50" y="50" width="20" height="20" rx="5" fill="white" />
-            </svg>
+          </svg>
           </motion.div>
 
           <Typography
@@ -209,8 +209,8 @@ const Landing = () => {
               bgcolor: 'background.paper',
               height: 56,
             }}
-          >
-            <InputBase
+        >
+          <InputBase
               sx={{
                 ml: 3,
                 flex: 1,
@@ -218,10 +218,10 @@ const Landing = () => {
                 color: '#222',
               }}
               placeholder="Search job titles, companies, or keywords"
-              inputProps={{ 'aria-label': 'search jobs' }}
-              value={search}
+            inputProps={{ 'aria-label': 'search jobs' }}
+            value={search}
               onChange={(e) => setSearch(e.target.value)}
-            />
+          />
             <IconButton 
               type="submit" 
               sx={{
@@ -234,8 +234,8 @@ const Landing = () => {
               }}
               aria-label="search"
             >
-              <SearchIcon />
-            </IconButton>
+            <SearchIcon />
+          </IconButton>
           </Box>
         </motion.div>
 
@@ -261,18 +261,18 @@ const Landing = () => {
                 '&:hover': { bgcolor: '#E65C00' } 
               }} 
               onClick={() => navigate('/signup')}>
-              Get Started
-            </Button>
+            Get Started
+          </Button>
           </motion.div>
          )}
 
         <Container maxWidth="lg" sx={{ mt: { xs: 8, md: 12 } }}>
-          <motion.div
+              <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
+                viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.8 }}
-          >
+              >
             <Typography variant="h3" sx={{ textAlign: 'center', fontWeight: 700, mb: 6, color: '#222' }}>
               Why Jobify?
             </Typography>
@@ -283,8 +283,8 @@ const Landing = () => {
                 <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} custom={index}>
                   <Card
                     sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
+                  display: 'flex',
+                  flexDirection: 'column',
                       height: '100%',
                       bgcolor: '#fff',
                       color: '#222',
@@ -302,7 +302,7 @@ const Landing = () => {
                        <Box sx={{
                          display: 'flex',
                          justifyContent: 'center',
-                         alignItems: 'center',
+                  alignItems: 'center',
                          mb: 4,
                          width: 64,
                          height: 64,
@@ -310,22 +310,22 @@ const Landing = () => {
                          bgcolor: '#FF6B00',
                          mx: 'auto',
                          boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                       }}>
+                }}>
                          {React.cloneElement(feature.icon, { width: 40, height: 40, style: { color: '#fff' } })}
                        </Box>
                       <Typography variant="h6" component="div" sx={{ fontWeight: 700, mb: 1.5, color: '#222' }}>
-                        {feature.title}
-                      </Typography>
+                      {feature.title}
+                    </Typography>
                       <Typography variant="body1" color="text.secondary" sx={{ color: '#555', lineHeight: 1.7 }}>
-                        {feature.description}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
+                      {feature.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
 
         <Container maxWidth="lg" sx={{ mt: { xs: 8, md: 12 }, pb: { xs: 8, md: 12 } }}>
           <motion.div
@@ -336,20 +336,20 @@ const Landing = () => {
           >
             <Typography variant="h3" sx={{ textAlign: 'center', fontWeight: 700, mb: 6, color: '#222' }}>
               What Users Say
-            </Typography>
+        </Typography>
           </motion.div>
           <Grid container spacing={4} justifyContent="center">
             {testimonials.map((testimonial, index) => (
               <Grid item xs={12} sm={6} md={4} key={testimonial.name}>
-                <motion.div 
+              <motion.div
                   variants={combinedTestimonialVariants(index)}
-                  initial="hidden"
-                  whileInView="visible"
+                initial="hidden"
+                whileInView="visible"
                   viewport={{ once: true, amount: 0.3 }}
-                  whileHover="hover"
-                >
-                  <Card sx={{ 
-                    display: 'flex', 
+                whileHover="hover"
+              >
+                <Card sx={{
+                  display: 'flex',
                     flexDirection: 'column', 
                     height: '100%', 
                     bgcolor: '#fff',
@@ -358,35 +358,35 @@ const Landing = () => {
                     boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
                     border: '1px solid #eee',
                     transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-                    '&:hover': {
+                  '&:hover': {
                       transform: 'translateY(-8px)',
                       boxShadow: '0 15px 40px rgba(0,0,0,0.2)',
                     }
-                  }}>
+                }}>
                     <CardContent sx={{ flexGrow: 1, p: { xs: 3, md: 5 } }}>
                        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
                          <FormatQuoteIcon sx={{ fontSize: 64, color: '#FF6B00' }} />
                        </Box>
                       <Typography variant="body1" fontStyle="italic" mb={2.5} sx={{ color: '#444', lineHeight: 1.6 }}>
-                        "{testimonial.quote}"
-                      </Typography>
+                      "{testimonial.quote}"
+                    </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto' }}>
                         <Avatar src={testimonial.image} alt={testimonial.name} sx={{ mr: 2, border: '2px solid #FF6B00' }}/>
                         <Box textAlign="left">
                           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#222' }}>
-                            {testimonial.name}
-                          </Typography>
+                      {testimonial.name}
+                    </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ color: '#555' }}>
-                            {testimonial.title}
-                          </Typography>
-                        </Box>
+                      {testimonial.title}
+                    </Typography>
+                  </Box>
                       </Box>
                     </CardContent>
-                  </Card>
-                </motion.div>
-              </Grid>
-            ))}
-          </Grid>
+                </Card>
+              </motion.div>
+            </Grid>
+          ))}
+        </Grid>
         </Container>
       </Box>
     </Box>

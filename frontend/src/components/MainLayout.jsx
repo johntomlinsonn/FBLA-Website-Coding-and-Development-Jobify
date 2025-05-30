@@ -36,6 +36,18 @@ const MainLayout = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
+  // Add useEffect for chatbot script
+  React.useEffect(() => {
+    const script = document.createElement('script');
+    script.innerHTML = `(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="RSn_LN0OepwcHkSSAHd3N";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();`;
+    document.head.appendChild(script);
+
+    // Cleanup function
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -49,6 +61,22 @@ const MainLayout = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Chatbot container with highest z-index */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          pointerEvents: 'none',
+          zIndex: 9999,
+          '& > *': {
+            pointerEvents: 'auto'
+          }
+        }}
+      />
+      
       <AppBar position="static" color="default" elevation={0} sx={{ 
         background: 'rgba(255,255,255,0.95)', 
         boxShadow: '0 2px 8px 0 rgba(0,0,0,0.03)', 

@@ -113,7 +113,6 @@ def account(request):
 def postjob(request):
     #Checking if the request is a post request
     if request.method == 'POST':
-
         form = JobPostingForm(request.POST)
         #Checking if the form is valid
         if form.is_valid():
@@ -124,17 +123,7 @@ def postjob(request):
             job_posting.requirements = ','.join(form.cleaned_data['requirements'])  
             custom_questions = request.POST.getlist('custom_questions')
             job_posting.custom_questions = '\n'.join(custom_questions)
-
-            #getting the job description
-            description =request.POST.get('description')
-
-            #grading the job based on if its attainable to high school students and how close it is to highschoolers
-            job_posting.grade = grade_job(job_posting)
             job_posting.save()
-
-            
-                
-
             return redirect('index')
     else:
         #If the request is not a post request then it will render the form as empty
@@ -243,6 +232,7 @@ def api_job_list(request):
         queryset = queryset.order_by('-created_at')
 
         serializer = JobPostingSerializer(queryset, many=True, context={'request': request})
+        
         return Response(serializer.data)
 
     elif request.method == 'POST':
@@ -250,43 +240,8 @@ def api_job_list(request):
         if serializer.is_valid():
             # Save the serializer. The create method will handle user and status from context
             job_posting = serializer.save()
-
-            # Calculate and save the job grade after initial creation
-            try:
-                # Call grade_job_lv with the request object
-                # grade_response = grade_job(description, location)
-                grade_response = grade_job_lv(request)
-                
-                # grade_job_lv is expected to return a JsonResponse or similar. 
-                # We need to check its structure to get the grade.
-                # Assuming it returns a Response object with JSON data
-                if hasattr(grade_response, 'data') and 'grade' in grade_response.data:
-                     # Convert grade to int if it exists and is not None
-                    grade_value = grade_response.data['grade']
-                    if grade_value is not None:
-                        job_posting.grade = int(grade_value)
-                        job_posting.save()
-                elif hasattr(grade_response, 'content'):
-                    # Fallback for HttpResponse or JsonResponse without .data attribute
-                    try:
-                        grade_data = json.loads(grade_response.content)
-                        if 'grade' in grade_data and grade_data['grade'] is not None:
-                             job_posting.grade = int(grade_data['grade'])
-                             job_posting.save()
-                    except json.JSONDecodeError:
-                        print("Could not decode JSON from grade_job_lv response.")
-                else:
-                    print("Unexpected response format from grade_job_lv.")
-
-
-            except Exception as e:
-                # Log the error but don't prevent job creation
-                print(f"Error calculating job grade: {e}")
-
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            print("Serializer Errors:", serializer.errors)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def signin_view(request):
     signin_form = SignInForm()
@@ -589,7 +544,7 @@ def api_apply_job(request, job_id):
         text_content, html_content = create_email_content(
             job_posting, name, email, resume,
             job_posting.custom_questions.split('\n') if job_posting.custom_questions else [],
-        custom_answers,
+            custom_answers,
             references,
             education
         )
@@ -598,7 +553,7 @@ def api_apply_job(request, job_id):
         mail = EmailMultiAlternatives(subject, text_content, to=[job_posting.company_email])
         mail.attach_alternative(html_content, "text/html")
     
-    # Attach resume if present
+        # Attach resume if present
         if resume:
             attach_resume_to_email(mail, resume)
     

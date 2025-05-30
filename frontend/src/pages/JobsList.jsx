@@ -317,24 +317,24 @@ const JobsList = () => {
 
           {/* Jobs List */}
           <Grid item xs={12} md={9}>
-            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h4" component="h1">
-                Available Jobs
-              </Typography>
-              <Button
-                variant="contained"
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" component="h1">
+          Available Jobs
+        </Typography>
+        <Button
+          variant="contained"
                 sx={{ background: '#FF6B00', '&:hover': { background: '#e65c00' } }}
-                onClick={() => navigate('/jobs/create')}
-              >
-                Post a Job
-              </Button>
-            </Box>
+          onClick={() => navigate('/jobs/create')}
+        >
+          Post a Job
+        </Button>
+      </Box>
 
-            {error && (
-              <Alert severity="error" sx={{ mb: 4 }}>
-                {error}
-              </Alert>
-            )}
+      {error && (
+        <Alert severity="error" sx={{ mb: 4 }}>
+          {error}
+        </Alert>
+      )}
 
             {/* Show loading indicator while fetching jobs (after initial load) */}
             {loading && jobs.length > 0 ? (
@@ -346,7 +346,7 @@ const JobsList = () => {
                 <Alert severity="info">No jobs found matching your criteria.</Alert>
               ) : (
                 <AnimatePresence>
-                  <Grid container spacing={3}>
+        <Grid container spacing={3}>
                     {jobs.map((job) => (
                       <motion.div
                         key={job.id}
@@ -357,64 +357,64 @@ const JobsList = () => {
                         item xs={12} sm={6} md={4}
                         sx={{ display: 'flex' }}
                       >
-                        <Card
-                          sx={{
-                            height: '100%',
-                            display: 'flex',
-                            flexDirection: 'column',
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
                             border: '1px solid #eee',
                             borderRadius: 2,
                             boxShadow: 1,
                             backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                            '&:hover': {
-                              boxShadow: 6,
-                              cursor: 'pointer',
+                  '&:hover': {
+                    boxShadow: 6,
+                    cursor: 'pointer',
                               transform: 'translateY(-4px)',
                               transition: 'transform 0.2s ease-in-out',
-                            },
-                          }}
+                  },
+                }}
                           onClick={() => handleApply(job.id)}
-                        >
-                          <CardContent>
+              >
+                <CardContent>
                             <Typography variant="h6" component="h2" gutterBottom sx={{ color: '#222' }}>
-                              {job.title}
-                            </Typography>
+                    {job.title}
+                  </Typography>
                             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                              {job.company_name}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 3,
-                                WebkitBoxOrient: 'vertical',
+                    {job.company_name}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
                                 mb: 2,
-                              }}
-                            >
-                              {job.description}
-                            </Typography>
+                    }}
+                  >
+                    {job.description}
+                  </Typography>
                             <Box sx={{ mt: 'auto' }}>
                               <Typography variant="body2" sx={{ color: '#FF6B00', fontWeight: 600 }}>
                                 Salary: ${job.salary.toLocaleString()}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                Grade: {job.grade}
-                              </Typography>
-                            </Box>
-                          </CardContent>
-                        </Card>
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Grade: {job.grade}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
                       </motion.div>
                     ))}
                   </Grid>
                 </AnimatePresence>
               )
             )}
-          </Grid>
+            </Grid>
         </Grid>
-      </Container>
+    </Container>
     </Box>
   );
 };
