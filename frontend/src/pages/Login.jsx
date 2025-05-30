@@ -229,10 +229,10 @@ const Login = () => {
       <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
         <Paper
           elevation={3}
-          sx={{
-            padding: theme.spacing(isLogin ? 4 : 3, 4),
-            width: '100%',
-            maxWidth: 420,
+        sx={{
+          padding: theme.spacing(isLogin ? 4 : 3, 4),
+          width: '100%',
+          maxWidth: 420,
             borderRadius: '12px',
             backgroundColor: 'rgba(255, 255, 255, 0.9)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
@@ -240,169 +240,169 @@ const Login = () => {
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)',
             color: theme.palette.text.primary,
-            textAlign: 'center',
+          textAlign: 'center',
             mx: 'auto'
-          }}
-        >
+        }}
+      >
           <AnimatedLogo />
           <Typography variant="h4" component="h2" sx={{ fontWeight: 600, mb: 3, color: theme.palette.text.primary }}>
-            {isLogin ? 'Login' : 'Create Account'}
-          </Typography>
+          {isLogin ? 'Login' : 'Create Account'}
+        </Typography>
 
-          <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-            {!isLogin && (
-              <StyledTextField
-                name="name"
-                label="Name"
-                type="text"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonOutline sx={{ color: theme.palette.text.secondary }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
-
+        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+          {!isLogin && (
             <StyledTextField
+              name="name"
+              label="Name"
+              type="text"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                      <PersonOutline sx={{ color: theme.palette.text.secondary }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          )}
+
+          <StyledTextField
               name="username"
               label="Username"
               type="text"
               value={formData.username}
-              onChange={handleChange}
-              required
-              InputLabelProps={{ shrink: true }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
+            onChange={handleChange}
+            required
+            InputLabelProps={{ shrink: true }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
                     <PersonOutline sx={{ color: theme.palette.text.secondary }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
+                </InputAdornment>
+              ),
+            }}
+          />
 
+          <StyledTextField
+            name="password"
+            label="Password"
+            type={showPassword ? 'text' : 'password'}
+            value={formData.password}
+            onChange={handleChange}
+            required
+            InputLabelProps={{ shrink: true }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                    <Lock sx={{ color: theme.palette.text.secondary }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                      sx={{ color: theme.palette.text.secondary }}
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {!isLogin && (
             <StyledTextField
-              name="password"
-              label="Password"
+              name="confirmPassword"
+              label="Confirm Password"
               type={showPassword ? 'text' : 'password'}
-              value={formData.password}
+              value={formData.confirmPassword}
               onChange={handleChange}
               required
               InputLabelProps={{ shrink: true }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock sx={{ color: theme.palette.text.secondary }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                      sx={{ color: theme.palette.text.secondary }}
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
+                      <Lock sx={{ color: theme.palette.text.secondary }} />
                   </InputAdornment>
                 ),
               }}
             />
+          )}
 
-            {!isLogin && (
-              <StyledTextField
-                name="confirmPassword"
-                label="Confirm Password"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Lock sx={{ color: theme.palette.text.secondary }} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            )}
-
-            {isLogin && (
-              <Box sx={{ textAlign: 'right', mb: 2 }}>
-                <MuiLink
-                  component="button"
-                  type="button"
-                  variant="body2"
-                  onClick={() => alert('Forgot password clicked')}
-                  sx={{
-                    color: theme.palette.primary.main,
-                    textDecoration: 'none',
-                    '&:hover': { textDecoration: 'underline' },
-                  }}
-                >
-                  Forgot Password?
-                </MuiLink>
-              </Box>
-            )}
-
-            {error && (
-              <Typography color="error" sx={{ mt: 0, mb: 2, textAlign: 'center' }}>
-                {error}
-              </Typography>
-            )}
-
-            <StyledButton
-              type="submit"
-              variant="contained"
-            >
-              {isLogin ? 'Sign In' : 'Create Account'}
-            </StyledButton>
-
-            {isLogin && (
-              <Box sx={{ my: 3 }}>
-                <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                  or continue with
-                </Typography>
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                  <SocialIconButton aria-label="login with google">
-                    <Google />
-                  </SocialIconButton>
-                  <SocialIconButton aria-label="login with github">
-                    <GitHub />
-                  </SocialIconButton>
-                  <SocialIconButton aria-label="login with facebook">
-                    <Facebook />
-                  </SocialIconButton>
-                </Box>
-              </Box>
-            )}
-
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mt: 3 }}>
-              {isLogin ? "Don't have an account yet?" : 'Already have an account?'}{' '}
+          {isLogin && (
+            <Box sx={{ textAlign: 'right', mb: 2 }}>
               <MuiLink
                 component="button"
-                variant="body2"
                 type="button"
-                onClick={toggleMode}
+                variant="body2"
+                onClick={() => alert('Forgot password clicked')}
                 sx={{
-                  cursor: 'pointer',
-                  color: theme.palette.primary.main,
-                  fontWeight: 'bold',
+                    color: theme.palette.primary.main,
                   textDecoration: 'none',
                   '&:hover': { textDecoration: 'underline' },
                 }}
               >
-                {isLogin ? 'Register for free' : 'Sign In'}
+                Forgot Password?
               </MuiLink>
+            </Box>
+          )}
+
+          {error && (
+            <Typography color="error" sx={{ mt: 0, mb: 2, textAlign: 'center' }}>
+              {error}
             </Typography>
-          </form>
-        </Paper>
+          )}
+
+          <StyledButton
+            type="submit"
+            variant="contained"
+          >
+            {isLogin ? 'Sign In' : 'Create Account'}
+          </StyledButton>
+
+          {isLogin && (
+            <Box sx={{ my: 3 }}>
+                <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+                or continue with
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <SocialIconButton aria-label="login with google">
+                  <Google />
+                </SocialIconButton>
+                <SocialIconButton aria-label="login with github">
+                  <GitHub />
+                </SocialIconButton>
+                <SocialIconButton aria-label="login with facebook">
+                  <Facebook />
+                </SocialIconButton>
+              </Box>
+            </Box>
+          )}
+
+            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, mt: 3 }}>
+            {isLogin ? "Don't have an account yet?" : 'Already have an account?'}{' '}
+            <MuiLink
+              component="button"
+              variant="body2"
+              type="button"
+              onClick={toggleMode}
+              sx={{
+                cursor: 'pointer',
+                  color: theme.palette.primary.main,
+                fontWeight: 'bold',
+                textDecoration: 'none',
+                '&:hover': { textDecoration: 'underline' },
+              }}
+            >
+              {isLogin ? 'Register for free' : 'Sign In'}
+            </MuiLink>
+          </Typography>
+        </form>
+      </Paper>
       </Container>
     </Box>
   );

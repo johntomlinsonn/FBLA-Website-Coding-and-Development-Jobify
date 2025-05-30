@@ -38,10 +38,10 @@ urlpatterns = [
     path('api/my-applications/', api_user_applications, name='api_user_applications'),
     path('api/profile/references/', views.api_references, name='api_references'),
     path('api/profile/references/add/', views.api_add_reference, name='api_add_reference'),
-    path('api/profile/references/<int:reference_id>/', views.api_delete_reference, name='api_delete_reference'),
+    path('api/profile/references/<int:reference_id>/delete/', views.api_delete_reference, name='api_delete_reference'),
     path('api/profile/education/', views.api_education, name='api_education'),
     path('api/profile/education/add/', views.api_add_education, name='api_add_education'),
-    path('api/profile/education/<int:education_id>/', views.api_delete_education, name='api_delete_education'),
+    path('api/profile/education/<int:education_id>/delete/', views.api_delete_education, name='api_delete_education'),
     path('api/grade_applicant_live/', grade_applicant_live, name='grade_applicant_live'),
     path('api/grade_job_live/', views.grade_job_live, name='api_grade_job_live'),
     
@@ -53,6 +53,12 @@ urlpatterns = [
     path('logout/', views.signout_view, name='frontend_logout'),  # Direct mapping to signout view
     # Include API router URLs (for JWT and DRF ViewSets)
     path('api/', include('myapp.api.urls')),
+
+    # --- ADMIN API ENDPOINTS ---
+    path('api/admin/jobs/', views.api_admin_list_jobs, name='api_admin_list_jobs'),
+    path('api/admin/jobs/<int:job_id>/approve/', views.api_admin_approve_job, name='api_admin_approve_job'),
+    path('api/admin/jobs/<int:job_id>/deny/', views.api_admin_deny_job, name='api_admin_deny_job'),
+    path('api/admin/jobs/<int:job_id>/', views.api_admin_delete_job, name='api_admin_delete_job'),
 ]
 
 if settings.DEBUG:

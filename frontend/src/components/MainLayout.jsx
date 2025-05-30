@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Box,
@@ -34,11 +34,18 @@ const socialLinks = [
 const MainLayout = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  const isLandingPage = location.pathname === '/';
+
+  // Render either Container or Box based on isLandingPage
+  const MainContentWrapper = isLandingPage ? Box : Container;
+  const wrapperSx = isLandingPage ? { width: '100%', flexGrow: 1 } : { flexGrow: 1, py: 4, pb: 16, px: { xs: 2, md: 'auto' } }; // Adjust padding for non-landing pages as needed
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -60,8 +67,8 @@ const MainLayout = () => {
             onClick={() => navigate('/')}
           >
             <Typography variant="h5" sx={{ fontWeight: 700, color: '#FF6B00', letterSpacing: 2, mr: 1 }}>
-              Jobify
-            </Typography>
+            Jobify
+          </Typography>
             <motion.div
               initial={{ scale: 1 }}
               animate={{ 
@@ -115,7 +122,7 @@ const MainLayout = () => {
                 </Button>
                 {user?.is_staff && (
                   <Button 
-                    color="inherit" 
+                color="inherit"
                     sx={{ color: '#222', fontWeight: 600, mr: 2 }} 
                     onClick={() => navigate('/admin')}
                   >
@@ -138,15 +145,15 @@ const MainLayout = () => {
                   Logout
                 </Button>
               </>
-            ) : (
+          ) : (
               <>
                 <Button 
                   color="inherit" 
                   sx={{ color: '#222', fontWeight: 600, mr: 2 }} 
                   onClick={() => navigate('/login')}
                 >
-                  Login
-                </Button>
+                Login
+              </Button>
                 <Button 
                   variant="contained" 
                   sx={{ 
@@ -161,31 +168,32 @@ const MainLayout = () => {
                   onClick={() => navigate('/signup')}
                 >
                   Get Started
-                </Button>
+              </Button>
               </>
             )}
-          </Box>
+            </Box>
         </Toolbar>
       </AppBar>
 
-      <Container component="main" sx={{ flexGrow: 1, py: 4, pb: 16 }}>
+      {/* Main Content Container - Conditionally render Container or Box */}
+      <MainContentWrapper component="main" sx={wrapperSx}>
         <Outlet />
-      </Container>
+      </MainContentWrapper>
 
       {/* Footer */}
       <Box
-        sx={{ 
-          width: '100%', 
-          background: '#fff', 
-          color: '#222', 
-          borderTop: '1px solid #eee', 
-          pt: 6, 
-          pb: 3, 
-          px: { xs: 2, md: 8 }, 
+        sx={{
+          width: '100%',
+          background: '#fff',
+          color: '#222',
+          borderTop: '1px solid #eee',
+          pt: 6,
+          pb: 3,
+          px: { xs: 2, md: 8 },
           mt: 8,
           position: 'relative',
           zIndex: 1300,
-        }} 
+        }}
         component="footer"
       >
         <Container maxWidth="lg" sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between', gap: 4 }}>
@@ -243,7 +251,7 @@ const MainLayout = () => {
               ))}
             </Box>
             <Box sx={{ textAlign: { xs: 'left', md: 'right' }, opacity: 0.7, fontSize: '1rem', ml: { md: 2 } }}>
-              © {new Date().getFullYear()} Jobify. All rights reserved.
+            © {new Date().getFullYear()} Jobify. All rights reserved.
             </Box>
           </Box>
         </Container>

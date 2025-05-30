@@ -19,32 +19,59 @@ import { api } from '../contexts/AuthContext'; // Import the configured api inst
 //   return config;
 // });
 
+// Remove the local API_URL, handleResponse, and api object definition
+// const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+
+// // Helper function to handle API responses
+// const handleResponse = async (response) => {
+//   if (!response.ok) {
+//     const error = await response.json();
+//     throw new Error(error.detail || 'Something went wrong');
+//   }
+//   return response.json();
+// };
+
+// // Basic API methods
+// const api = {
+//   get: async (endpoint, params = {}) => {
+//     const url = new URL(`${API_URL}${endpoint}`);
+//     Object.keys(params).forEach(key => {
+//       // Handle array parameters correctly (e.g., jobTypes=type1&jobTypes=type2)
+//       if (Array.isArray(params[key])) {
+//         params[key].forEach(item => url.searchParams.append(key, item));
+//       } else if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+//         url.searchParams.append(key, params[key]);
+//       }
+//     });
+
+//     // --- Add console log here ---
+//     console.log('Fetching from:', url.toString());
+//     // ---------------------------
+
+//     const response = await fetch(url.toString());
+//     return handleResponse(response);
+//   },
+
+//   // ... rest of the existing api object methods ...
+// };
+
 // Auth API
 export const authAPI = {
   login: async (credentials) => {
-    // JWT login
-    // Use the imported api instance
     const response = await api.post('/token/', credentials);
-    // Token handling is now done in AuthContext, so no need to save here
-    // localStorage.setItem('access', response.data.access);
-    // localStorage.setItem('refresh', response.data.refresh);
     return response.data;
   },
 
   register: async (userData) => {
-    // Use the imported api instance
     const response = await api.post('/register/', userData);
     return response.data;
   },
 
   logout: () => {
-    // Token removal is now done in AuthContext
-    // localStorage.removeItem('access');
-    // localStorage.removeItem('refresh');
+    // Handled by AuthContext
   },
 
   getCurrentUser: async () => {
-    // Use the imported api instance
     const response = await api.get('/profile/');
     return response.data;
   },
@@ -55,14 +82,9 @@ export const authAPI = {
   },
 
   refreshToken: async () => {
-    // Token refresh logic is now in the api instance's response interceptor in AuthContext
-    // This function might not be needed anymore if refresh is handled automatically
-    // However, keeping it for now in case it's called directly elsewhere.
-    const refresh = localStorage.getItem('refresh_token'); // Use refresh_token key from AuthContext
+    const refresh = localStorage.getItem('refresh_token');
     if (!refresh) throw new Error('No refresh token');
-    // Use the imported api instance (note: the response interceptor will handle saving the new token)
     const response = await api.post('/token/refresh/', { refresh });
-    // localStorage.setItem('access', response.data.access); // Token saving is in interceptor
     return response.data;
   },
 };
@@ -71,28 +93,9 @@ export const authAPI = {
 export const jobsAPI = {
   getAll: async (filters = {}) => {
     try {
-      const params = new URLSearchParams();
-
-      if (filters.searchTerm) {
-        params.append('search', filters.searchTerm);
-      }
-
-      if (filters.jobTypes && filters.jobTypes.length > 0) {
-        filters.jobTypes.forEach(type => params.append('job_type', type));
-      }
-
-      if (filters.salaryRange) {
-        params.append('min_salary', filters.salaryRange[0]);
-        params.append('max_salary', filters.salaryRange[1]);
-      }
-
-      if (filters.companies && filters.companies.length > 0) {
-        filters.companies.forEach(company => params.append('company', company));
-      }
-
-      const url = `/jobs/?${params.toString()}`;
-      const response = await api.get(url);
-    return response.data;
+      // Use the imported api instance which already handles URL construction and params
+      const response = await api.get('/jobs/', { params: filters });
+      return response.data;
     } catch (error) {
       console.error('Error fetching jobs:', error);
       throw error;
@@ -101,8 +104,8 @@ export const jobsAPI = {
 
   getById: async (id) => {
     try {
-    const response = await api.get(`/jobs/${id}/`);
-    return response.data;
+      const response = await api.get(`/jobs/${id}/`);
+      return response.data;
     } catch (error) {
       console.error(`Error fetching job with id ${id}:`, error);
       throw error;
@@ -111,8 +114,8 @@ export const jobsAPI = {
 
   create: async (jobData) => {
     try {
-    const response = await api.post('/jobs/', jobData);
-    return response.data;
+      const response = await api.post('/jobs/', jobData);
+      return response.data;
     } catch (error) {
       console.error('Error creating job:', error);
       throw error;
@@ -121,8 +124,8 @@ export const jobsAPI = {
 
   update: async (id, jobData) => {
     try {
-    const response = await api.put(`/jobs/${id}/`, jobData);
-    return response.data;
+      const response = await api.put(`/jobs/${id}/`, jobData);
+      return response.data;
     } catch (error) {
       console.error(`Error updating job with id ${id}:`, error);
       throw error;
@@ -146,7 +149,7 @@ export const jobsAPI = {
           'Content-Type': 'multipart/form-data',
         },
       });
-      return response;
+      return response.data; // Assuming backend returns data on successful application
     } catch (error) {
       console.error('Error submitting application:', error);
       throw error;
@@ -159,7 +162,7 @@ export const profileAPI = {
   get: async () => {
     try {
       const response = await api.get('/profile/');
-      return response;
+      return response.data;
     } catch (error) {
       console.error('Error fetching profile:', error);
       throw error;
@@ -173,7 +176,7 @@ export const profileAPI = {
           'Content-Type': 'multipart/form-data',
         },
       });
-      return response;
+      return response.data; // Assuming backend returns data on successful update
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
@@ -183,7 +186,7 @@ export const profileAPI = {
   getReferences: async () => {
     try {
       const response = await api.get('/profile/references/');
-      return response;
+      return response.data; // Assuming backend returns data
     } catch (error) {
       console.error('Error fetching references:', error);
       throw error;
@@ -193,7 +196,7 @@ export const profileAPI = {
   addReference: async (referenceData) => {
     try {
       const response = await api.post('/profile/references/add/', referenceData);
-      return response;
+      return response.data; // Assuming backend returns data
     } catch (error) {
       console.error('Error adding reference:', error);
       throw error;
@@ -203,7 +206,7 @@ export const profileAPI = {
   deleteReference: async (referenceId) => {
     try {
       const response = await api.delete(`/profile/references/${referenceId}/`);
-      return response;
+      return response.data; // Assuming backend returns data
     } catch (error) {
       console.error(`Error deleting reference with id ${referenceId}:`, error);
       throw error;
@@ -213,7 +216,7 @@ export const profileAPI = {
   getEducation: async () => {
     try {
       const response = await api.get('/profile/education/');
-      return response;
+      return response.data; // Assuming backend returns data
     } catch (error) {
       console.error('Error fetching education:', error);
       throw error;
@@ -223,7 +226,7 @@ export const profileAPI = {
   addEducation: async (educationData) => {
     try {
       const response = await api.post('/profile/education/add/', educationData);
-      return response;
+      return response.data; // Assuming backend returns data
     } catch (error) {
       console.error('Error adding education:', error);
       throw error;
@@ -233,7 +236,7 @@ export const profileAPI = {
   deleteEducation: async (educationId) => {
     try {
       const response = await api.delete(`/profile/education/${educationId}/`);
-      return response;
+      return response.data; // Assuming backend returns data
     } catch (error) {
       console.error(`Error deleting education with id ${educationId}:`, error);
       throw error;
@@ -241,11 +244,12 @@ export const profileAPI = {
   },
 };
 
-// Admin API (example - assuming you have admin related endpoints)
+// Admin API
 export const adminAPI = {
-  getPendingJobs: async () => {
+  getPendingJobs: async (filters = {}) => {
     try {
-      const response = await api.get('/admin/jobs/pending/');
+      // Use the imported api instance which already handles URL construction and params
+      const response = await api.get('/admin/jobs/', { params: filters });
       return response.data;
     } catch (error) {
       console.error('Error fetching pending jobs:', error);

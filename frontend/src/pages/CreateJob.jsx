@@ -559,12 +559,6 @@ const CreateJob = () => {
       />
 
       <Container maxWidth="md" sx={{ py: 4, position: 'relative', zIndex: 1, mb: 4 }}>
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            Create Job Posting
-          </Typography>
-        </Paper>
-
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}

@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .serializers import UserProfileSerializer, JobPostingSerializer, UserSerializer, ReferenceSerializer, EducationSerializer
 import mimetypes
 from django.shortcuts import render, redirect, get_object_or_404
@@ -179,8 +179,70 @@ def search(request):
 def api_job_list(request):
     """API endpoint for job search and creation"""
     if request.method == 'GET':
-        job_postings = JobPosting.objects.filter(status='approved').order_by('-created_at')
-        serializer = JobPostingSerializer(job_postings, many=True, context={'request': request})
+        # Start with approved job postings
+        queryset = JobPosting.objects.filter(status='approved')
+        print(f"Initial approved queryset count: {queryset.count()}")
+
+        # Get query parameters
+        search_term = request.query_params.get('search', None)
+        # Modified to get parameters with [] suffix
+        job_types = request.query_params.getlist('job_type[]')
+        # Removed salary parameters
+        # min_salary_str = request.query_params.get('min_salary', None)
+        # max_salary_str = request.query_params.get('max_salary', None)
+        # Modified to get parameters with [] suffix
+        companies = request.query_params.getlist('company[]')
+
+        # Updated print statement to reflect getting params with []
+        print(f"Received query params: search={search_term}, job_types={job_types}, companies={companies}")
+
+        # Build up a combined filter using Q objects
+        combined_filters = Q()
+
+        # Apply search filter (already uses Q objects)
+        if search_term:
+            search_q = (
+                Q(title__icontains=search_term) |
+                Q(company_name__icontains=search_term) |
+                Q(location__icontains=search_term) |
+                Q(salary__icontains=search_term) | # Keep salary in main search for broad matching
+                Q(description__icontains=search_term) |
+                Q(requirements__icontains=search_term)
+            )
+            combined_filters &= search_q # Combine with AND
+            # Print statement reflects filtering up to this point
+            print(f"After applying search Q object: {queryset.filter(combined_filters).count()}")
+
+        # Apply job type filter using Q objects (OR logic)
+        job_type_q = Q()
+        if job_types:
+            for job_type in job_types:
+                # Use icontains for potentially more flexible matching
+                job_type_q |= Q(job_type__icontains=job_type)
+            combined_filters &= job_type_q # Combine with AND
+            # Print statement reflects filtering up to this point
+            print(f"After applying job type Q object ({job_types}): {queryset.filter(combined_filters).count()}")
+
+        # Apply company filter using Q objects (OR logic)
+        company_q = Q()
+        if companies:
+            for company in companies:
+                 # Use icontains for potentially more flexible matching
+                company_q |= Q(company_name__icontains=company)
+            combined_filters &= company_q # Combine with AND
+            # Print statement reflects filtering up to this point
+            print(f"After applying company Q object ({companies}): {queryset.filter(combined_filters).count()}")
+
+        # Apply all combined filters to the initial queryset
+        # This line now applies the combined filters for search, job type, and company
+        queryset = queryset.filter(combined_filters)
+        # Added a final print statement for clarity
+        print(f"Final queryset count after all filters: {queryset.count()}")
+
+        # Default ordering
+        queryset = queryset.order_by('-created_at')
+
+        serializer = JobPostingSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
     elif request.method == 'POST':
@@ -527,22 +589,22 @@ def api_apply_job(request, job_id):
         text_content, html_content = create_email_content(
             job_posting, name, email, resume,
             job_posting.custom_questions.split('\n') if job_posting.custom_questions else [],
-            custom_answers,
+        custom_answers,
             references,
             education
         )
-        
+    
         # Prepare email
         mail = EmailMultiAlternatives(subject, text_content, to=[job_posting.company_email])
         mail.attach_alternative(html_content, "text/html")
-        
-        # Attach resume if present
+    
+    # Attach resume if present
         if resume:
             attach_resume_to_email(mail, resume)
-        
+    
         # Send email
         mail.send()
-        
+    
         # Calculate grade if resume is present
         grade = None
         if resume:
@@ -675,11 +737,11 @@ def api_add_reference(request):
     except UserProfile.DoesNotExist:
         return Response({'error': 'User profile not found'}, status=404)
     
-    serializer = ReferenceSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(user_profile=user_profile)
-        return Response(serializer.data, status=201)
-    return Response(serializer.errors, status=400)
+        serializer = ReferenceSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user_profile=user_profile)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -713,11 +775,11 @@ def api_add_education(request):
     except UserProfile.DoesNotExist:
         return Response({'error': 'User profile not found'}, status=404)
     
-    serializer = EducationSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(user_profile=user_profile)
-        return Response(serializer.data, status=201)
-    return Response(serializer.errors, status=400)
+        serializer = EducationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user_profile=user_profile)
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -729,3 +791,52 @@ def api_delete_education(request, education_id):
         return Response(status=204) # No content status
     except Education.DoesNotExist:
         return Response({'error': 'Education not found'}, status=404)
+
+# --- ADMIN API ENDPOINTS ---
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def api_admin_list_jobs(request):
+    """List all jobs, filterable by status (pending, approved, denied) and search term"""
+    status_filter = request.GET.get('status', None)
+    search_term = request.GET.get('search', None)
+
+    jobs = JobPosting.objects.all()
+
+    if status_filter:
+        jobs = jobs.filter(status=status_filter)
+
+    if search_term:
+        # Filter by search term across multiple fields
+        jobs = jobs.filter(
+            Q(title__icontains=search_term) |
+            Q(company_name__icontains=search_term) |
+            Q(description__icontains=search_term) |
+            Q(location__icontains=search_term)
+        )
+
+    serializer = JobPostingSerializer(jobs, many=True, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def api_admin_approve_job(request, job_id):
+    job = get_object_or_404(JobPosting, id=job_id)
+    job.status = 'approved'
+    job.save()
+    return Response({'message': 'Job approved.'})
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def api_admin_deny_job(request, job_id):
+    job = get_object_or_404(JobPosting, id=job_id)
+    job.status = 'denied'
+    job.save()
+    return Response({'message': 'Job denied.'})
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def api_admin_delete_job(request, job_id):
+    job = get_object_or_404(JobPosting, id=job_id)
+    job.delete()
+    return Response({'message': 'Job deleted.'})
