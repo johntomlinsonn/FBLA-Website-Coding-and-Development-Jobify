@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
@@ -19,11 +19,31 @@ import {
   Paper,
   Divider,
   useTheme,
+  Modal,
+  IconButton,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
 import { jobsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Add grade color and formatting functions
+const getGradeColor = (grade) => {
+  if (!grade) return '#757575'; // Gray for N/A
+  const numGrade = Number(grade);
+  if (numGrade >= 90) return '#4CAF50';      // Green
+  if (numGrade >= 80) return '#8BC34A';      // Light Green
+  if (numGrade >= 70) return '#FFEB3B';      // Yellow
+  if (numGrade >= 60) return '#FF9800';      // Orange
+  if (numGrade >= 50) return '#FF5722';      // Deep Orange
+  return '#F44336';                          // Red
+};
+
+const formatGrade = (grade) => {
+  if (!grade) return 'N/A';
+  return String(grade);
+};
 
 // Debounce utility
 const debounce = (func, delay) => {
@@ -49,33 +69,38 @@ const JobsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     jobTypes: [],
-    salaryRange: [0, 200000],
+    salaryRange: [0, 50],
     companies: [],
   });
+  const [appliedFilters, setAppliedFilters] = useState({
+    jobTypes: [],
+    salaryRange: [0, 50],
+    companies: [],
+  });
+  const [openFilterModal, setOpenFilterModal] = useState(null);
   const [availableCompanies, setAvailableCompanies] = useState([]);
   const [availableJobTypes, setAvailableJobTypes] = useState([]);
 
-  // Debounced fetch function - will be called when search or filters change
-  const debouncedFetchJobs = useRef(debounce(async (currentFilters, currentSearchTerm) => {
+  // Memoized fetch function
+  const fetchJobs = useMemo(() => debounce(async (currentFilters, currentSearchTerm) => {
     setLoading(true);
     try {
-      // Construct parameters object for the API call
       const params = {
         status: 'approved', // Only show approved jobs
         search: currentSearchTerm,
       };
 
-      // Add job type filter parameters
       if (currentFilters.jobTypes && currentFilters.jobTypes.length > 0) {
-        // Ensure jobTypes is an array for the backend
-        // The api.get function handles converting array values to multiple params
-        params.job_type = currentFilters.jobTypes; 
+        params.job_type = currentFilters.jobTypes;
       }
 
-      // Add company filter parameters
       if (currentFilters.companies && currentFilters.companies.length > 0) {
-         // Ensure companies is an array for the backend
-         params.company = currentFilters.companies;
+        params.company = currentFilters.companies;
+      }
+
+      if (currentFilters.salaryRange) {
+        params.min_salary = currentFilters.salaryRange[0];
+        params.max_salary = currentFilters.salaryRange[1];
       }
 
       const response = await jobsAPI.getAll(params);
@@ -88,12 +113,12 @@ const JobsList = () => {
     } finally {
       setLoading(false);
     }
-  }, 300)).current;
+  }, 300), []); // Empty dependency array means this function is created once
 
   // Effect to fetch jobs when filters OR search changes
   useEffect(() => {
     // Call the debounced fetch function
-    debouncedFetchJobs(filters, searchTerm);
+    fetchJobs(appliedFilters, searchTerm);
 
     // Cleanup the debounce timer on unmount
     return () => {
@@ -101,7 +126,7 @@ const JobsList = () => {
       // if debounce implementation changes.
       // clearTimeout(debouncedFetchJobs.current); // This won't work directly with useRef
     };
-  }, [filters, searchTerm, debouncedFetchJobs]); // Depend on filters AND searchTerm
+  }, [appliedFilters, searchTerm, fetchJobs]); // Depend on appliedFilters and searchTerm
 
   // Initial data fetch (for populating filter options)
   useEffect(() => {
@@ -162,6 +187,29 @@ const JobsList = () => {
     }));
   };
 
+  const handleApplyFilters = () => {
+    setAppliedFilters(filters);
+    setOpenFilterModal(null);
+  };
+
+  const handleOpenFilter = (filterType) => {
+    setOpenFilterModal(filterType);
+  };
+
+  const handleCloseFilterModal = () => {
+    setOpenFilterModal(null);
+  };
+
+  const handleClearFilter = () => {
+    if (openFilterModal === 'jobType') {
+      setFilters(prev => ({ ...prev, jobTypes: [] }));
+    } else if (openFilterModal === 'hourlyWage') {
+      setFilters(prev => ({ ...prev, salaryRange: [0, 50] }));
+    } else if (openFilterModal === 'company') {
+      setFilters(prev => ({ ...prev, companies: [] }));
+    }
+  };
+
   const handleApply = (jobId) => {
     if (!user) {
       navigate('/login', { state: { from: `/jobs/${jobId}/apply` } });
@@ -171,7 +219,7 @@ const JobsList = () => {
   };
 
   // Show initial loading only if no jobs are loaded yet
-  if (loading && jobs.length === 0 && searchTerm === '' && filters.jobTypes.length === 0 && filters.companies.length === 0 && filters.salaryRange[0] === 0 && filters.salaryRange[1] === 200000) {
+  if (loading && jobs.length === 0 && searchTerm === '' && filters.jobTypes.length === 0 && filters.companies.length === 0 && filters.salaryRange[0] === 0 && filters.salaryRange[1] === 50) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
         <CircularProgress />
@@ -196,7 +244,7 @@ const JobsList = () => {
         overflow: 'auto',
         // --- Background image styles from CreateJob.jsx ---
         backgroundColor: '#FFFFFF',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='284' height='284' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23E9E4DE' stroke-width='8.7'%3E%3Cpath d='M769 229L1037 260.9M927 880L731 737 520 660 309 538 40 599 295 764 126.5 879.5 40 599-197 493 102 382-31 229 126.5 79.5-69-63'/%3E%3Cpath d='M-31 229L237 261 390 382 603 493 308.5 537.5 101.5 381.5M370 905L295 764'/%3E%3Cpath d='M520 660L578 842 731 737 840 599 603 493 520 660 295 764 309 538 390 382 539 269 769 229 577.5 41.5 370 105 295 -36 126.5 79.5 237 261 102 382 40 599 -69 737 127 880'/%3E%3C/g%3E%3Cg fill='%23FF6B00'%3E%3Ccircle cx='769' cy='229' r='7'/%3E%3Ccircle cx='539' cy='269' r='7'/%3E%3Ccircle cx='603' cy='493' r='7'/%3E%3Ccircle cx='731' cy='737' r='7'/%3E%3Ccircle cx='520' cy='660' r='7'/%3Ccircle cx='309' cy='538' r='7'/%3E%3Ccircle cx='295' cy='764' r='7'/%3E%3Ccircle cx='40' cy='599' r='7'/%3E%3Ccircle cx='102' cy='382' r='7'/%3E%3Ccircle cx='127' cy='80' r='7'/%3E%3Ccircle cx='370' cy='105' r='7'/%3E%3Ccircle cx='578' cy='42' r='7'/%3E%3Ccircle cx='237' cy='261' r='7'/%3E%3Ccircle cx='390' cy='382' r='7'/%3E%3C/g%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='284' height='284' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23E9E4DE' stroke-width='8.7'%3E%3Cpath d='M769 229L1037 260.9M927 880L731 737 520 660 309 538 40 599 295 764 126.5 879.5 40 599-197 493 102 382-31 229 126.5 79.5-69-63'/%3E%3Cpath d='M-31 229L237 261 390 382 603 493 308.5 537.5 101.5 381.5M370 905L295 764'/%3E%3Cpath d='M520 660L578 842 731 737 840 599 603 493 520 660 295 764 309 538 390 382 539 269 769 229 577.5 41.5 370 105 295 -36 126.5 79.5 237 261 102 382 40 599 -69 737 127 880'/%3E%3C/g%3E%3Cg fill='%23FF6B00'%3E%3Ccircle cx='769' cy='229' r='7'/%3E%3Ccircle cx='539' cy='269' r='7'/%3E%3Ccircle cx='603' cy='493' r='7'/%3E%3Ccircle cx='731' cy='737' r='7'/%3E%3Ccircle cx='520' cy='660' r='7'/%3E%3Ccircle cx='309' cy='538' r='7'/%3E%3Ccircle cx='295' cy='764' r='7'/%3E%3Ccircle cx='40' cy='599' r='7'/%3E%3Ccircle cx='102' cy='382' r='7'/%3E%3Ccircle cx='127' cy='80' r='7'/%3E%3Ccircle cx='370' cy='105' r='7'/%3E%3Ccircle cx='578' cy='42' r='7'/%3E%3Ccircle cx='237' cy='261' r='7'/%3E%3Ccircle cx='390' cy='382' r='7'/%3E%3C/g%3E%3C/svg%3E")`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -225,7 +273,7 @@ const JobsList = () => {
         <Grid container spacing={4}>
           {/* Filters Panel */}
           <Grid item xs={12} md={3}>
-            <Paper elevation={2} sx={{ p: 2, borderRadius: 2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
+            <Paper elevation={2} sx={{ p: 3, borderRadius: 2, backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
               <Typography variant="h6" gutterBottom>Filter Jobs</Typography>
               <Divider sx={{ my: 2 }} />
 
@@ -237,7 +285,7 @@ const JobsList = () => {
                 fullWidth
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ mb: 3 }}
+                sx={{ mb: 2 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -247,70 +295,59 @@ const JobsList = () => {
                 }}
               />
 
-              {/* Job Type Filters */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" gutterBottom>Job Type</Typography>
-                <FormGroup>
-                  {availableJobTypes.map(type => (
-                    <FormControlLabel
-                      key={type}
-                      control={
-                        <Checkbox
-                          name={type}
-                          checked={filters.jobTypes.includes(type)}
-                          onChange={handleJobTypeChange}
-                          sx={{ color: '#FF6B00' }}
-                        />
-                      }
-                      label={type}
-                    />
-                  ))}
-                </FormGroup>
-              </Box>
-
-              {/* Salary Range Filter */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" gutterBottom>Salary Range</Typography>
-                <Slider
-                  value={filters.salaryRange}
-                  onChangeCommitted={(event, newValue) => setFilters(prev => ({ ...prev, salaryRange: newValue }))} // Use onChangeCommitted for better performance on slider
-                  valueLabelDisplay="auto"
-                  min={0}
-                  max={200000}
+              {/* Filter Categories - Clickable headers */}
+              <Box sx={{ mb: 2 }}>
+                <Button
+                  fullWidth
                   sx={{
-                    color: '#FF6B00',
-                    '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' },
-                    '& .MuiSlider-track': { backgroundColor: '#FF6B00' },
-                    '& .MuiSlider-rail': { color: '#ccc' }
+                    justifyContent: 'flex-start',
+                    color: appliedFilters.jobTypes.length > 0 ? '#FF6B00' : 'text.primary',
+                    fontWeight: appliedFilters.jobTypes.length > 0 ? 'bold' : 'normal',
                   }}
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-                  ${filters.salaryRange[0].toLocaleString()} - ${filters.salaryRange[1].toLocaleString()}
-                </Typography>
+                  onClick={() => handleOpenFilter('jobType')}
+                >
+                  <Typography variant="subtitle1">Job Type</Typography>
+                </Button>
+                <Divider sx={{ my: 1 }} />
+                <Button
+                  fullWidth
+                  sx={{
+                    justifyContent: 'flex-start',
+                    color: (appliedFilters.salaryRange[0] !== 0 || appliedFilters.salaryRange[1] !== 50) ? '#FF6B00' : 'text.primary',
+                    fontWeight: (appliedFilters.salaryRange[0] !== 0 || appliedFilters.salaryRange[1] !== 50) ? 'bold' : 'normal',
+                  }}
+                  onClick={() => handleOpenFilter('hourlyWage')}
+                >
+                  <Typography variant="subtitle1">Hourly Wage Range</Typography>
+                </Button>
+                <Divider sx={{ my: 1 }} />
+                <Button
+                  fullWidth
+                  sx={{
+                    justifyContent: 'flex-start',
+                    color: appliedFilters.companies.length > 0 ? '#FF6B00' : 'text.primary',
+                    fontWeight: appliedFilters.companies.length > 0 ? 'bold' : 'normal',
+                  }}
+                  onClick={() => handleOpenFilter('company')}
+                >
+                  <Typography variant="subtitle1">Company</Typography>
+                </Button>
+                <Divider sx={{ my: 1 }} />
               </Box>
 
-              {/* Company Filter */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" gutterBottom>Company</Typography>
-                <FormGroup>
-                  {availableCompanies.map(company => (
-                    <FormControlLabel
-                      key={company}
-                      control={
-                        <Checkbox
-                          name={company}
-                          checked={filters.companies.includes(company)}
-                          onChange={handleCompanyChange}
-                          sx={{ color: '#FF6B00' }}
-                        />
-                      }
-                      label={company}
-                    />
-                  ))}
-                </FormGroup>
-              </Box>
-
-              {/* Removed Apply Filters Button - Filters apply automatically */}
+              {/* Apply Filters Button for the main panel */}
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={handleApplyFilters}
+                sx={{
+                  background: '#FF6B00',
+                  '&:hover': { background: '#e65c00' },
+                  mt: 3, // Increased top margin
+                }}
+              >
+                Apply Filters
+              </Button>
 
             </Paper>
           </Grid>
@@ -398,10 +435,10 @@ const JobsList = () => {
                   </Typography>
                             <Box sx={{ mt: 'auto' }}>
                               <Typography variant="body2" sx={{ color: '#FF6B00', fontWeight: 600 }}>
-                                Salary: ${job.salary.toLocaleString()}
+                                Hourly Wage: ${job.salary}/hr
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Grade: {job.grade}
+                    <Typography variant="body2" sx={{ color: getGradeColor(job.grade), fontWeight: 500 }}>
+                      Grade: {formatGrade(job.grade)}
                     </Typography>
                   </Box>
                 </CardContent>
@@ -415,6 +452,165 @@ const JobsList = () => {
             </Grid>
         </Grid>
     </Container>
+    {/* Filter Modal */}
+    <Modal
+      open={Boolean(openFilterModal)}
+      onClose={handleCloseFilterModal}
+      aria-labelledby="filter-modal-title"
+      aria-describedby="filter-modal-description"
+    >
+      <Box sx={{ // Add styles for modal content box
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: { xs: '90%', sm: 400 }, // Make modal wider on smaller screens
+        bgcolor: 'background.paper',
+        borderRadius: 2, // Rounded corners
+        boxShadow: 24,
+        outline: 'none', // Remove default outline
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: '90vh', // Limit height for scrollability
+      }}>
+        {/* Modal Header */}
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          p: 2, // Consistent padding
+          borderBottom: '1px solid #eee',
+        }}>
+          <Typography id="filter-modal-title" variant="h6" component="h2">
+            {openFilterModal === 'jobType' && 'Job Type'}
+            {openFilterModal === 'hourlyWage' && 'Hourly Wage Range'}
+            {openFilterModal === 'company' && 'Company'}
+          </Typography>
+          <IconButton onClick={handleCloseFilterModal} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        {/* Modal Body - Filter Options */}
+        <Box sx={{ p: 2, overflowY: 'auto' }}>{/* Added overflowY for scroll if content is tall */}
+          {openFilterModal === 'jobType' && (
+            <FormGroup>
+              {availableJobTypes.map(type => (
+                <FormControlLabel
+                  key={type}
+                  control={
+                    <Checkbox
+                      name={type}
+                      checked={filters.jobTypes.includes(type)}
+                      onChange={handleJobTypeChange}
+                      sx={{ color: '#FF6B00' }}
+                    />
+                  }
+                  label={type}
+                  sx={{ mb: 1 }}
+                />
+              ))}
+            </FormGroup>
+          )}
+          {openFilterModal === 'hourlyWage' && (
+            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>{/* Added vertical padding, added flex properties for centering */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, mb: 3, mt: 3 }}>{/* Increased gap, increased top margin */}
+                <TextField
+                  size="small"
+                  label="Min"
+                  type="number"
+                  value={filters.salaryRange[0]}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(50, Number(e.target.value)));
+                    setFilters(prev => ({
+                      ...prev,
+                      salaryRange: [value, Math.max(value, prev.salaryRange[1])]
+                    }));
+                  }}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  }}
+                  sx={{ width: '150px' }}
+                />
+                <TextField
+                  size="small"
+                  label="Max"
+                  type="number"
+                  value={filters.salaryRange[1]}
+                  onChange={(e) => {
+                    const value = Math.max(0, Math.min(50, Number(e.target.value)));
+                    setFilters(prev => ({
+                      ...prev,
+                      salaryRange: [Math.min(value, prev.salaryRange[0]), value]
+                    }));
+                  }}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  }}
+                  sx={{ width: '150px' }}
+                />
+              </Box>
+              <Slider
+                value={filters.salaryRange}
+                onChange={(event, newValue) => setFilters(prev => ({ ...prev, salaryRange: newValue }))}
+                onChangeCommitted={(event, newValue) => setFilters(prev => ({ ...prev, salaryRange: newValue }))}
+                valueLabelDisplay="auto"
+                min={0}
+                max={50}
+                step={1}
+                sx={{
+                  width: '80%', // Make slider smaller
+                  color: '#FF6B00',
+                  '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' },
+                  '& .MuiSlider-track': { backgroundColor: '#FF6B00' },
+                  '& .MuiSlider-rail': { color: '#ccc' }
+                }}
+              />
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 3 }}>
+                ${filters.salaryRange[0]}/hr - ${filters.salaryRange[1]}/hr
+              </Typography>
+            </Box>
+          )}
+          {openFilterModal === 'company' && (
+            <FormGroup>
+              {availableCompanies.map(company => (
+                <FormControlLabel
+                  key={company}
+                  control={
+                    <Checkbox
+                      name={company}
+                      checked={filters.companies.includes(company)}
+                      onChange={handleCompanyChange}
+                      sx={{ color: '#FF6B00' }}
+                    />
+                  }
+                  label={company}
+                  sx={{ mb: 1 }}
+                />
+              ))}
+            </FormGroup>
+          )}
+        </Box>
+
+        {/* Modal Footer */}
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          p: 2, // Consistent padding
+          borderTop: '1px solid #eee',
+          gap: 1,
+        }}>
+          <Button onClick={handleClearFilter} sx={{ color: 'text.primary' }}>Clear all</Button>
+          <Button
+            variant="contained"
+            onClick={handleApplyFilters}
+            sx={{ background: '#FF6B00', '&:hover': { background: '#e65c00' }, color: 'white' }}
+          >
+            Update
+          </Button>
+        </Box>
+      </Box>
+    </Modal>
     </Box>
   );
 };

@@ -174,58 +174,60 @@ def api_job_list(request):
 
         # Get query parameters
         search_term = request.query_params.get('search', None)
-        # Modified to get parameters with [] suffix
         job_types = request.query_params.getlist('job_type[]')
-        # Removed salary parameters
-        # min_salary_str = request.query_params.get('min_salary', None)
-        # max_salary_str = request.query_params.get('max_salary', None)
-        # Modified to get parameters with [] suffix
         companies = request.query_params.getlist('company[]')
+        min_salary = request.query_params.get('min_salary', None)
+        max_salary = request.query_params.get('max_salary', None)
 
-        # Updated print statement to reflect getting params with []
-        print(f"Received query params: search={search_term}, job_types={job_types}, companies={companies}")
+        print(f"Received query params: search={search_term}, job_types={job_types}, companies={companies}, min_salary={min_salary}, max_salary={max_salary}")
 
         # Build up a combined filter using Q objects
         combined_filters = Q()
 
-        # Apply search filter (already uses Q objects)
+        # Apply search filter
         if search_term:
             search_q = (
                 Q(title__icontains=search_term) |
                 Q(company_name__icontains=search_term) |
                 Q(location__icontains=search_term) |
-                Q(salary__icontains=search_term) | # Keep salary in main search for broad matching
+                Q(salary__icontains=search_term) |
                 Q(description__icontains=search_term) |
                 Q(requirements__icontains=search_term)
             )
-            combined_filters &= search_q # Combine with AND
-            # Print statement reflects filtering up to this point
+            combined_filters &= search_q
             print(f"After applying search Q object: {queryset.filter(combined_filters).count()}")
 
-        # Apply job type filter using Q objects (OR logic)
+        # Apply job type filter
         job_type_q = Q()
         if job_types:
             for job_type in job_types:
-                # Use icontains for potentially more flexible matching
                 job_type_q |= Q(job_type__icontains=job_type)
-            combined_filters &= job_type_q # Combine with AND
-            # Print statement reflects filtering up to this point
+            combined_filters &= job_type_q
             print(f"After applying job type Q object ({job_types}): {queryset.filter(combined_filters).count()}")
 
-        # Apply company filter using Q objects (OR logic)
+        # Apply company filter
         company_q = Q()
         if companies:
             for company in companies:
-                 # Use icontains for potentially more flexible matching
                 company_q |= Q(company_name__icontains=company)
-            combined_filters &= company_q # Combine with AND
-            # Print statement reflects filtering up to this point
+            combined_filters &= company_q
             print(f"After applying company Q object ({companies}): {queryset.filter(combined_filters).count()}")
 
-        # Apply all combined filters to the initial queryset
-        # This line now applies the combined filters for search, job type, and company
+        # Apply salary range filter
+        if min_salary is not None or max_salary is not None:
+            try:
+                if min_salary is not None:
+                    min_salary = float(min_salary)
+                    combined_filters &= Q(salary__gte=min_salary)
+                if max_salary is not None:
+                    max_salary = float(max_salary)
+                    combined_filters &= Q(salary__lte=max_salary)
+                print(f"After applying salary range filter: {queryset.filter(combined_filters).count()}")
+            except (ValueError, TypeError) as e:
+                print(f"Error parsing salary range: {e}")
+
+        # Apply all combined filters
         queryset = queryset.filter(combined_filters)
-        # Added a final print statement for clarity
         print(f"Final queryset count after all filters: {queryset.count()}")
 
         # Default ordering
