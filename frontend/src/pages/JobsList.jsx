@@ -80,6 +80,10 @@ const JobsList = () => {
   const [openFilterModal, setOpenFilterModal] = useState(null);
   const [availableCompanies, setAvailableCompanies] = useState([]);
   const [availableJobTypes, setAvailableJobTypes] = useState([]);
+  const [expandedFilters, setExpandedFilters] = useState({
+    jobType: false,
+    company: false
+  });
 
   // Memoized fetch function
   const fetchJobs = useMemo(() => debounce(async (currentFilters, currentSearchTerm) => {
@@ -193,7 +197,14 @@ const JobsList = () => {
   };
 
   const handleOpenFilter = (filterType) => {
-    setOpenFilterModal(filterType);
+    if (filterType === 'hourlyWage') {
+      setOpenFilterModal(filterType);
+    } else {
+      setExpandedFilters(prev => ({
+        ...prev,
+        [filterType]: !prev[filterType]
+      }));
+    }
   };
 
   const handleCloseFilterModal = () => {
@@ -201,11 +212,11 @@ const JobsList = () => {
   };
 
   const handleClearFilter = () => {
-    if (openFilterModal === 'jobType') {
-      setFilters(prev => ({ ...prev, jobTypes: [] }));
-    } else if (openFilterModal === 'hourlyWage') {
+    if (openFilterModal === 'hourlyWage') {
       setFilters(prev => ({ ...prev, salaryRange: [0, 50] }));
-    } else if (openFilterModal === 'company') {
+    } else if (expandedFilters.jobType) {
+      setFilters(prev => ({ ...prev, jobTypes: [] }));
+    } else if (expandedFilters.company) {
       setFilters(prev => ({ ...prev, companies: [] }));
     }
   };
@@ -308,6 +319,27 @@ const JobsList = () => {
                 >
                   <Typography variant="subtitle1">Job Type</Typography>
                 </Button>
+                {expandedFilters.jobType && (
+                  <Box sx={{ pl: 2, mt: 1, mb: 2 }}>
+                    <FormGroup>
+                      {availableJobTypes.map(type => (
+                        <FormControlLabel
+                          key={type}
+                          control={
+                            <Checkbox
+                              name={type}
+                              checked={filters.jobTypes.includes(type)}
+                              onChange={handleJobTypeChange}
+                              sx={{ color: '#FF6B00' }}
+                            />
+                          }
+                          label={type}
+                          sx={{ mb: 1 }}
+                        />
+                      ))}
+                    </FormGroup>
+                  </Box>
+                )}
                 <Divider sx={{ my: 1 }} />
                 <Button
                   fullWidth
@@ -332,6 +364,27 @@ const JobsList = () => {
                 >
                   <Typography variant="subtitle1">Company</Typography>
                 </Button>
+                {expandedFilters.company && (
+                  <Box sx={{ pl: 2, mt: 1, mb: 2 }}>
+                    <FormGroup>
+                      {availableCompanies.map(company => (
+                        <FormControlLabel
+                          key={company}
+                          control={
+                            <Checkbox
+                              name={company}
+                              checked={filters.companies.includes(company)}
+                              onChange={handleCompanyChange}
+                              sx={{ color: '#FF6B00' }}
+                            />
+                          }
+                          label={company}
+                          sx={{ mb: 1 }}
+                        />
+                      ))}
+                    </FormGroup>
+                  </Box>
+                )}
                 <Divider sx={{ my: 1 }} />
               </Box>
 
@@ -452,151 +505,109 @@ const JobsList = () => {
             </Grid>
         </Grid>
     </Container>
-    {/* Filter Modal */}
+    {/* Filter Modal - Only for Hourly Wage Range */}
     <Modal
       open={Boolean(openFilterModal)}
       onClose={handleCloseFilterModal}
       aria-labelledby="filter-modal-title"
       aria-describedby="filter-modal-description"
     >
-      <Box sx={{ // Add styles for modal content box
+      <Box sx={{
         position: 'absolute',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: { xs: '90%', sm: 400 }, // Make modal wider on smaller screens
+        width: { xs: '90%', sm: 400 },
         bgcolor: 'background.paper',
-        borderRadius: 2, // Rounded corners
+        borderRadius: 2,
         boxShadow: 24,
-        outline: 'none', // Remove default outline
+        outline: 'none',
         display: 'flex',
         flexDirection: 'column',
-        maxHeight: '90vh', // Limit height for scrollability
+        maxHeight: '90vh',
       }}>
         {/* Modal Header */}
         <Box sx={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          p: 2, // Consistent padding
+          p: 2,
           borderBottom: '1px solid #eee',
         }}>
           <Typography id="filter-modal-title" variant="h6" component="h2">
-            {openFilterModal === 'jobType' && 'Job Type'}
-            {openFilterModal === 'hourlyWage' && 'Hourly Wage Range'}
-            {openFilterModal === 'company' && 'Company'}
+            Hourly Wage Range
           </Typography>
           <IconButton onClick={handleCloseFilterModal} size="small">
             <CloseIcon />
           </IconButton>
         </Box>
 
-        {/* Modal Body - Filter Options */}
-        <Box sx={{ p: 2, overflowY: 'auto' }}>{/* Added overflowY for scroll if content is tall */}
-          {openFilterModal === 'jobType' && (
-            <FormGroup>
-              {availableJobTypes.map(type => (
-                <FormControlLabel
-                  key={type}
-                  control={
-                    <Checkbox
-                      name={type}
-                      checked={filters.jobTypes.includes(type)}
-                      onChange={handleJobTypeChange}
-                      sx={{ color: '#FF6B00' }}
-                    />
-                  }
-                  label={type}
-                  sx={{ mb: 1 }}
-                />
-              ))}
-            </FormGroup>
-          )}
-          {openFilterModal === 'hourlyWage' && (
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>{/* Added vertical padding, added flex properties for centering */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, mb: 3, mt: 3 }}>{/* Increased gap, increased top margin */}
-                <TextField
-                  size="small"
-                  label="Min"
-                  type="number"
-                  value={filters.salaryRange[0]}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(50, Number(e.target.value)));
-                    setFilters(prev => ({
-                      ...prev,
-                      salaryRange: [value, Math.max(value, prev.salaryRange[1])]
-                    }));
-                  }}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                  sx={{ width: '150px' }}
-                />
-                <TextField
-                  size="small"
-                  label="Max"
-                  type="number"
-                  value={filters.salaryRange[1]}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(50, Number(e.target.value)));
-                    setFilters(prev => ({
-                      ...prev,
-                      salaryRange: [Math.min(value, prev.salaryRange[0]), value]
-                    }));
-                  }}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                  sx={{ width: '150px' }}
-                />
-              </Box>
-              <Slider
-                value={filters.salaryRange}
-                onChange={(event, newValue) => setFilters(prev => ({ ...prev, salaryRange: newValue }))}
-                onChangeCommitted={(event, newValue) => setFilters(prev => ({ ...prev, salaryRange: newValue }))}
-                valueLabelDisplay="auto"
-                min={0}
-                max={50}
-                step={1}
-                sx={{
-                  width: '80%', // Make slider smaller
-                  color: '#FF6B00',
-                  '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' },
-                  '& .MuiSlider-track': { backgroundColor: '#FF6B00' },
-                  '& .MuiSlider-rail': { color: '#ccc' }
+        {/* Modal Body - Only Hourly Wage Range */}
+        <Box sx={{ p: 2, overflowY: 'auto' }}>
+          <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, mb: 3, mt: 3 }}>
+              <TextField
+                size="small"
+                label="Min"
+                type="number"
+                value={filters.salaryRange[0]}
+                onChange={(e) => {
+                  const value = Math.max(0, Math.min(50, Number(e.target.value)));
+                  setFilters(prev => ({
+                    ...prev,
+                    salaryRange: [value, Math.max(value, prev.salaryRange[1])]
+                  }));
                 }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{ width: '150px' }}
               />
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 3 }}>
-                ${filters.salaryRange[0]}/hr - ${filters.salaryRange[1]}/hr
-              </Typography>
+              <TextField
+                size="small"
+                label="Max"
+                type="number"
+                value={filters.salaryRange[1]}
+                onChange={(e) => {
+                  const value = Math.max(0, Math.min(50, Number(e.target.value)));
+                  setFilters(prev => ({
+                    ...prev,
+                    salaryRange: [Math.min(value, prev.salaryRange[0]), value]
+                  }));
+                }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{ width: '150px' }}
+              />
             </Box>
-          )}
-          {openFilterModal === 'company' && (
-            <FormGroup>
-              {availableCompanies.map(company => (
-                <FormControlLabel
-                  key={company}
-                  control={
-                    <Checkbox
-                      name={company}
-                      checked={filters.companies.includes(company)}
-                      onChange={handleCompanyChange}
-                      sx={{ color: '#FF6B00' }}
-                    />
-                  }
-                  label={company}
-                  sx={{ mb: 1 }}
-                />
-              ))}
-            </FormGroup>
-          )}
+            <Slider
+              value={filters.salaryRange}
+              onChange={(event, newValue) => setFilters(prev => ({ ...prev, salaryRange: newValue }))}
+              onChangeCommitted={(event, newValue) => setFilters(prev => ({ ...prev, salaryRange: newValue }))}
+              valueLabelDisplay="auto"
+              min={0}
+              max={50}
+              step={1}
+              sx={{
+                width: '80%',
+                color: '#FF6B00',
+                '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' },
+                '& .MuiSlider-track': { backgroundColor: '#FF6B00' },
+                '& .MuiSlider-rail': { color: '#ccc' }
+              }}
+            />
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 3 }}>
+              ${filters.salaryRange[0]}/hr - ${filters.salaryRange[1]}/hr
+            </Typography>
+          </Box>
         </Box>
 
         {/* Modal Footer */}
         <Box sx={{
           display: 'flex',
           justifyContent: 'flex-end',
-          p: 2, // Consistent padding
+          p: 2,
           borderTop: '1px solid #eee',
           gap: 1,
         }}>
