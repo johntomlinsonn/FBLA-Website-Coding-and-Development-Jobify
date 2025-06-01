@@ -36,6 +36,8 @@ const Account = () => {
   const [education, setEducation] = useState([]);
   const [newReference, setNewReference] = useState({ name: '', relation: '', contact: '' });
   const [newEducation, setNewEducation] = useState({ school_name: '', graduation_date: '', gpa: '' });
+  const [showNewReferenceForm, setShowNewReferenceForm] = useState(false);
+  const [showNewEducationForm, setShowNewEducationForm] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -46,19 +48,19 @@ const Account = () => {
             profileAPI.getReferences(),
             profileAPI.getEducation(),
           ]);
+          
+          console.log(profileResponse,profileResponse?.data);
 
-          const profileData = profileResponse?.data || {};
-          const referencesData = Array.isArray(referencesResponse?.data) ? referencesResponse.data : [];
-          const educationData = Array.isArray(educationResponse?.data) ? educationResponse.data : [];
+          const profileData = profileResponse || {};
+          const referencesData = Array.isArray(referencesResponse) ? referencesResponse : [];
+          const educationData = Array.isArray(educationResponse) ? educationResponse : [];
 
           setProfile(profileData);
           setReferences(referencesData);
           setEducation(educationData);
           setFormData({
             resume: null,
-            gpa: profileData.gpa || '',
             is_job_provider: profileData.is_job_provider || false,
-            account_holder_name: profileData.account_holder_name || '',
           });
           setLoading(false);
         } catch (err) {
@@ -116,6 +118,7 @@ const Account = () => {
       setReferences([...references, response.data]);
       setNewReference({ name: '', relation: '', contact: '' });
       setSuccess('Reference added successfully');
+      setShowNewReferenceForm(false);
     } catch (err) {
       setError('Failed to add reference');
     }
@@ -137,6 +140,7 @@ const Account = () => {
       setEducation([...education, response.data]);
       setNewEducation({ school_name: '', graduation_date: '', gpa: '' });
       setSuccess('Education added successfully');
+      setShowNewEducationForm(false);
     } catch (err) {
       setError('Failed to add education');
     }
@@ -181,6 +185,12 @@ const Account = () => {
             <Typography variant="h4" component="h1" gutterBottom>
               My Account
             </Typography>
+            {profile?.user && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6">{`${profile.user.first_name} ${profile.user.last_name}`}</Typography>
+                <Typography color="textSecondary">{profile.user.email}</Typography>
+              </Box>
+            )}
             <form onSubmit={handleSubmit}>
               <Grid container spacing={3}>
                 <Grid item xs={12}>
@@ -208,35 +218,6 @@ const Account = () => {
                       </Button>
                     )}
                   </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="GPA"
-                    type="number"
-                    inputProps={{ step: "0.01", min: "0", max: "4.0" }}
-                    value={formData.gpa}
-                    onChange={(e) => setFormData({ ...formData, gpa: e.target.value })}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Account Holder Name"
-                    value={formData.account_holder_name}
-                    onChange={(e) => setFormData({ ...formData, account_holder_name: e.target.value })}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                    disabled={loading}
-                  >
-                    Save Changes
-                  </Button>
                 </Grid>
               </Grid>
             </form>
@@ -273,44 +254,66 @@ const Account = () => {
               ))}
               <Grid item xs={12}>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Add New Reference
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      label="Name"
-                      value={newReference.name}
-                      onChange={(e) => setNewReference({ ...newReference, name: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      label="Relation"
-                      value={newReference.relation}
-                      onChange={(e) => setNewReference({ ...newReference, relation: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      label="Contact"
-                      value={newReference.contact}
-                      onChange={(e) => setNewReference({ ...newReference, contact: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={handleAddReference}
-                    >
-                      Add Reference
-                    </Button>
-                  </Grid>
-                </Grid>
+                {!showNewReferenceForm && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => setShowNewReferenceForm(true)}
+                    sx={{ mt: 2 }}
+                  >
+                    Add New Reference
+                  </Button>
+                )}
+                {showNewReferenceForm && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Add New Reference
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          fullWidth
+                          label="Name"
+                          value={newReference.name}
+                          onChange={(e) => setNewReference({ ...newReference, name: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          fullWidth
+                          label="Relation"
+                          value={newReference.relation}
+                          onChange={(e) => setNewReference({ ...newReference, relation: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          fullWidth
+                          label="Contact"
+                          value={newReference.contact}
+                          onChange={(e) => setNewReference({ ...newReference, contact: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Button
+                          variant="contained"
+                          startIcon={<AddIcon />}
+                          onClick={handleAddReference}
+                        >
+                          Save New Reference
+                        </Button>
+                         <Button
+                          variant="outlined"
+                          color="secondary"
+                          onClick={() => setShowNewReferenceForm(false)}
+                          sx={{ ml: 2 }}
+                        >
+                          Cancel
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                )}
               </Grid>
             </Grid>
           </Paper>
@@ -348,48 +351,70 @@ const Account = () => {
               ))}
               <Grid item xs={12}>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  Add New Education
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      label="School Name"
-                      value={newEducation.school_name}
-                      onChange={(e) => setNewEducation({ ...newEducation, school_name: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      label="Graduation Date"
-                      type="date"
-                      value={newEducation.graduation_date}
-                      onChange={(e) => setNewEducation({ ...newEducation, graduation_date: e.target.value })}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      fullWidth
-                      label="GPA"
-                      type="number"
-                      inputProps={{ step: "0.01", min: "0", max: "4.0" }}
-                      value={newEducation.gpa}
-                      onChange={(e) => setNewEducation({ ...newEducation, gpa: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={handleAddEducation}
-                    >
-                      Add Education
-                    </Button>
-                  </Grid>
-                </Grid>
+                {!showNewEducationForm && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={() => setShowNewEducationForm(true)}
+                    sx={{ mt: 2 }}
+                  >
+                    Add New Education
+                  </Button>
+                )}
+                {showNewEducationForm && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Add New Education
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          fullWidth
+                          label="School Name"
+                          value={newEducation.school_name}
+                          onChange={(e) => setNewEducation({ ...newEducation, school_name: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          fullWidth
+                          label="Graduation Date"
+                          type="date"
+                          value={newEducation.graduation_date}
+                          onChange={(e) => setNewEducation({ ...newEducation, graduation_date: e.target.value })}
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          fullWidth
+                          label="GPA"
+                          type="number"
+                          inputProps={{ step: "0.01", min: "0", max: "4.0" }}
+                          value={newEducation.gpa}
+                          onChange={(e) => setNewEducation({ ...newEducation, gpa: e.target.value })}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Button
+                          variant="contained"
+                          startIcon={<AddIcon />}
+                          onClick={handleAddEducation}
+                        >
+                          Save New Education
+                        </Button>
+                         <Button
+                          variant="outlined"
+                          color="secondary"
+                          onClick={() => setShowNewEducationForm(false)}
+                          sx={{ ml: 2 }}
+                        >
+                          Cancel
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                )}
               </Grid>
             </Grid>
           </Paper>

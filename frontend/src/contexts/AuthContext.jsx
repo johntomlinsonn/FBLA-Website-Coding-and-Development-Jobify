@@ -6,7 +6,7 @@ const AuthContext = createContext(null);
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -104,22 +104,26 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       setLoading(true);
-      const response = await api.post('/login/', {
+      const response = await api.post('/token/', {
         username,
         password,
       });
-      
-      const { access, refresh, user: userData } = response.data;
+
+      const { access, refresh } = response.data; // Destructure only tokens
+
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
-      
+
       // Explicitly set the Authorization header for the api instance
       api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-      
-      setUser(userData);
+
+      // Fetch full user profile after getting tokens
+      const profileResponse = await api.get('/profile/');
+      setUser(profileResponse.data); // Set user with full profile data
+
       navigate('/account');
-      
-      return userData;
+
+      return profileResponse.data; // Return full user data
     } catch (error) {
       throw error;
     } finally {

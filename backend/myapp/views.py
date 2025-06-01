@@ -120,9 +120,11 @@ def postjob(request):
             job_posting = form.save(commit=False)
             job_posting.user = request.user
             job_posting.status = 'pending'
-            job_posting.requirements = ','.join(form.cleaned_data['requirements'])  
+            # Assign the list directly. The model's save method will handle JSON dumping.
+            job_posting.requirements = form.cleaned_data['requirements']
             custom_questions = request.POST.getlist('custom_questions')
-            job_posting.custom_questions = '\n'.join(custom_questions)
+            # Assign the list directly. The model's save method will handle JSON dumping.
+            job_posting.custom_questions = custom_questions
             job_posting.save()
             return redirect('index')
     else:

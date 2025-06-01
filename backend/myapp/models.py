@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import json
 
 class TodoItem(models.Model):
     title = models.CharField(max_length=200)
@@ -51,13 +52,29 @@ class JobPosting(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    null = True
-    empty = True
-
-    #saving the job posing
     def save(self, *args, **kwargs):
+        # Ensure requirements and custom_questions are stored as JSON strings
+        if isinstance(self.requirements, (list, tuple)):
+            self.requirements = json.dumps(self.requirements)
+        elif isinstance(self.requirements, str):
+            try:
+                # Validate that it's proper JSON
+                json.loads(self.requirements)
+            except json.JSONDecodeError:
+                # If not JSON, treat as comma-separated
+                self.requirements = json.dumps([r.strip() for r in self.requirements.split(',') if r.strip()])
+
+        if isinstance(self.custom_questions, (list, tuple)):
+            self.custom_questions = json.dumps(self.custom_questions)
+        elif isinstance(self.custom_questions, str):
+            try:
+                # Validate that it's proper JSON
+                json.loads(self.custom_questions)
+            except json.JSONDecodeError:
+                # If not JSON, treat as newline-separated
+                self.custom_questions = json.dumps([q.strip() for q in self.custom_questions.split('\n') if q.strip()])
+
         super().save(*args, **kwargs)
-    
 
     class Meta:
         ordering = ['-created_at']

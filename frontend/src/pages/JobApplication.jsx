@@ -13,6 +13,7 @@ import {
   CircularProgress,
   Alert,
   IconButton,
+  Collapse,
   useTheme,
   Divider,
   AppBar,
@@ -21,7 +22,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import SettingsIcon from '@mui/icons-material/Settings';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { jobsAPI, profileAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../contexts/AuthContext';
@@ -37,6 +38,8 @@ const JobApplication = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [steps, setSteps] = useState([]);
+  const [expanded, setExpanded] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -45,14 +48,6 @@ const JobApplication = () => {
     education: [{ school: '', graduationDate: '', gpa: '' }],
     customAnswers: {},
   });
-
-  // Get steps based on job requirements
-  const getSteps = () => {
-    const baseSteps = ['Personal Information', 'References', 'Education', 'Custom Questions', 'Review & Submit'];
-    return baseSteps;
-  };
-
-  const steps = getSteps();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,6 +62,19 @@ const JobApplication = () => {
         setJobDetails(jobData);
         setProfile(profileData.data);
         
+        // Dynamically set steps based on custom questions
+        const baseSteps = ['Personal Information', 'References', 'Education'];
+        const reviewStep = 'Review & Submit';
+        let dynamicSteps = [...baseSteps];
+        
+        // Check if jobDetails has custom questions and they are not empty
+        if (jobData?.custom_questions && Array.isArray(jobData.custom_questions) && jobData.custom_questions.length > 0) {
+          dynamicSteps.push('Custom Questions');
+        }
+        
+        dynamicSteps.push(reviewStep);
+        setSteps(dynamicSteps);
+
         // Set personal information from profile data
         if (profileData.data && profileData.data.user) {
           setFormData(prev => ({
@@ -296,6 +304,10 @@ const JobApplication = () => {
         </Box>
       </Box>
     );
+  };
+
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
   };
 
   if (loading) {
@@ -548,77 +560,77 @@ const JobApplication = () => {
           </motion.div>
         );
 
-      case 3:
-        return (
-          <motion.div
-            key="custom"
-            custom={1}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <Box sx={{ 
-              p: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              maxWidth: '800px',
-              margin: '0 auto'
-            }}>
-              <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>Custom Questions</Typography>
-              {(() => {
-                // Parse the questions into an array of full questions
-                const parseQuestions = (input) => {
-                  if (!input) return [];
-                  
-                  if (Array.isArray(input)) {
-                    // If it's already an array, join the characters and clean it
-                    const fullQuestion = input.join('').replace(/^\[|\]$/g, '').replace(/^'|'$/g, '');
-                    return [fullQuestion];
-                  }
-                  
-                  if (typeof input === 'string') {
-                    // If it's a string, clean it
-                    const cleanStr = input.replace(/^\[|\]$/g, '').replace(/^'|'$/g, '');
-                    return [cleanStr];
-                  }
-                  
-                  return [];
-                };
+      case steps.indexOf('Custom Questions'):
+        // Only render if Custom Questions step exists
+        if (steps.includes('Custom Questions')) {
+          return (
+            <motion.div
+              key="custom"
+              custom={1}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+              <Box sx={{ 
+                p: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                maxWidth: '800px',
+                margin: '0 auto'
+              }}>
+                <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>Custom Questions</Typography>
+                {(() => {
+                  // Debug log to see the format of custom_questions
+                  console.log("jobDetails.custom_questions:", jobDetails?.custom_questions);
 
-                const questions = parseQuestions(jobDetails.custom_questions);
-                
-                return questions.map((question, index) => (
-                  <Box key={index} sx={{ width: '100%', mb: 4 }}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ mb: 2 }}>
-                      {question}
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      value={formData.customAnswers[question] || ''}
-                      onChange={(e) => handleInputChange('customAnswers', null, question, e.target.value)}
-                      multiline
-                      minRows={3}
-                      maxRows={20}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '& textarea': {
-                            resize: 'vertical',
-                            minHeight: '100px'
+                  // Parse the questions into an array of full questions
+                  const parseQuestions = (input) => {
+                    if (!input) return [];
+                    
+                    if (Array.isArray(input)) {
+                      // If it's already an array, return it directly
+                      return input;
+                    }
+                    
+                    return [];
+                  };
+
+                  const questions = parseQuestions(jobDetails?.custom_questions);
+                  
+                  return questions.map((question, index) => (
+                    <Box key={index} sx={{ width: '100%', mb: 4 }}>
+                      <Typography variant="subtitle1" gutterBottom sx={{ mb: 2 }}>
+                        {question}
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        value={formData.customAnswers[question] || ''}
+                        onChange={(e) => handleInputChange('customAnswers', null, question, e.target.value)}
+                        multiline
+                        minRows={3}
+                        maxRows={20}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& textarea': {
+                              resize: 'vertical',
+                              minHeight: '100px'
+                            }
                           }
-                        }
-                      }}
-                    />
-                  </Box>
-                ));
-              })()}
-            </Box>
-          </motion.div>
-        );
+                        }}
+                      />
+                    </Box>
+                  ));
+                })()}
+              </Box>
+            </motion.div>
+          );
+        }
+        return null; // Return null if Custom Questions step is not in steps
 
-      case 4:
+      case steps.indexOf('Review & Submit'):
         return (
           <motion.div
             key="review"
@@ -722,18 +734,57 @@ const JobApplication = () => {
 
       <Container maxWidth="md" sx={{ py: 4, position: 'relative', zIndex: 1, mb: 4 }}>
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            {jobDetails?.title}
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary">
-            {jobDetails?.company_name}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box>
+              <Typography variant="h4" gutterBottom>
+                {jobDetails?.title}
+              </Typography>
+              <Typography variant="subtitle1" color="text.secondary">
+                {jobDetails?.company_name}
+              </Typography>
+            </Box>
+            <IconButton
+              onClick={handleExpandClick}
+              aria-expanded={expanded}
+              aria-label="show more job details"
+              sx={{
+                transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: theme.transitions.create('transform', {
+                  duration: theme.transitions.duration.shortest,
+                }),
+              }}
+            >
+              <ExpandMoreIcon />
+            </IconButton>
+          </Box>
+          <Collapse in={expanded} timeout="auto" unmountOnExit>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" gutterBottom>Job Details:</Typography>
+              <Typography><strong>Location:</strong> {jobDetails?.location}</Typography>
+              <Typography><strong>Salary:</strong> {jobDetails?.salary}/hr</Typography>
+              <Typography><strong>Job Type:</strong> {jobDetails?.job_type}</Typography>
+              <Typography sx={{ mt: 2 }}><strong>Description:</strong></Typography>
+              <Typography>{jobDetails?.description}</Typography>
+            </Box>
+          </Collapse>
         </Paper>
 
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => (
+          {steps.map((label, index) => (
             <Step key={label}>
-              <StepLabel>{label}</StepLabel>
+              <StepLabel
+                onClick={() => setActiveStep(index)}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-5px)',
+                    textShadow: '0 0 8px #FF6B00', // Jobify orange glow effect
+                    transition: 'transform 0.3s ease-in-out, text-shadow 0.3s ease-in-out',
+                  },
+                }}
+              >
+                {label}
+              </StepLabel>
             </Step>
           ))}
         </Stepper>

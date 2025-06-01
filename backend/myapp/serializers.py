@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import JobPosting, UserProfile, Reference, Education, TodoItem
 from datetime import datetime, timezone
+import json
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,8 +39,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return None
 
 class JobPostingSerializer(serializers.ModelSerializer):
-    requirements = serializers.ListField(required=False)
-    custom_questions = serializers.ListField(required=False)
+    requirements = serializers.CharField(required=False, allow_blank=True)
+    custom_questions = serializers.CharField(required=False, allow_blank=True)
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     status = serializers.CharField(read_only=True)
 
@@ -47,6 +48,20 @@ class JobPostingSerializer(serializers.ModelSerializer):
         model = JobPosting
         fields = ['id', 'title', 'company_name', 'company_email', 'description', 'salary', 'location', 'job_type', 'requirements', 'custom_questions', 'user', 'status', 'created_at', 'updated_at','grade']
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        try:
+            representation['requirements'] = json.loads(instance.requirements)
+        except (json.JSONDecodeError, TypeError):
+            representation['requirements'] = [] # Handle cases where it's not valid JSON
+
+        try:
+            representation['custom_questions'] = json.loads(instance.custom_questions)
+        except (json.JSONDecodeError, TypeError):
+            representation['custom_questions'] = [] # Handle cases where it's not valid JSON
+
+        return representation
 
     def create(self, validated_data):
         # Debug print to inspect validated_data

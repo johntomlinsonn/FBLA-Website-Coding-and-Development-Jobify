@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from ..models import JobPosting, UserProfile, Reference, Education
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +52,21 @@ class JobPostingSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         # Convert string back to list for requirements and custom_questions
         if isinstance(instance.requirements, str):
-            data['requirements'] = instance.requirements.split(',') if instance.requirements else []
+            try:
+                # Try to parse as JSON first
+                data['requirements'] = json.loads(instance.requirements)
+            except json.JSONDecodeError:
+                # If not JSON, split by comma
+                data['requirements'] = [r.strip() for r in instance.requirements.split(',') if r.strip()]
+        
         if isinstance(instance.custom_questions, str):
-            data['custom_questions'] = instance.custom_questions.split('\n') if instance.custom_questions else []
+            try:
+                # Try to parse as JSON first
+                data['custom_questions'] = json.loads(instance.custom_questions)
+            except json.JSONDecodeError:
+                # If not JSON, split by newline
+                data['custom_questions'] = [q.strip() for q in instance.custom_questions.split('\n') if q.strip()]
+        
         # Ensure grade is included in the response
         data['grade'] = instance.grade
         return data
@@ -62,14 +75,30 @@ class JobPostingSerializer(serializers.ModelSerializer):
         # Convert lists to strings for requirements and custom_questions
         if 'requirements' in data:
             if isinstance(data['requirements'], list):
-                data['requirements'] = ','.join(data['requirements'])
+                # Store the list directly as JSON
+                data['requirements'] = json.dumps(data['requirements'])
             elif isinstance(data['requirements'], str):
-                data['requirements'] = data['requirements']
+                try:
+                    # Validate that it's proper JSON
+                    json.loads(data['requirements'])
+                    data['requirements'] = data['requirements']
+                except json.JSONDecodeError:
+                    # If not JSON, treat as comma-separated
+                    data['requirements'] = json.dumps([r.strip() for r in data['requirements'].split(',') if r.strip()])
+        
         if 'custom_questions' in data:
             if isinstance(data['custom_questions'], list):
-                data['custom_questions'] = '\n'.join(data['custom_questions'])
+                # Store the list directly as JSON
+                data['custom_questions'] = json.dumps(data['custom_questions'])
             elif isinstance(data['custom_questions'], str):
-                data['custom_questions'] = data['custom_questions']
+                try:
+                    # Validate that it's proper JSON
+                    json.loads(data['custom_questions'])
+                    data['custom_questions'] = data['custom_questions']
+                except json.JSONDecodeError:
+                    # If not JSON, treat as newline-separated
+                    data['custom_questions'] = json.dumps([q.strip() for q in data['custom_questions'].split('\n') if q.strip()])
+        
         # Ensure grade is properly handled
         if 'grade' in data:
             try:

@@ -1,324 +1,705 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, Grid, Card, CardContent, Container, InputBase, Paper, IconButton, Avatar, Link as MuiLink } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../contexts/AuthContext';
-import SettingsIcon from '@mui/icons-material/Settings';
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
+"use client"
 
+import React, { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  Container,
+  InputBase,
+  IconButton,
+  Avatar,
+} from "@mui/material"
+import SearchIcon from "@mui/icons-material/Search"
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote"
+import WorkIcon from "@mui/icons-material/Work"
+import SchoolIcon from "@mui/icons-material/School"
+import GroupIcon from "@mui/icons-material/Group"
+import { motion } from "framer-motion"
+import { useAuth } from "../contexts/AuthContext"
+import { useTheme } from "@mui/material/styles"
+import useMediaQuery from "@mui/material/useMediaQuery"
+
+// Enhanced floating animation variants
+const floatingVariants = {
+  animate: {
+    y: [0, -20, 0],
+    rotate: [0, 5, -5, 0],
+    transition: {
+      duration: 6,
+      repeat: Number.POSITIVE_INFINITY,
+      ease: "easeInOut",
+    },
+  },
+}
+
+const pulseVariants = {
+  animate: {
+    scale: [1, 1.1, 1],
+    transition: {
+      duration: 3,
+      repeat: Number.POSITIVE_INFINITY,
+      ease: "easeInOut",
+    },
+  },
+}
+
+const slideInVariants = {
+  hidden: { opacity: 0, x: -50 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.8, ease: "easeOut" },
+  },
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2,
+    },
+  },
+}
+
+const cardHoverVariants = {
+  hover: {
+    y: -10,
+    scale: 1.02,
+    boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+    transition: { duration: 0.3 },
+  },
+}
+
+// Enhanced features with modern icons and descriptions
 const features = [
   {
-    icon: (
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="8" y="8" width="32" height="32" rx="8" fill="white" />
-        <rect x="16" y="16" width="16" height="16" rx="4" fill="#FF6B00" />
-      </svg>
-    ),
-    title: 'For Employers',
-    description: 'Easily submit job postings and reach students at your school. Simple, fast, and effective.',
+    icon: <WorkIcon sx={{ fontSize: 40, color: "#fff" }} />,
+    title: "For Students",
+    description:
+      "Discover amazing job opportunities tailored for high school students. From part-time gigs to internships that kickstart your career!",
+    color: "#FF6B35",
+    bgGradient: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
   },
   {
-    icon: (
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="24" cy="24" r="20" fill="white" />
-        <rect x="18" y="28" width="12" height="4" rx="2" fill="#FF6B00" />
-        <rect x="20" y="18" width="8" height="10" rx="2" fill="#FF6B00" />
-      </svg>
-    ),
-    title: 'For Students',
-    description: 'Browse and apply for approved job postings. Find the perfect opportunity for your future.',
+    icon: <GroupIcon sx={{ fontSize: 40, color: "#fff" }} />,
+    title: "For Employers",
+    description:
+      "Connect with motivated young talent. Post opportunities and find the perfect student candidates for your business.",
+    color: "#4ECDC4",
+    bgGradient: "linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)",
   },
   {
-    icon: (
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="12" y="12" width="24" height="24" rx="6" fill="white" />
-        <rect x="20" y="20" width="8" height="8" rx="2" fill="#FF6B00" />
-        <rect x="16" y="32" width="16" height="4" rx="2" fill="#FF6B00" />
-      </svg>
-    ),
-    title: 'For Admins',
-    description: 'Approve or delete postings and manage your school\'s job board with ease.',
+    icon: <SchoolIcon sx={{ fontSize: 40, color: "#fff" }} />,
+    title: "For Schools",
+    description:
+      "Manage your school's job board with ease. Approve postings and help your students find their first professional experiences.",
+    color: "#A8E6CF",
+    bgGradient: "linear-gradient(135deg, #FFAA00 0%, #FFD6B0 100%)",
   },
-];
+]
 
 const testimonials = [
   {
-    name: 'Alex Johnson',
-    image: '/static/images/testimonial1.jpg',
-    quote: 'Jobify helped me find my first internship. The process was easy and the opportunities were amazing!',
-    title: 'High School Senior',
+    name: "Emma Rodriguez",
+    image: "/placeholder.svg?height=80&width=80",
+    quote:
+      "Jobify helped me land my first job at a local café! The application process was so simple and I love earning my own money.",
+    title: "High School Junior",
+    color: "#FF6B35",
   },
   {
-    name: 'Maria Chen',
-    image: '/static/images/testimonial2.jpg',
-    quote: 'I love how simple it is to apply for jobs and connect with employers. Highly recommended for all students!',
-    title: 'FBLA Member',
+    name: "Marcus Chen",
+    image: "/placeholder.svg?height=80&width=80",
+    quote:
+      "Found an amazing internship at a tech startup through Jobify. It's given me real-world experience and looks great on college applications!",
+    title: "Senior, Future Engineer",
+    color: "#FF8C00",
   },
-];
-
-const heroSvgVariants = {
-  animate: {
-    rotate: [0, 10, -10, 0],
-    scale: [1, 1.05, 1],
-    transition: {
-      duration: 4,
-      repeat: Infinity,
-      ease: 'easeInOut',
-    },
+  {
+    name: "Sophia Williams",
+    image: "/placeholder.svg?height=80&width=80",
+    quote:
+      "The platform made it easy to balance work and school. I've gained confidence and valuable skills that will help me in college.",
+    title: "FBLA President",
+    color: "#FFAA00",
   },
-};
+]
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: (i) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.2, duration: 0.7, type: 'spring' },
-  }),
-};
+// Floating geometric shapes component
+const FloatingShapes = () => (
+  <Box sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "hidden", zIndex: 0 }}>
+    {/* Large floating sphere */}
+    <motion.div
+      variants={floatingVariants}
+      animate="animate"
+      style={{
+        position: "absolute",
+        top: "10%",
+        left: "5%",
+        width: 120,
+        height: 120,
+        borderRadius: "50%",
+        background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
+        opacity: 0.3,
+      }}
+    />
 
-const testimonialVariants = {
-  hidden: { opacity: 0, y: 80, scale: 0.95 },
-  visible: (i) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { delay: i * 0.3, duration: 0.9, type: 'spring' },
-  }),
-};
+    {/* Geometric diamond */}
+    <motion.div
+      variants={pulseVariants}
+      animate="animate"
+      style={{
+        position: "absolute",
+        top: "20%",
+        right: "10%",
+        width: 80,
+        height: 80,
+        background: "linear-gradient(135deg, #FF8C00 0%, #FFAA00 100%)",
+        transform: "rotate(45deg)",
+        opacity: 0.35,
+      }}
+    />
 
-const testimonialHover = {
-  hover: {
-    scale: 1.03,
-    boxShadow: '0 8px 40px 0 rgba(255,107,0,0.5)',
-    transition: { duration: 0.3 },
-  },
-};
+    {/* Floating ring */}
+    <motion.div
+      variants={floatingVariants}
+      animate="animate"
+      style={{
+        position: "absolute",
+        bottom: "20%",
+        left: "15%",
+        width: 100,
+        height: 100,
+        border: "8px solid #FFAA00",
+        borderRadius: "50%",
+        opacity: 0.4,
+      }}
+    />
 
-const combinedTestimonialVariants = (i) => ({
-  hidden: testimonialVariants.hidden,
-  visible: testimonialVariants.visible(i),
-  hover: testimonialHover.hover
-});
+    {/* Small floating dots */}
+    {[...Array(6)].map((_, i) => (
+      <motion.div
+        key={i}
+        variants={floatingVariants}
+        animate="animate"
+        style={{
+          position: "absolute",
+          top: `${20 + i * 15}%`,
+          right: `${5 + i * 8}%`,
+          width: 20,
+          height: 20,
+          borderRadius: "50%",
+          background: `#FF6B00`,
+          opacity: 0.5,
+        }}
+      />
+    ))}
+  </Box>
+)
 
 const Landing = () => {
-  const [search, setSearch] = useState('');
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [search, setSearch] = useState("")
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+    window.addEventListener("mousemove", handleMouseMove)
+    return () => window.removeEventListener("mousemove", handleMouseMove)
+  }, [])
 
   const handleSearch = (e) => {
-    e.preventDefault();
-      navigate(`/jobs?search=${encodeURIComponent(search.trim())}`);
-  };
+    e.preventDefault()
+    navigate(`/jobs?search=${encodeURIComponent(search.trim())}`)
+  }
 
   return (
-    <Box sx={{ 
-      flexGrow: 1,
-      display: 'flex', 
-      flexDirection: 'column', 
-    }}>
+    <Box
+      sx={{
+        flexGrow: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* Hero Section with Enhanced Design */}
       <Box
         sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          background: 'linear-gradient(120deg, #fff 0%, #ffe0c2 40%, #FF6B00 100%)',
-          py: { xs: 10, md: 15 },
-          px: { xs: 2, md: 0 },
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+          position: "relative",
+          minHeight: "100vh",
+          background: "linear-gradient(135deg, #FF6B00 0%, #FFD6B0 50%, #FFFFFF 100%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          px: { xs: 2, md: 4 },
+          textAlign: "center",
+          overflow: "hidden",
         }}
       >
+        <FloatingShapes />
+
+        {/* Animated cursor follower */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          animate={{
+            x: mousePosition.x - 10,
+            y: mousePosition.y - 10,
+          }}
+          transition={{ type: "spring", stiffness: 500, damping: 28 }}
+          style={{
+            position: "fixed",
+            width: 20,
+            height: 20,
+            borderRadius: "50%",
+            background: "rgba(255, 107, 0, 0.5)",
+            pointerEvents: "none",
+            zIndex: 9999,
+            display: isMobile ? "none" : "block",
+          }}
+        />
+
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          style={{ position: "relative", zIndex: 2 }}
         >
-        <motion.div
-          variants={heroSvgVariants}
-          animate="animate"
-          style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}
-        >
-          <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="orangeGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-                <stop stopColor="#FF6B00" />
-                <stop offset="1" stopColor="#FFD6B0" />
-              </linearGradient>
-            </defs>
-            <circle cx="60" cy="60" r="50" fill="url(#orangeGrad)" />
-              <rect x="35" y="35" width="50" height="50" rx="12" fill="rgba(255,255,255,0.7)" stroke="rgba(255,255,255,0.5)" strokeWidth="2"/>
-              <rect x="50" y="50" width="20" height="20" rx="5" fill="white" />
-          </svg>
+          {/* Animated Logo */}
+          <motion.div
+            variants={pulseVariants}
+            animate="animate"
+            style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}
+          >
+            <Box
+              sx={{
+                width: 120,
+                height: 120,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+                position: "relative",
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  top: -10,
+                  left: -10,
+                  right: -10,
+                  bottom: -10,
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, rgba(255,107,53,0.5) 0%, rgba(247,147,30,0.5) 100%)",
+                  zIndex: -1,
+                },
+              }}
+            >
+              <WorkIcon sx={{ fontSize: 60, color: "#fff" }} />
+            </Box>
           </motion.div>
 
           <Typography
-            variant={isMobile ? 'h4' : 'h2'}
+            variant={isMobile ? "h3" : "h1"}
             component="h1"
-            gutterBottom
             sx={{
-              fontWeight: 700,
-              color: '#222',
-              mb: 2,
+              fontWeight: 800,
+              color: "#222",
+              mb: 3,
+              textShadow: "0 4px 8px rgba(0,0,0,0.1)",
+              background: "linear-gradient(135deg, #222 0%, #555 100%)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              fontSize: { xs: "2.5rem", md: "4rem" },
             }}
           >
-            The Go-To Platform for<br/>School Job Boards
+            Your First Job
+            <br />
+            <span style={{ color: "#FF6B00" }}>Starts Here! 🚀</span>
           </Typography>
+
           <Typography
             variant="h5"
             component="p"
             sx={{
-              color: '#444',
-              mb: 4,
-              maxWidth: 600,
-              mx: 'auto',
+              color: "#444",
+              mb: 5,
+              maxWidth: 700,
+              mx: "auto",
               fontWeight: 400,
-              fontSize: { xs: '1.2rem', md: '1.5rem' },
-              opacity: 0.9,
+              fontSize: { xs: "1.2rem", md: "1.5rem" },
+              textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              lineHeight: 1.6,
             }}
           >
-            Empowering students, employers, and schools to connect and grow.
+            Discover amazing opportunities, build your future, and take the first step toward your dream career. Join
+            thousands of students already making their mark!
+          </Typography>
+
+          {/* Enhanced Search Bar */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            style={{ width: "100%", maxWidth: 600, margin: "0 auto 40px" }}
+          >
+            <Box
+              component="form"
+              onSubmit={handleSearch}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                width: "100%",
+                borderRadius: "30px",
+                boxShadow: "0 15px 40px rgba(0,0,0,0.2)",
+                overflow: "hidden",
+                bgcolor: "rgba(255,255,255,0.98)",
+                backdropFilter: "blur(12px)",
+                height: 68,
+                border: "3px solid rgba(255,107,0,0.2)",
+              }}
+            >
+              <InputBase
+                sx={{
+                  ml: 4,
+                  flex: 1,
+                  fontSize: "1.3rem",
+                  color: "#333",
+                  fontWeight: 500,
+                }}
+                placeholder="Search for your dream job... 💼"
+                inputProps={{ "aria-label": "search jobs" }}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <IconButton
+                type="submit"
+                sx={{
+                  p: "18px",
+                  bgcolor: "#FF6B00",
+                  color: "#fff",
+                  borderRadius: "0 30px 30px 0",
+                  height: "100%",
+                  width: 90,
+                  "&:hover": {
+                    bgcolor: "#E65C00",
+                    transform: "scale(1.05) translateX(5px)",
+                  },
+                  transition: "all 0.4s ease",
+                }}
+                aria-label="search"
+              >
+                <SearchIcon sx={{ fontSize: 30 }} />
+              </IconButton>
+            </Box>
+          </motion.div>
+
+          {/* CTA Button */}
+          {!user && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.6 }}
+            >
+              <Button
+                variant="contained"
+                size="large"
+                sx={{
+                  background: "linear-gradient(135deg, #FF8C00 0%, #FF6B00 100%)",
+                  color: "white",
+                  fontWeight: 700,
+                  px: 7,
+                  py: 2.5,
+                  borderRadius: "30px",
+                  fontSize: "1.4rem",
+                  boxShadow: "0 10px 30px rgba(255,107,0,0.5)",
+                  textTransform: "none",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 15px 45px rgba(255,107,0,0.7)",
+                  },
+                  transition: "all 0.4s ease",
+                }}
+                onClick={() => navigate("/signup")}
+              >
+                Start Your Journey ✨
+              </Button>
+            </motion.div>
+          )}
+        </motion.div>
+      </Box>
+
+      {/* Features Section with Enhanced Design */}
+      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 }, position: "relative" }}>
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          <motion.div variants={slideInVariants}>
+            <Typography
+              variant="h2"
+              sx={{
+                textAlign: "center",
+                fontWeight: 800,
+                mb: 2,
+                color: "#222",
+                fontSize: { xs: "2.5rem", md: "3.5rem" },
+              }}
+            >
+              Why Choose Jobify? 🌟
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                textAlign: "center",
+                mb: 8,
+                color: "#555",
+                maxWidth: 600,
+                mx: "auto",
+                fontSize: { xs: "1.1rem", md: "1.3rem" },
+              }}
+            >
+              We're here to make your job search journey exciting, simple, and successful!
+            </Typography>
+          </motion.div>
+
+          <Grid container spacing={4} justifyContent="center">
+            {features.map((feature, index) => (
+              <Grid item xs={12} sm={6} md={4} key={feature.title}>
+                <motion.div variants={slideInVariants} whileHover="hover" custom={index} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.6, delay: index * 0.2 }}>
+                  <Card
+                    sx={{
+                      height: "100%",
+                      borderRadius: "25px",
+                      border: "none",
+                      background: "#fff",
+                      boxShadow: "0 15px 35px rgba(0,0,0,0.1)",
+                      overflow: "hidden",
+                      position: "relative",
+                      "&:hover": {
+                        transform: "translateY(-12px)",
+                        boxShadow: "0 25px 55px rgba(0,0,0,0.2)",
+                      },
+                      transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                    }}
+                  >
+                    <CardContent sx={{ p: 5, textAlign: "center", position: "relative" }}>
+                      {/* Gradient background accent */}
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 8,
+                          background: feature.bgGradient,
+                        }}
+                      />
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          mb: 4,
+                          width: 90,
+                          height: 90,
+                          borderRadius: "50%",
+                          background: feature.bgGradient,
+                          mx: "auto",
+                          boxShadow: `0 10px 30px ${feature.color}60`,
+                        }}
+                      >
+                        {React.cloneElement(feature.icon, { sx: { fontSize: 48, color: "#fff" } })}
+                      </Box>
+
+                      <Typography variant="h5" component="div" sx={{ fontWeight: 700, mb: 2, color: "#222" }}>
+                        {feature.title}
+                      </Typography>
+
+                      <Typography variant="body1" sx={{ color: "#555", lineHeight: 1.8, fontSize: "1.15rem" }}>
+                        {feature.description}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </motion.div>
+      </Container>
+
+      {/* Stats Section */}
+      <Box
+        sx={{
+          background: "linear-gradient(135deg, #FF6B00 0%, #222 100%)",
+          py: { xs: 8, md: 12 },
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <Container maxWidth="lg">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.9 }}
+          >
+            <Typography
+              variant="h3"
+              sx={{
+                textAlign: "center",
+                fontWeight: 800,
+                mb: 8,
+                color: "#fff",
+                textShadow: "0 5px 10px rgba(0,0,0,0.4)",
+                fontSize: { xs: "2.8rem", md: "4rem" },
+              }}
+            >
+              Join Our Growing Community 🎉
+            </Typography>
+
+            <Grid container spacing={4}>
+              {[
+                { number: "5,000+", label: "Students Connected", icon: "👥" },
+                { number: "1,200+", label: "Jobs Posted", icon: "💼" },
+                { number: "850+", label: "Success Stories", icon: "⭐" },
+                { number: "200+", label: "Partner Companies", icon: "🏢" },
+              ].map((stat, index) => (
+                <Grid item xs={6} md={3} key={stat.label}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.7, y: 20 }}
+                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.7, delay: index * 0.15 }}
+                  >
+                    <Box sx={{ textAlign: "center", color: "#fff" }}>
+                      <Typography variant="h4" sx={{ fontSize: "2.5rem", mb: 1.5 }}>
+                        {stat.icon}
+                      </Typography>
+                      <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
+                        {stat.number}
+                      </Typography>
+                      <Typography variant="body1" sx={{ opacity: 0.9, fontSize: "1.1rem" }}>
+                        {stat.label}
+                      </Typography>
+                    </Box>
+                  </motion.div>
+                </Grid>
+              ))}
+            </Grid>
+          </motion.div>
+        </Container>
+      </Box>
+
+      {/* Testimonials Section */}
+      <Container maxWidth="lg" sx={{ py: { xs: 8, md: 12 } }}>
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.8 }}
+        >
+          <Typography
+            variant="h2"
+            sx={{
+              textAlign: "center",
+              fontWeight: 800,
+              mb: 2,
+              color: "#222",
+              fontSize: { xs: "2.5rem", md: "3.5rem" },
+            }}
+          >
+            Success Stories 💫
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{
+              textAlign: "center",
+              mb: 8,
+              color: "#555",
+              maxWidth: 600,
+              mx: "auto",
+              fontSize: { xs: "1.1rem", md: "1.3rem" },
+            }}
+          >
+            Hear from students who found their perfect opportunities through Jobify
           </Typography>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ width: '100%', maxWidth: 600, margin: '0 auto' }}
-        >
-          <Box
-            component="form"
-            onSubmit={handleSearch}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              width: '100%',
-              maxWidth: 600,
-              margin: '0 auto',
-              borderRadius: '12px',
-              boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
-              overflow: 'hidden',
-              bgcolor: 'background.paper',
-              height: 56,
-            }}
-        >
-          <InputBase
-              sx={{
-                ml: 3,
-                flex: 1,
-                fontSize: '1.1rem',
-                color: '#222',
-              }}
-              placeholder="Search job titles, companies, or keywords"
-            inputProps={{ 'aria-label': 'search jobs' }}
-            value={search}
-              onChange={(e) => setSearch(e.target.value)}
-          />
-            <IconButton 
-              type="submit" 
-              sx={{
-                 p: '12px',
-                 bgcolor: '#FF6B00',
-                 color: '#fff',
-                 borderRadius: '0 12px 12px 0',
-                 height: '100%',
-                 '&:hover': { bgcolor: '#E65C00' }
-              }}
-              aria-label="search"
-            >
-            <SearchIcon />
-          </IconButton>
-          </Box>
-        </motion.div>
-
-         {!user && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            style={{ marginTop: theme.spacing(4) }}
-          >
-            <Button 
-              variant="contained" 
-              size="large"
-              sx={{ 
-                bgcolor: '#FF6B00',
-                color: 'white',
-                fontWeight: 700, 
-                px: 4, 
-                py: 1.5, 
-                borderRadius: '8px', 
-                fontSize: '1.1rem', 
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
-                '&:hover': { bgcolor: '#E65C00' } 
-              }} 
-              onClick={() => navigate('/signup')}>
-            Get Started
-          </Button>
-          </motion.div>
-         )}
-
-        <Container maxWidth="lg" sx={{ mt: { xs: 8, md: 12 } }}>
+        <Grid container spacing={4} justifyContent="center">
+          {testimonials.map((testimonial, index) => (
+            <Grid item xs={12} md={4} key={testimonial.name}>
               <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.8 }}
+                transition={{ duration: 0.7, delay: index * 0.25 }}
+                whileHover={{ y: -12, boxShadow: "0 20px 50px rgba(0,0,0,0.15)" }}
               >
-            <Typography variant="h3" sx={{ textAlign: 'center', fontWeight: 700, mb: 6, color: '#222' }}>
-              Why Jobify?
-            </Typography>
-          </motion.div>
-          <Grid container spacing={4} justifyContent="center">
-            {features.map((feature, index) => (
-              <Grid item xs={12} sm={6} md={4} key={feature.title} >
-                <motion.div variants={cardVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} custom={index}>
-                  <Card
-                    sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                      height: '100%',
-                      bgcolor: '#fff',
-                      color: '#222',
-                      borderRadius: '16px',
-                      border: '1px solid #eee',
-                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-                      transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-                      '&:hover': {
-                        transform: 'translateY(-8px)',
-                        boxShadow: '0 15px 40px rgba(0,0,0,0.2)',
-                      }
-                    }}
-                  >
-                    <CardContent sx={{ flexGrow: 1, textAlign: 'center', p: { xs: 3, md: 5 } }}>
-                       <Box sx={{
-                         display: 'flex',
-                         justifyContent: 'center',
-                  alignItems: 'center',
-                         mb: 4,
-                         width: 64,
-                         height: 64,
-                         borderRadius: '50%',
-                         bgcolor: '#FF6B00',
-                         mx: 'auto',
-                         boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                }}>
-                         {React.cloneElement(feature.icon, { width: 40, height: 40, style: { color: '#fff' } })}
-                       </Box>
-                      <Typography variant="h6" component="div" sx={{ fontWeight: 700, mb: 1.5, color: '#222' }}>
-                      {feature.title}
+                <Card
+                  sx={{
+                    height: "100%",
+                    borderRadius: "20px",
+                    background: "#fff",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+                    border: `3px solid ${testimonial.color}40`,
+                    transition: "all 0.4s ease",
+                    "&:hover": {
+                      borderColor: `${testimonial.color}60`,
+                    },
+                  }}
+                >
+                  <CardContent sx={{ p: 4 }}>
+                    <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+                      <FormatQuoteIcon sx={{ fontSize: 52, color: testimonial.color, opacity: 0.8 }} />
+                    </Box>
+
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontStyle: "italic",
+                        mb: 3,
+                        color: "#333",
+                        lineHeight: 1.8,
+                        fontSize: "1.15rem",
+                      }}
+                    >
+                      "{testimonial.quote}"
                     </Typography>
-                      <Typography variant="body1" color="text.secondary" sx={{ color: '#555', lineHeight: 1.7 }}>
-                      {feature.description}
-                    </Typography>
+
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Avatar
+                        src={testimonial.image}
+                        sx={{
+                          width: 64,
+                          height: 64,
+                          mr: 3,
+                          border: `4px solid ${testimonial.color}`,
+                        }}
+                      />
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: "#222" }}>
+                          {testimonial.name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: testimonial.color, fontWeight: 600, fontSize: "1rem" }}>
+                          {testimonial.title}
+                        </Typography>
+                      </Box>
+                    </Box>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -327,70 +708,81 @@ const Landing = () => {
         </Grid>
       </Container>
 
-        <Container maxWidth="lg" sx={{ mt: { xs: 8, md: 12 }, pb: { xs: 8, md: 12 } }}>
+      {/* Final CTA Section */}
+      <Box
+        sx={{
+          background: "linear-gradient(135deg, #FF6B00 0%, #F7931E 100%)",
+          py: { xs: 10, md: 15 },
+          textAlign: "center",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <Container maxWidth="md">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.8 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.9 }}
           >
-            <Typography variant="h3" sx={{ textAlign: 'center', fontWeight: 700, mb: 6, color: '#222' }}>
-              What Users Say
-        </Typography>
-          </motion.div>
-          <Grid container spacing={4} justifyContent="center">
-            {testimonials.map((testimonial, index) => (
-              <Grid item xs={12} sm={6} md={4} key={testimonial.name}>
-              <motion.div
-                  variants={combinedTestimonialVariants(index)}
-                initial="hidden"
-                whileInView="visible"
-                  viewport={{ once: true, amount: 0.3 }}
-                whileHover="hover"
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: 800,
+                mb: 4,
+                color: "#fff",
+                textShadow: "0 5px 10px rgba(0,0,0,0.4)",
+                fontSize: { xs: "2.8rem", md: "4rem" },
+              }}
+            >
+              Ready to Start Your Journey? 🚀
+            </Typography>
+
+            <Typography
+              variant="h6"
+              sx={{
+                mb: 6,
+                color: "rgba(255,255,255,0.95)",
+                maxWidth: 600,
+                mx: "auto",
+                fontSize: { xs: "1.3rem", md: "1.5rem" },
+              }}
+            >
+              Join thousands of students who have already found their perfect opportunities. Your dream job is just one
+              click away!
+            </Typography>
+
+            {!user && (
+              <Button
+                variant="contained"
+                size="large"
+                sx={{
+                  bgcolor: "#fff",
+                  color: "#FF6B00",
+                  fontWeight: 800,
+                  px: 8,
+                  py: 3,
+                  borderRadius: "30px",
+                  fontSize: "1.5rem",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+                  textTransform: "none",
+                  "&:hover": {
+                    bgcolor: "#f0f0f0",
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 15px 40px rgba(0,0,0,0.3)",
+                  },
+                  transition: "all 0.4s ease",
+                }}
+                onClick={() => navigate("/signup")}
               >
-                <Card sx={{
-                  display: 'flex',
-                    flexDirection: 'column', 
-                    height: '100%', 
-                    bgcolor: '#fff',
-                    color: '#222',
-                    borderRadius: '16px',
-                    boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-                    border: '1px solid #eee',
-                    transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-                  '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 15px 40px rgba(0,0,0,0.2)',
-                    }
-                }}>
-                    <CardContent sx={{ flexGrow: 1, p: { xs: 3, md: 5 } }}>
-                       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-                         <FormatQuoteIcon sx={{ fontSize: 64, color: '#FF6B00' }} />
-                       </Box>
-                      <Typography variant="body1" fontStyle="italic" mb={2.5} sx={{ color: '#444', lineHeight: 1.6 }}>
-                      "{testimonial.quote}"
-                    </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto' }}>
-                        <Avatar src={testimonial.image} alt={testimonial.name} sx={{ mr: 2, border: '2px solid #FF6B00' }}/>
-                        <Box textAlign="left">
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#222' }}>
-                      {testimonial.name}
-                    </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ color: '#555' }}>
-                      {testimonial.title}
-                    </Typography>
-                  </Box>
-                      </Box>
-                    </CardContent>
-                </Card>
-              </motion.div>
-            </Grid>
-          ))}
-        </Grid>
+                Get Started Now! 🎯
+              </Button>
+            )}
+          </motion.div>
         </Container>
       </Box>
     </Box>
-  );
-};
+  )
+}
 
-export default Landing; 
+export default Landing 
