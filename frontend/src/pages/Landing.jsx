@@ -23,6 +23,7 @@ import { motion } from "framer-motion"
 import { useAuth } from "../contexts/AuthContext"
 import { useTheme } from "@mui/material/styles"
 import useMediaQuery from "@mui/material/useMediaQuery"
+import FloatingNames from "../components/FloatingNames"
 
 // Enhanced floating animation variants
 const floatingVariants = {
@@ -131,78 +132,6 @@ const testimonials = [
   },
 ]
 
-// Floating geometric shapes component
-const FloatingShapes = () => (
-  <Box sx={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", overflow: "hidden", zIndex: 0 }}>
-    {/* Large floating sphere */}
-    <motion.div
-      variants={floatingVariants}
-      animate="animate"
-      style={{
-        position: "absolute",
-        top: "10%",
-        left: "5%",
-        width: 120,
-        height: 120,
-        borderRadius: "50%",
-        background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-        opacity: 0.3,
-      }}
-    />
-
-    {/* Geometric diamond */}
-    <motion.div
-      variants={pulseVariants}
-      animate="animate"
-      style={{
-        position: "absolute",
-        top: "20%",
-        right: "10%",
-        width: 80,
-        height: 80,
-        background: "linear-gradient(135deg, #FF8C00 0%, #FFAA00 100%)",
-        transform: "rotate(45deg)",
-        opacity: 0.35,
-      }}
-    />
-
-    {/* Floating ring */}
-    <motion.div
-      variants={floatingVariants}
-      animate="animate"
-      style={{
-        position: "absolute",
-        bottom: "20%",
-        left: "15%",
-        width: 100,
-        height: 100,
-        border: "8px solid #FFAA00",
-        borderRadius: "50%",
-        opacity: 0.4,
-      }}
-    />
-
-    {/* Small floating dots */}
-    {[...Array(6)].map((_, i) => (
-      <motion.div
-        key={i}
-        variants={floatingVariants}
-        animate="animate"
-        style={{
-          position: "absolute",
-          top: `${20 + i * 15}%`,
-          right: `${5 + i * 8}%`,
-          width: 20,
-          height: 20,
-          borderRadius: "50%",
-          background: `#FF6B00`,
-          opacity: 0.5,
-        }}
-      />
-    ))}
-  </Box>
-)
-
 const Landing = () => {
   const [search, setSearch] = useState("")
   const navigate = useNavigate()
@@ -237,7 +166,8 @@ const Landing = () => {
       <Box
         sx={{
           position: "relative",
-          minHeight: "100vh",
+          minHeight: "60vh",
+          width: "100%",
           background: "linear-gradient(135deg, #FF6B00 0%, #FFD6B0 50%, #FFFFFF 100%)",
           display: "flex",
           flexDirection: "column",
@@ -247,8 +177,10 @@ const Landing = () => {
           textAlign: "center",
           overflow: "hidden",
         }}
+        style={{paddingTop: 32, 
+                height:895}}
       >
-        <FloatingShapes />
+        <FloatingNames />
 
         {/* Animated cursor follower */}
         <motion.div
@@ -438,6 +370,33 @@ const Landing = () => {
             </motion.div>
           )}
         </motion.div>
+
+        {/* SVG Wave Divider for Smooth Transition */}
+        <Box
+          sx={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: -1,
+            width: "100%",
+            zIndex: 10,
+            lineHeight: 0,
+          }}
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 1440 80"
+            width="100%"
+            height="80"
+            preserveAspectRatio="none"
+            style={{ display: "block" }}
+          >
+            <path
+              d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z"
+              fill="#fff"
+            />
+          </svg>
+        </Box>
       </Box>
 
       {/* Features Section with Enhanced Design */}
@@ -542,67 +501,185 @@ const Landing = () => {
         </motion.div>
       </Container>
 
+      {/* Wave Divider for transition from Why Choose Jobify to Stats */}
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: { xs: 60, md: 80 },
+          zIndex: 2,
+          background: "transparent",
+          lineHeight: 0,
+        }}
+        aria-hidden="true"
+      >
+        <svg
+          viewBox="0 0 1440 80"
+          width="100%"
+          height="80"
+          preserveAspectRatio="none"
+          style={{ display: "block" }}
+        >
+          <defs>
+            <linearGradient id="statsWaveGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#FFB366" />
+              <stop offset="86%" stopColor="#FFF6ED" />
+              <stop offset="100%" stopColor="#fff" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z"
+            fill="url(#statsWaveGrad)"
+          />
+        </svg>
+      </Box>
+
       {/* Stats Section */}
       <Box
         sx={{
-          background: "linear-gradient(135deg, #FF6B00 0%, #222 100%)",
+          width: "100%",
           py: { xs: 8, md: 12 },
+          background: "linear-gradient(135deg, #FFB366 0%, #FFF6ED 60%, #fff 100%)",
           position: "relative",
-          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        <Container maxWidth="lg">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.9 }}
+        <Container maxWidth="md" sx={{ px: 2 }}>
+          <Typography
+            variant="h3"
+            sx={{
+              textAlign: "center",
+              fontWeight: 800,
+              mb: { xs: 6, md: 10 },
+              color: "#222",
+              fontSize: { xs: "2.2rem", md: "3rem" },
+              letterSpacing: "-0.02em",
+            }}
           >
-            <Typography
-              variant="h3"
-              sx={{
-                textAlign: "center",
-                fontWeight: 800,
-                mb: 8,
-                color: "#fff",
-                textShadow: "0 5px 10px rgba(0,0,0,0.4)",
-                fontSize: { xs: "2.8rem", md: "4rem" },
-              }}
-            >
-              Join Our Growing Community 🎉
-            </Typography>
-
-            <Grid container spacing={4}>
-              {[
-                { number: "5,000+", label: "Students Connected", icon: "👥" },
-                { number: "1,200+", label: "Jobs Posted", icon: "💼" },
-                { number: "850+", label: "Success Stories", icon: "⭐" },
-                { number: "200+", label: "Partner Companies", icon: "🏢" },
-              ].map((stat, index) => (
-                <Grid item xs={6} md={3} key={stat.label}>
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.7, y: 20 }}
-                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.7, delay: index * 0.15 }}
-                  >
-                    <Box sx={{ textAlign: "center", color: "#fff" }}>
-                      <Typography variant="h4" sx={{ fontSize: "2.5rem", mb: 1.5 }}>
-                        {stat.icon}
-                      </Typography>
-                      <Typography variant="h3" sx={{ fontWeight: 800, mb: 1 }}>
-                        {stat.number}
-                      </Typography>
-                      <Typography variant="body1" sx={{ opacity: 0.9, fontSize: "1.1rem" }}>
-                        {stat.label}
-                      </Typography>
-                    </Box>
-                  </motion.div>
-                </Grid>
-              ))}
-            </Grid>
-          </motion.div>
+            Join Our Growing Community{" "}
+            <span role="img" aria-label="rocket">
+              🚀
+            </span>
+          </Typography>
+          <Grid
+            container
+            spacing={{ xs: 4, md: 0 }}
+            justifyContent="center"
+            alignItems="flex-start"
+            sx={{
+              maxWidth: 800,
+              mx: "auto",
+              mb: 2,
+            }}
+          >
+            {[
+              {
+                emoji: "👥",
+                number: "5,000+",
+                label: "Students Connected",
+              },
+              {
+                emoji: "💼",
+                number: "1,200+",
+                label: "Jobs Posted",
+              },
+              {
+                emoji: "⭐",
+                number: "850+",
+                label: "Success Stories",
+              },
+              {
+                emoji: "🏢",
+                number: "200+",
+                label: "Partner Companies",
+              },
+            ].map((stat) => (
+              <Grid
+                item
+                xs={6}
+                md={3}
+                key={stat.label}
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  mb: { xs: 4, md: 0 },
+                }}
+              >
+                <Typography
+                  component="div"
+                  sx={{
+                    fontSize: { xs: "2.2rem", md: "2.7rem" },
+                    mb: 1,
+                    lineHeight: 1,
+                  }}
+                  aria-label={stat.label + " icon"}
+                >
+                  {stat.emoji}
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 800,
+                    color: "#222",
+                    fontSize: { xs: "1.7rem", md: "2.1rem" },
+                    mb: 0.5,
+                  }}
+                >
+                  {stat.number}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "#555",
+                    fontSize: { xs: "1.05rem", md: "1.1rem" },
+                    textAlign: "center",
+                    fontWeight: 500,
+                  }}
+                >
+                  {stat.label}
+                </Typography>
+              </Grid>
+            ))}
+          </Grid>
         </Container>
+      </Box>
+
+      {/* Scallop Divider for transition from Stats to Success Stories */}
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: "80px",
+          marginBottom: "-1px",
+          zIndex: 2,
+          background: "transparent",
+          lineHeight: 0,
+        }}
+        aria-hidden="true"
+      >
+        <svg
+          viewBox="0 0 1440 80"
+          width="100%"
+          height="60"
+          preserveAspectRatio="none"
+          style={{ display: "block" }}
+        >
+          <g>
+            {Array.from({ length: 25 }).map((_, i) => (
+              <circle
+                key={i}
+                cx={i * 60}
+                cy="1"
+                r="78"
+                fill="#FFB366"
+              />
+            ))}
+          </g>
+        </svg>
       </Box>
 
       {/* Testimonials Section */}
@@ -707,6 +784,39 @@ const Landing = () => {
           ))}
         </Grid>
       </Container>
+
+      {/* Blob Transition for Success Stories to CTA */}
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: { xs: 120, md: 180 },
+          zIndex: 2,
+          background: "transparent",
+          lineHeight: 0,
+        }}
+        aria-hidden="true"
+      >
+        <svg
+          viewBox="0 0 1440 180"
+          width="100%"
+          height="180"
+          preserveAspectRatio="none"
+          style={{ display: "block" }}
+        >
+          <defs>
+            <linearGradient id="ctaBlobGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#FF6B00" />
+              <stop offset="100%" stopColor="#F7931E" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M0,80 Q360,160 720,100 T1440,120 L1440,180 L0,180 Z"
+            fill="url(#ctaBlobGrad)"
+            fillOpacity="1"
+          />
+        </svg>
+      </Box>
 
       {/* Final CTA Section */}
       <Box

@@ -1,0 +1,31 @@
+/* FloatingNames animation keyframes and classes */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  @keyframes popIn {
+    to { transform: scale(1); opacity: 1; }
+  }
+  .animate-pop-in {
+    transform: scale(0);
+    opacity: 0;
+    animation: popIn 0.4s forwards;
+    
+  }
+
+  @keyframes gentleFloat {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-12px); }
+  }
+  .animate-gentle-float {
+    animation: gentleFloat 4s ease-in-out infinite alternate;
+  }
+
+  @keyframes popOut {
+    to { transform: scale(0); opacity: 0; }
+  }
+  .animate-pop-out {
+    animation: popOut 0.3s forwards;
+  }
+}
