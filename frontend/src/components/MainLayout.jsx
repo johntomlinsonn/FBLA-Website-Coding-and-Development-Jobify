@@ -9,6 +9,12 @@ import {
   Container,
   IconButton,
   Link as MuiLink,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Grid,
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -18,6 +24,9 @@ import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import InstagramIcon from '@mui/icons-material/Instagram';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const footerLinks = [
   { label: 'Home', href: '/' },
@@ -35,6 +44,10 @@ const MainLayout = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const isMobile = useMediaQuery('(max-width:900px)');
+
+  const handleDrawerToggle = () => setMobileOpen((prev) => !prev);
 
   // Add useEffect for chatbot script
   React.useEffect(() => {
@@ -59,8 +72,22 @@ const MainLayout = () => {
   const MainContentWrapper = isLandingPage ? Box : Container;
   const wrapperSx = isLandingPage ? { width: '100%', flexGrow: 1 } : { flexGrow: 1, py: 4, pb: 16, px: { xs: 2, md: 'auto' } }; // Adjust padding for non-landing pages as needed
 
+  // Navigation links (reuse for desktop and mobile)
+  const navLinks = [
+    { label: 'Post a Job', onClick: () => { user ? navigate('/jobs/create') : navigate('/login'); } },
+    user && { label: 'Account', onClick: () => navigate('/account'), icon: <SettingsIcon /> },
+    user && { label: 'Browse Jobs', onClick: () => navigate('/jobs') },
+    user?.is_staff && { label: 'Admin Panel', onClick: () => navigate('/admin') },
+    user
+      ? { label: 'Logout', onClick: handleLogout, icon: <LogoutIcon /> }
+      : { label: 'Login', onClick: () => navigate('/login') },
+    !user && { label: 'Get Started', onClick: () => navigate('/signup'), isButton: true },
+  ].filter(Boolean);
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Orange accent bar */}
+      {/* <Box sx={{ width: '100%', height: 4, background: 'linear-gradient(90deg, #FF6B00 0%, #FF8C00 100%)', zIndex: 1301 }} /> */}
       {/* Chatbot container with highest z-index */}
       <Box
         sx={{
@@ -76,212 +103,346 @@ const MainLayout = () => {
           }
         }}
       />
-      
-      <AppBar position="static" color="default" elevation={0} sx={{ 
-        background: 'rgba(255,255,255,0.95)', 
-        boxShadow: '0 2px 8px 0 rgba(0,0,0,0.03)', 
-        pt: 2,
-        position: 'relative',
-        zIndex: 1200 
-      }}>
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              cursor: 'pointer',
-              '&:hover': { opacity: 0.8 }
-            }}
-            onClick={() => navigate('/')}
-          >
-            <Typography variant="h5" sx={{ fontWeight: 700, color: '#FF6B00', letterSpacing: 2, mr: 1 }}>
-            Jobify
-          </Typography>
-            <motion.div
-              initial={{ scale: 1 }}
-              animate={{ 
-                scale: [1, 1.1, 1],
-                rotate: [0, 5, -5, 0]
+      <AppBar 
+        position="static" 
+        color="default" 
+        elevation={0} 
+        sx={{ 
+          background: 'rgba(255,255,255,0.98)', 
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 2px 12px 0 rgba(0,0,0,0.05)', 
+          pt: 2,
+          pb: 2,
+          position: 'relative',
+          zIndex: 1200,
+          transition: 'all 0.3s ease-in-out',
+          '&:hover': {
+            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+          }
+        }}
+      >
+        <Container maxWidth="xl">
+          <Toolbar sx={{ 
+            justifyContent: 'space-between',
+            px: { xs: 0, sm: 2 },
+            minHeight: { xs: 64, sm: 72 }
+          }}>
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease-in-out',
+                '&:hover': { 
+                  transform: 'scale(1.02)',
+                  opacity: 0.9 
+                }
               }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatType: "reverse"
-              }}
+              onClick={() => navigate('/')}
             >
-              <svg width="32" height="32" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="orangeGrad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#FF6B00" />
-                    <stop offset="1" stopColor="#FFD6B0" />
-                  </linearGradient>
-                </defs>
-                <circle cx="60" cy="60" r="50" fill="url(#orangeGrad)" />
-                <rect x="35" y="35" width="50" height="50" rx="12" fill="#fff" opacity="0.7" />
-                <rect x="50" y="50" width="20" height="20" rx="5" fill="#FF6B00" />
-              </svg>
-            </motion.div>
-          </Box>
-          
-          <Box>
-            <Button
-              color="inherit"
-              sx={{ color: '#222', fontWeight: 600, mr: 2 }}
-              onClick={() => { user ? navigate('/jobs/create') : navigate('/login'); }}
-            >
-              Post a Job
-            </Button>
-            {user ? (
-              <>
-                <Button
-                  color="inherit"
-                  sx={{ color: '#222', fontWeight: 600, mr: 1 }}
-                  onClick={() => navigate('/account')}
-                  startIcon={<SettingsIcon />}
-                >
-                  Account
-                </Button>
-                <Button 
-                  color="inherit" 
-                  sx={{ color: '#222', fontWeight: 600, mr: 2 }} 
-                  onClick={() => navigate('/jobs')}
-                >
-                  Browse Jobs
-                </Button>
-                {user?.is_staff && (
-                  <Button 
-                color="inherit"
-                    sx={{ color: '#222', fontWeight: 600, mr: 2 }} 
-                    onClick={() => navigate('/admin')}
-                  >
-                    Admin Panel
-                  </Button>
-                )}
-                <Button
-                  color="inherit"
-                  sx={{ 
-                    color: '#222', 
-                    fontWeight: 600,
-                    '&:hover': {
-                      color: '#FF6B00',
-                      backgroundColor: 'rgba(255, 107, 0, 0.08)'
-                    }
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  fontWeight: 800, 
+                  background: 'linear-gradient(45deg, #FF6B00, #FF8C00)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: 1.5,
+                  mr: 1.5,
+                  fontSize: { xs: '1.5rem', sm: '1.75rem' }
+                }}
+              >
+                Jobify
+              </Typography>
+              <motion.div
+                initial={{ scale: 1 }}
+                animate={{
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, -5, 0]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              >
+                <img
+                  src="/logo.svg"
+                  alt="Jobify Logo"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))' // Add a subtle shadow if needed
                   }}
-                  onClick={handleLogout}
-                  startIcon={<LogoutIcon />}
-                >
-                  Logout
-                </Button>
-              </>
-          ) : (
-              <>
-                <Button 
-                  color="inherit" 
-                  sx={{ color: '#222', fontWeight: 600, mr: 2 }} 
-                  onClick={() => navigate('/login')}
-                >
-                Login
-              </Button>
-                <Button 
-                  variant="contained" 
-                  sx={{ 
-                    background: '#FF6B00', 
-                    color: '#fff', 
-                    fontWeight: 600, 
-                    boxShadow: 2,
-                    '&:hover': {
-                      backgroundColor: '#E65C00'
-                    }
-                  }} 
-                  onClick={() => navigate('/signup')}
-                >
-                  Get Started
-              </Button>
-              </>
-            )}
+                />
+              </motion.div>
             </Box>
-        </Toolbar>
+            {/* Desktop Nav */}
+            {!isMobile && (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                gap: { xs: 1, sm: 2 },
+                flexWrap: { xs: 'wrap', sm: 'nowrap' }
+              }}>
+                {navLinks.map((link, i) => (
+                  link.isButton ? (
+                    <Button 
+                      key={link.label}
+                      variant="contained" 
+                      sx={{ 
+                        background: 'linear-gradient(45deg, #FF6B00, #FF8C00)',
+                        color: '#fff', 
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        px: 3,
+                        py: 1,
+                        borderRadius: 2,
+                        boxShadow: '0 4px 14px 0 rgba(255, 107, 0, 0.3)',
+                        transition: 'all 0.3s ease-in-out',
+                        ml: 1,
+                        '&:hover': {
+                          background: 'linear-gradient(45deg, #FF8C00, #FF6B00)',
+                          boxShadow: '0 6px 20px 0 rgba(255, 107, 0, 0.4)',
+                          transform: 'translateY(-1px)'
+                        }
+                      }} 
+                      onClick={link.onClick}
+                    >
+                      {link.label}
+                    </Button>
+                  ) : (
+                    <Button
+                      key={link.label}
+                      color="inherit"
+                      startIcon={link.icon}
+                      sx={{ 
+                        color: '#222', 
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        px: 2,
+                        py: 1,
+                        borderRadius: 2,
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 107, 0, 0.08)',
+                          color: '#FF6B00'
+                        }
+                      }}
+                      onClick={link.onClick}
+                    >
+                      {link.label}
+                    </Button>
+                  )
+                ))}
+              </Box>
+            )}
+            {/* Mobile Hamburger */}
+            {isMobile && (
+              <IconButton
+                edge="end"
+                color="inherit"
+                aria-label="menu"
+                onClick={handleDrawerToggle}
+                sx={{ ml: 1, color: '#FF6B00', zIndex: 1302 }}
+              >
+                {mobileOpen ? <CloseIcon sx={{ fontSize: 32 }} /> : <MenuIcon sx={{ fontSize: 32 }} />}
+              </IconButton>
+            )}
+          </Toolbar>
+        </Container>
+        {/* Mobile Drawer */}
+        <Drawer
+          anchor="right"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          sx={{
+            display: { xs: "block", md: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: "100%",
+              maxWidth: 300,
+              bgcolor: "#fff",
+              borderLeft: "1px solid #eee",
+              boxShadow: "-5px 0 15px rgba(0,0,0,0.05)",
+            },
+          }}
+        >
+          <Box
+            onClick={handleDrawerToggle}
+            sx={{ textAlign: "center", pt: 3, pb: 2, borderBottom: "1px solid #eee" }}
+          >
+            <Box
+              sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}
+            >
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  flexGrow: 1,
+                  fontWeight: 800,
+                  background: "linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  letterSpacing: 1.5,
+                  mr: 1,
+                }}
+              >
+                Jobify
+              </Typography>
+              <motion.div
+                initial={{ scale: 1 }}
+                animate={{
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, -5, 0]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              >
+                <img
+                  src="/logo.svg"
+                  alt="Jobify Logo"
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0px 1px 3px rgba(0,0,0,0.1))'
+                  }}
+                />
+              </motion.div>
+              <IconButton
+                onClick={handleDrawerToggle}
+                sx={{ position: "absolute", right: 8, top: 8 }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            <List>
+              {navLinks.map((item) => (
+                <ListItem key={item.label} disablePadding>
+                  <ListItemButton
+                    sx={{ textAlign: "center", py: 1.5 }}
+                    onClick={() => { handleDrawerToggle(); item.onClick(); }}
+                  >
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{ fontSize: "1.1rem", fontWeight: 600, color: "#333" }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        </Drawer>
       </AppBar>
 
-      {/* Main Content Container - Conditionally render Container or Box */}
-      <MainContentWrapper component="main" sx={wrapperSx}>
+      <MainContentWrapper sx={wrapperSx}>
         <Outlet />
       </MainContentWrapper>
 
       {/* Footer */}
-      <Box
-        sx={{
-          width: '100%',
-          background: '#fff',
-          color: '#222',
-          borderTop: '1px solid #eee',
-          pt: 6,
-          pb: 3,
-          px: { xs: 2, md: 8 },
-          mt: 8,
-          position: 'relative',
-          zIndex: 1300,
-        }}
-        component="footer"
-      >
-        <Container maxWidth="lg" sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between', gap: 4 }}>
-          {/* Logo */}
-          <Box sx={{ mb: { xs: 2, md: 0 } }}>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: '#FF6B00', letterSpacing: 2 }}>
-              Jobify
-            </Typography>
-          </Box>
-          {/* Links */}
-          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: { xs: 2, md: 0 } }}>
-            {footerLinks.map(link => (
-              <MuiLink 
-                key={link.label} 
-                href={link.href} 
-                underline="none" 
-                sx={{ 
-                  color: '#222', 
-                  fontWeight: 500, 
-                  fontSize: '1.1rem', 
-                  opacity: 0.85, 
-                  transition: 'opacity 0.2s', 
-                  '&:hover': { 
-                    opacity: 1, 
-                    color: '#FF6B00' 
-                  } 
-                }}
-              >
-                {link.label}
-              </MuiLink>
-            ))}
-          </Box>
-          {/* Socials & Copyright */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexDirection: { xs: 'column', md: 'row' }, width: { xs: '100%', md: 'auto' }, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {socialLinks.map(social => (
-                <IconButton
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.label}
-                  sx={{
-                    color: '#222', 
-                    transition: 'color 0.2s', 
-                    '&:hover': { 
-                      color: '#FF6B00',
-                      transform: 'translateY(-2px)',
-                      transition: 'all 0.2s ease-in-out'
-                    } 
+      <Box sx={{
+        background: 'rgba(255,255,255,0.98)', // Changed to match header background
+        backdropFilter: 'blur(8px)', // Added backdropFilter
+        color: '#222', // Text color needs to be dark for light background
+        py: { xs: 6, md: 8 },
+        textAlign: 'center',
+        borderTop: '5px solid #FF6B00', // Orange accent line
+      }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={4} justifyContent="center" alignItems="center">
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'center', md: 'flex-start' }, mb: { xs: 2, md: 0 } }}>
+                <Typography variant="h5" sx={{ 
+                  fontWeight: 800, 
+                  background: 'linear-gradient(45deg, #FF6B00, #FF8C00)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mr: 1,
+                  fontSize: { xs: '1.4rem', md: '1.75rem' }
+                }}>
+                  Jobify
+                </Typography>
+                <img
+                  src="/logo.svg"
+                  alt="Jobify Logo"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0px 1px 3px rgba(0,0,0,0.1))'
                   }}
-                >
-                  {social.icon}
-                </IconButton>
-              ))}
-            </Box>
-            <Box sx={{ textAlign: { xs: 'left', md: 'right' }, opacity: 0.7, fontSize: '1rem', ml: { md: 2 } }}>
-            © {new Date().getFullYear()} Jobify. All rights reserved.
-            </Box>
-          </Box>
+                />
+              </Box>
+              <Typography variant="body2" sx={{ color: '#555', mt: 2, maxWidth: 300, mx: { xs: 'auto', md: '0' }, textAlign: { xs: 'center', md: 'left' } }}>
+                Connecting students with their first job opportunities. Building futures, one placement at a time.
+              </Typography>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#222', textAlign: 'center' }}>
+                Quick Links
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+                {footerLinks.map((link) => (
+                  <MuiLink
+                    key={link.label}
+                    href={link.href}
+                    color="inherit"
+                    underline="none"
+                    sx={{
+                      color: '#555',
+                      fontWeight: 500,
+                      '&:hover': {
+                        color: '#FF6B00',
+                        transform: 'translateX(5px)',
+                      },
+                      transition: 'all 0.3s ease',
+                      fontSize: '1.05rem',
+                    }}
+                  >
+                    {link.label}
+                  </MuiLink>
+                ))}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#222', textAlign: 'center' }}>
+                Follow Us
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2 }}>
+                {socialLinks.map((link) => (
+                  <IconButton
+                    key={link.label}
+                    component={MuiLink}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: '#222',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        color: '#FF6B00',
+                        transform: 'scale(1.2)',
+                      },
+                      fontSize: '2rem',
+                    }}
+                    aria-label={link.label}
+                  >
+                    {link.icon}
+                  </IconButton>
+                ))}
+              </Box>
+            </Grid>
+          </Grid>
+          <Typography variant="body2" sx={{ color: '#888', mt: { xs: 6, md: 8 }, fontSize: '0.9rem' }}>
+            &copy; {new Date().getFullYear()} Jobify. All rights reserved.
+          </Typography>
         </Container>
       </Box>
     </Box>

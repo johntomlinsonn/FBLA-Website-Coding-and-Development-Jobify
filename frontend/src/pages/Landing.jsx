@@ -217,13 +217,13 @@ const Landing = () => {
               sx={{
                 width: 120,
                 height: 120,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
                 position: "relative",
+                borderRadius: "50%",
+                background: "#FFFFFF",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
                 "&::before": {
                   content: '""',
                   position: "absolute",
@@ -232,12 +232,21 @@ const Landing = () => {
                   right: -10,
                   bottom: -10,
                   borderRadius: "50%",
-                  background: "linear-gradient(135deg, rgba(255,107,53,0.5) 0%, rgba(247,147,30,0.5) 100%)",
+                  background: "rgba(255,255,255,0.7)",
                   zIndex: -1,
+                  filter: "blur(10px)",
                 },
               }}
             >
-              <WorkIcon sx={{ fontSize: 60, color: "#fff" }} />
+              <img 
+                src="/logo.svg" 
+                alt="Jobify Logo" 
+                style={{ 
+                  width: "70%",
+                  height: "70%", 
+                  objectFit: "contain",
+                }} 
+              />
             </Box>
           </motion.div>
 
@@ -548,22 +557,22 @@ const Landing = () => {
         }}
       >
         <Container maxWidth="md" sx={{ px: 2 }}>
-          <Typography
-            variant="h3"
-            sx={{
-              textAlign: "center",
-              fontWeight: 800,
+            <Typography
+              variant="h3"
+              sx={{
+                textAlign: "center",
+                fontWeight: 800,
               mb: { xs: 6, md: 10 },
               color: "#222",
               fontSize: { xs: "2.2rem", md: "3rem" },
               letterSpacing: "-0.02em",
-            }}
-          >
+              }}
+            >
             Join Our Growing Community{" "}
             <span role="img" aria-label="rocket">
               🚀
             </span>
-          </Typography>
+            </Typography>
           <Grid
             container
             spacing={{ xs: 4, md: 0 }}
@@ -575,7 +584,7 @@ const Landing = () => {
               mb: 2,
             }}
           >
-            {[
+              {[
               {
                 emoji: "👥",
                 number: "5,000+",
@@ -619,7 +628,7 @@ const Landing = () => {
                   aria-label={stat.label + " icon"}
                 >
                   {stat.emoji}
-                </Typography>
+                      </Typography>
                 <Typography
                   variant="h4"
                   sx={{
@@ -629,8 +638,8 @@ const Landing = () => {
                     mb: 0.5,
                   }}
                 >
-                  {stat.number}
-                </Typography>
+                        {stat.number}
+                      </Typography>
                 <Typography
                   variant="body1"
                   sx={{
@@ -640,11 +649,11 @@ const Landing = () => {
                     fontWeight: 500,
                   }}
                 >
-                  {stat.label}
-                </Typography>
-              </Grid>
-            ))}
-          </Grid>
+                        {stat.label}
+                      </Typography>
+                </Grid>
+              ))}
+            </Grid>
         </Container>
       </Box>
 
