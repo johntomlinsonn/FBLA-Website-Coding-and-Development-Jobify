@@ -30,10 +30,28 @@ class UserProfileSerializer(serializers.ModelSerializer):
     references = ReferenceSerializer(many=True, read_only=True)
     education = EducationSerializer(many=True, read_only=True)
     user = UserSerializer(read_only=True)
+    is_job_provider = serializers.BooleanField(required=False, allow_null=True)
 
     class Meta:
         model = UserProfile
         fields = ['id', 'user', 'resume', 'gpa', 'is_job_provider', 'account_holder_name', 'references', 'education']
+
+    def validate_is_job_provider(self, value):
+        if value is None:
+            return False
+        if isinstance(value, str):
+            normalized_value = value.lower()
+            if normalized_value in ['false', '0', 'no']:
+                return False
+            elif normalized_value in ['true', '1', 'yes']:
+                return True
+            # If it's a string not explicitly 'true' or 'false', treat as True
+            # This handles cases where unexpected non-empty strings are sent
+            return True
+        return bool(value)
+
+    def create(self, validated_data):
+        return super().create(validated_data)
 
 class JobPostingSerializer(serializers.ModelSerializer):
     grade = serializers.IntegerField(required=False, allow_null=True)

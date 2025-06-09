@@ -10,7 +10,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     resume = models.FileField(upload_to='resumes/', blank=True, null=True)
     gpa = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
-    is_job_provider = models.BooleanField(default=False)
+    is_job_provider = models.BooleanField(default=True)
     account_holder_name = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
