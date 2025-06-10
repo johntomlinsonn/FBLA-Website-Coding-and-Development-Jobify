@@ -377,6 +377,11 @@ def apply(request, job_id):
         # 3. Send email after redirect
         mail.send()
         
+        # Increment num_applications for the user profile
+        user_profile.num_applications = (user_profile.num_applications or 0) + 1
+        user_profile.save()
+
+
         return response
         
     return render(request, 'apply.html', {
@@ -574,6 +579,10 @@ def api_apply_job(request, job_id):
         # Send email
         mail.send()
     
+        # Increment num_applications for the user profile
+        user_profile.num_applications = (user_profile.num_applications or 0) + 1
+        user_profile.save()
+
         # Calculate grade if resume is present
         grade = None
         if resume:
@@ -872,7 +881,7 @@ def api_admin_dashboard_stats(request):
                                                .annotate(count=Count('id')) \
                                                .order_by('month')
         # Format for frontend consumption (e.g., 'YYYY-MM')
-        formatted_monthly_submissions = [{'month': item['month'].strftime('%Y-%m'), 'count': item['count']} for item in monthly_submissions]
+        formatted_monthly_submissions = [{'month': item['month'].strftime('%B-%Y'), 'count': item['count']} for item in monthly_submissions]
 
         # Breakdown by job categories
         job_category_breakdown = JobPosting.objects.values('job_type') \

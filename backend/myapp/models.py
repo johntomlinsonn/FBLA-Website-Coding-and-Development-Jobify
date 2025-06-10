@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 import json
+from django.utils import timezone
 
 class TodoItem(models.Model):
     title = models.CharField(max_length=200)
@@ -51,7 +52,7 @@ class JobPosting(models.Model):
     )
     #job grade and date it was made on
     grade = models.IntegerField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):

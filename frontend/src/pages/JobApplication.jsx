@@ -44,8 +44,8 @@ const JobApplication = () => {
     name: '',
     email: '',
     resume: null,
-    references: [{ name: '', relation: '', contact: '' }],
-    education: [{ school: '', graduationDate: '', gpa: '' }],
+    references: [],
+    education: [],
     customAnswers: {},
   });
 
@@ -79,34 +79,32 @@ const JobApplication = () => {
         if (profileData.data && profileData.data.user) {
           setFormData(prev => ({
             ...prev,
-            name: `${profileData.data.user.first_name} ${profileData.data.user.last_name}`,
-            email: profileData.data.user.email,
+            name: `${profileData.data.user.first_name || ''} ${profileData.data.user.last_name || ''}`,
+            email: profileData.data.user.email || '',
           }));
         }
 
-        // Set references if they exist
-        if (referencesData.data && referencesData.data.length > 0) {
-          setFormData(prev => ({
-            ...prev,
-            references: referencesData.data.map(ref => ({
-              name: ref.name || '',
-              relation: ref.relation || '',
-              contact: ref.contact || ''
-            }))
-          }));
-        }
+        // Always ensure references are set, even if empty
+        setFormData(prev => {
+          const newReferences = referencesData.data ? referencesData.data.map(ref => ({
+            name: ref.name || '',
+            relation: ref.relation || '',
+            contact: ref.contact || ''
+          })) : [];
+          console.log("Updated references in formData:", newReferences);
+          return { ...prev, references: newReferences };
+        });
 
-        // Set education if it exists
-        if (educationData.data && educationData.data.length > 0) {
-          setFormData(prev => ({
-            ...prev,
-            education: educationData.data.map(edu => ({
-              school: edu.school_name || '',
-              graduationDate: edu.graduation_date || '',
-              gpa: edu.gpa || ''
-            }))
-          }));
-        }
+        // Always ensure education is set, even if empty
+        setFormData(prev => {
+          const newEducation = educationData.data ? educationData.data.map(edu => ({
+            school: edu.school_name || '',
+            graduationDate: edu.graduation_date || '',
+            gpa: edu.gpa || ''
+          })) : [];
+          console.log("Updated education in formData:", newEducation);
+          return { ...prev, education: newEducation };
+        });
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Failed to fetch data');
@@ -517,7 +515,7 @@ const JobApplication = () => {
                   <TextField
                     fullWidth
                     label="School Name"
-                    value={edu.school}
+                    value={edu.school || ''}
                     onChange={(e) => handleInputChange('education', index, 'school', e.target.value)}
                     margin="normal"
                   />
@@ -525,7 +523,7 @@ const JobApplication = () => {
                     fullWidth
                     label="Graduation Date"
                     type="date"
-                    value={edu.graduationDate}
+                    value={edu.graduationDate || ''}
                     onChange={(e) => handleInputChange('education', index, 'graduationDate', e.target.value)}
                     margin="normal"
                     InputLabelProps={{ shrink: true }}
@@ -534,7 +532,7 @@ const JobApplication = () => {
                     fullWidth
                     label="GPA"
                     type="number"
-                    value={edu.gpa}
+                    value={edu.gpa || ''}
                     onChange={(e) => handleInputChange('education', index, 'gpa', e.target.value)}
                     margin="normal"
                   />

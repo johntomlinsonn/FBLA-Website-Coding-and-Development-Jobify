@@ -40,9 +40,8 @@ class JobPostingAdmin(admin.ModelAdmin):
     list_display = ('title', 'company_name', 'created_at', 'status','grade')
     list_filter = ('status', 'created_at')
     search_fields = ('title', 'company_name', 'description')
+    fields = ('title', 'company_name', 'company_email', 'location', 'salary', 'job_type', 'description', 'requirements', 'custom_questions', 'featured', 'status', 'grade', 'created_at')
     actions = ['approve_jobs', 'deny_jobs']
-
-   
 
     def approve_jobs(self, request, queryset):
         queryset.update(status='approved')
