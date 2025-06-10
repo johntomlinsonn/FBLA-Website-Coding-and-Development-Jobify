@@ -27,6 +27,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import permissions
 from cerebras.cloud.sdk import Cerebras
 from rest_framework import status
+from django.db.models.functions import TruncMonth
+from django.db.models import Count, Avg
 
 Api = os.getenv("API_KEY")
 
@@ -501,7 +503,7 @@ def grade_applicant_live(request):
         return Response({'error': 'Failed to grade applicant'}, status=500)
 
 @api_view(['GET'])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def api_job_detail(request, pk):
     """API endpoint for single job posting details"""
     try:
@@ -565,7 +567,7 @@ def api_apply_job(request, job_id):
         mail = EmailMultiAlternatives(subject, text_content, to=[job_posting.company_email])
         mail.attach_alternative(html_content, "text/html")
     
-        # Attach resume if present
+        # Attach resume
         if resume:
             attach_resume_to_email(mail, resume)
     
@@ -843,3 +845,123 @@ def api_favorited_jobs_list(request):
     favorited_jobs = user_profile.favorited_jobs.all()
     serializer = JobPostingSerializer(favorited_jobs, many=True, context={'request': request})
     return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_check_is_staff(request):
+    """API endpoint to check if the authenticated user is staff"""
+    return Response({'is_staff': request.user.is_staff}, status=status.HTTP_200_OK)
+
+
+# --- NEW ADMIN DASHBOARD STATS ENDPOINTS ---
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def api_admin_dashboard_stats(request):
+    """API endpoint for admin dashboard statistics"""
+    try:
+        # Total job submissions
+        total_job_submissions = JobPosting.objects.count()
+
+        # Approved job postings
+        approved_postings = JobPosting.objects.filter(status='approved').count()
+
+        # Job submissions per month
+        monthly_submissions = JobPosting.objects.annotate(month=TruncMonth('created_at')) \
+                                               .values('month') \
+                                               .annotate(count=Count('id')) \
+                                               .order_by('month')
+        # Format for frontend consumption (e.g., 'YYYY-MM')
+        formatted_monthly_submissions = [{'month': item['month'].strftime('%Y-%m'), 'count': item['count']} for item in monthly_submissions]
+
+        # Breakdown by job categories
+        job_category_breakdown = JobPosting.objects.values('job_type') \
+                                               .annotate(count=Count('id')) \
+                                               .order_by('-count')
+        # Filter out entries where job_type is empty or None
+        job_category_breakdown = [item for item in job_category_breakdown if item['job_type']]
+
+        # Total student accounts (proxy for student applications if no dedicated Application model)
+        total_student_accounts = UserProfile.objects.filter(is_job_provider=False).count()
+        # Note: For accurate application counts, a dedicated JobApplication model linking UserProfile to JobPosting
+        # would be required, along with updates to the api_apply_job endpoint to create these entries.
+
+        # Total employer accounts
+        total_employer_accounts = UserProfile.objects.filter(is_job_provider=True).count()
+
+        # Salary Distribution
+        salary_bins = {
+            '$0-16/hr': 0,
+            '$16-35/hr': 0,
+            '$35+/hr': 0,
+        }
+
+        # Helper to parse salary (removes non-numeric, converts to int) and convert to hourly
+        def parse_salary_to_hourly(salary_str):
+            if not salary_str: return None
+            # Clean string to get only digits, assuming it's a numerical salary
+            cleaned_salary = int(salary_str)
+            return cleaned_salary
+
+        for job in JobPosting.objects.all():
+            hourly_rate = parse_salary_to_hourly(job.salary)
+            if hourly_rate is not None:
+                if (hourly_rate < 17): 
+                    salary_bins['$0-16/hr'] += 1
+                elif (hourly_rate < 35): 
+                    salary_bins['$16-35/hr'] += 1
+                else: 
+                    salary_bins['$35+/hr'] += 1
+        
+        formatted_salary_distribution = [{'name': k, 'count': v} for k, v in salary_bins.items()]
+
+        # Average Job Grade
+        total_grades = []
+        for job in JobPosting.objects.all():
+            try:
+                grade = float(job.grade) # Assuming job.grade is a string that can be converted to float
+                total_grades.append(grade)
+            except (ValueError, TypeError):
+                # Handle cases where grade is not a valid number (e.g., 'N/A')
+                continue
+        
+        average_job_grade = sum(total_grades) / len(total_grades) if total_grades else None
+
+        return Response({
+            'total_job_submissions': total_job_submissions,
+            'approved_postings': approved_postings,
+            'monthly_submissions': formatted_monthly_submissions,
+            'job_category_breakdown': job_category_breakdown,
+            'total_student_accounts': total_student_accounts,
+            'total_employer_accounts': total_employer_accounts,
+            'salary_distribution': formatted_salary_distribution,
+            'average_job_grade': average_job_grade,
+        })
+    except Exception as e:
+        return Response({'error': f'Failed to retrieve dashboard stats: {str(e)}'}, status=500)
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def api_admin_student_account_stats(request):
+    """API endpoint to view statistics per student account, including number of applications and favorited jobs."""
+    try:
+        student_profiles = UserProfile.objects.filter(is_job_provider=False)
+        student_stats_list = []
+
+        for profile in student_profiles:
+            # Number of favorited jobs is directly available
+            num_favorited_jobs = profile.favorited_jobs.count()
+
+            #
+            num_applications = profile.num_applications
+
+            student_stats_list.append({
+                'id': profile.id,
+                'username': profile.user.username,
+                'num_applications': num_applications,
+                'num_favorited_jobs': num_favorited_jobs,
+                'is_active': profile.user.is_active, # Example: could indicate active students
+            })
+        return Response({'student_stats': student_stats_list})
+    except Exception as e:
+        return Response({'error': f'Failed to retrieve student stats: {str(e)}'}, status=500)

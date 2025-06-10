@@ -46,6 +46,7 @@ urlpatterns = [
     path('api/grade_job_live/', views.grade_job_live, name='api_grade_job_live'),
     path('api/favorite-job/', views.api_favorite_job, name='api_favorite_job'),
     path('api/favorited-jobs/', views.api_favorited_jobs_list, name='api_favorited_jobs_list'),
+    path('api/check-is-staff/', views.api_check_is_staff, name='api_check_is_staff'),
     
     # Frontend routes - redirect to appropriate existing views or API endpoints
     # Fixed routes to address 404 errors
@@ -61,6 +62,8 @@ urlpatterns = [
     path('api/admin/jobs/<int:job_id>/approve/', views.api_admin_approve_job, name='api_admin_approve_job'),
     path('api/admin/jobs/<int:job_id>/deny/', views.api_admin_deny_job, name='api_admin_deny_job'),
     path('api/admin/jobs/<int:job_id>/', views.api_admin_delete_job, name='api_admin_delete_job'),
+    path('api/admin/dashboard-stats/', views.api_admin_dashboard_stats, name='api_admin_dashboard_stats'),
+    path('api/admin/student-account-stats/', views.api_admin_student_account_stats, name='api_admin_student_account_stats'),
 ]
 
 if settings.DEBUG:

@@ -3,6 +3,7 @@ import { Box, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActi
 import { KeyboardArrowDown as KeyboardArrowDownIcon, KeyboardArrowUp as KeyboardArrowUpIcon } from '@mui/icons-material';
 import { adminAPI } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
+import AdminDashboardStats from '../components/AdminDashboardStats';
 
 // Simple debounce utility
 const debounce = (func, delay) => {
@@ -24,6 +25,7 @@ const AdminPanel = () => {
   const [actionType, setActionType] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [expandedJobId, setExpandedJobId] = useState(null);
+  const [currentTab, setCurrentTab] = useState(0);
 
   // Debounced version of fetchJobs
   const debouncedFetchJobs = useRef(debounce(async (currentStatusFilter, currentSearchTerm) => {
@@ -81,6 +83,10 @@ const AdminPanel = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setCurrentTab(newValue);
   };
 
   const handleRowClick = (jobId) => {
@@ -143,88 +149,98 @@ const AdminPanel = () => {
       </Box>
 
       <Box sx={{ flexGrow: 1 }}>
-        <TableContainer component={Paper} sx={{ borderRadius: '8px' }}>
-          <Table aria-label="admin job table">
-            <TableHead>
-              <TableRow>
-                <TableCell padding="normal" />
-                <TableCell padding="normal">Title</TableCell>
-                <TableCell padding="normal">Company</TableCell>
-                <TableCell padding="normal">Location</TableCell>
-                <TableCell padding="normal">Status</TableCell>
-                <TableCell padding="normal">Grade</TableCell>
-              </TableRow>
-            </TableHead>
-            <AnimatePresence>
-              <TableBody>
-                {jobs.map((job) => (
-                  <React.Fragment key={job.id}>
-                    <motion.tr
-                       layout
-                       initial="hidden"
-                       animate="visible"
-                       exit="hidden"
-                       variants={rowVariants}
-                       transition={{ duration: 0.5 }}
-                    >
-                      <TableCell padding="normal">
-                        <IconButton size="small" onClick={() => handleRowClick(job.id)}>
-                          {expandedJobId === job.id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                        </IconButton>
-                      </TableCell>
-                      <TableCell component="th" scope="row" padding="normal">{job.title}</TableCell>
-                      <TableCell padding="normal">{job.company_name}</TableCell>
-                      <TableCell padding="normal">{job.location}</TableCell>
-                      <TableCell padding="normal" sx={{
-                        color: job.status === 'pending' ? '#FFA726' :
-                               job.status === 'approved' ? '#66BB6A' :
-                               job.status === 'denied' ? '#EF5350' :
-                               'inherit',
-                        fontWeight: 'bold'
-                      }}>
-                        {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
-                      </TableCell>
-                      <TableCell padding="normal" sx={{ fontWeight: 500 }}>
-                        <Typography sx={{ color: getGradeColor(job.grade) }}>
-                          {formatGrade(job.grade)}
-                        </Typography>
-                      </TableCell>
-                    </motion.tr>
-                    <TableRow>
-                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                        <Collapse in={expandedJobId === job.id} timeout="auto" unmountOnExit>
-                          <Box sx={{ margin: 1 }}>
-                            <Typography variant="h6" gutterBottom component="div">
-                              Details
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                              Salary: ${job.salary?.toLocaleString() || 'N/A'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                              Grade: <span style={{ color: getGradeColor(job.grade) }}>{formatGrade(job.grade)}</span>
-                            </Typography>
-                            <Typography variant="body2">
-                              **Description:** {job.description || 'No description provided'}
-                            </Typography>
-                            <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                              {job.status !== 'approved' && (
-                                <Button variant="contained" sx={{ bgcolor: '#FF6B00', '&:hover': { bgcolor: '#FF8C00' } }} onClick={() => handleAction(job, 'approve')}>Approve</Button>
-                              )}
-                              {job.status !== 'denied' && (
-                                <Button variant="outlined" sx={{ color: '#222', borderColor: '#222', '&:hover': { borderColor: '#000' } }} onClick={() => handleAction(job, 'deny')}>Deny</Button>
-                              )}
-                              <Button variant="outlined" color="error" onClick={() => handleAction(job, 'delete')}>Delete</Button>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs value={currentTab} onChange={handleTabChange} aria-label="admin panel tabs">
+            <Tab label="Job Management" />
+            <Tab label="Dashboard Stats" />
+          </Tabs>
+        </Box>
+
+        {currentTab === 0 && (
+          <TableContainer component={Paper} sx={{ borderRadius: '8px' }}>
+            <Table aria-label="admin job table">
+              <TableHead>
+                <TableRow>
+                  <TableCell padding="normal" />
+                  <TableCell padding="normal">Title</TableCell>
+                  <TableCell padding="normal">Company</TableCell>
+                  <TableCell padding="normal">Location</TableCell>
+                  <TableCell padding="normal">Status</TableCell>
+                  <TableCell padding="normal">Grade</TableCell>
+                </TableRow>
+              </TableHead>
+              <AnimatePresence>
+                <TableBody>
+                  {jobs.map((job) => (
+                    <React.Fragment key={job.id}>
+                      <motion.tr
+                         layout
+                         initial="hidden"
+                         animate="visible"
+                         exit="hidden"
+                         variants={rowVariants}
+                         transition={{ duration: 0.5 }}
+                      >
+                        <TableCell padding="normal">
+                          <IconButton size="small" onClick={() => handleRowClick(job.id)}>
+                            {expandedJobId === job.id ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                          </IconButton>
+                        </TableCell>
+                        <TableCell component="th" scope="row" padding="normal">{job.title}</TableCell>
+                        <TableCell padding="normal">{job.company_name}</TableCell>
+                        <TableCell padding="normal">{job.location}</TableCell>
+                        <TableCell padding="normal" sx={{
+                          color: job.status === 'pending' ? '#FFA726' :
+                                 job.status === 'approved' ? '#66BB6A' :
+                                 job.status === 'denied' ? '#EF5350' :
+                                 'inherit',
+                          fontWeight: 'bold'
+                        }}>
+                          {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
+                        </TableCell>
+                        <TableCell padding="normal" sx={{ fontWeight: 500 }}>
+                          <Typography sx={{ color: getGradeColor(job.grade) }}>
+                            {formatGrade(job.grade)}
+                          </Typography>
+                        </TableCell>
+                      </motion.tr>
+                      <TableRow>
+                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                          <Collapse in={expandedJobId === job.id} timeout="auto" unmountOnExit>
+                            <Box sx={{ margin: 1 }}>
+                              <Typography variant="h6" gutterBottom component="div">
+                                Details
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Salary: ${job.salary?.toLocaleString() || 'N/A'}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Grade: <span style={{ color: getGradeColor(job.grade) }}>{formatGrade(job.grade)}</span>
+                              </Typography>
+                              <Typography variant="body2">
+                                **Description:** {job.description || 'No description provided'}
+                              </Typography>
+                              <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                                {job.status !== 'approved' && (
+                                  <Button variant="contained" sx={{ bgcolor: '#FF6B00', '&:hover': { bgcolor: '#FF8C00' } }} onClick={() => handleAction(job, 'approve')}>Approve</Button>
+                                )}
+                                {job.status !== 'denied' && (
+                                  <Button variant="outlined" sx={{ color: '#222', borderColor: '#222', '&:hover': { borderColor: '#000' } }} onClick={() => handleAction(job, 'deny')}>Deny</Button>
+                                )}
+                                <Button variant="outlined" color="error" onClick={() => handleAction(job, 'delete')}>Delete</Button>
+                              </Box>
                             </Box>
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  </React.Fragment>
-                ))}
-              </TableBody>
-            </AnimatePresence>
-          </Table>
-        </TableContainer>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </AnimatePresence>
+            </Table>
+          </TableContainer>
+        )}
+        {currentTab === 1 && <AdminDashboardStats />}
       </Box>
 
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>

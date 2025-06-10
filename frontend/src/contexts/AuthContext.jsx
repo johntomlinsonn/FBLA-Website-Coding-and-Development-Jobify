@@ -82,7 +82,13 @@ export const AuthProvider = ({ children }) => {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         try {
           const profileResponse = await api.get('/profile/');
-          setUser(profileResponse.data);
+          const userProfile = profileResponse.data;
+
+          // Fetch staff status
+          const staffResponse = await api.get('/check-is-staff/');
+          const isStaff = staffResponse.data.is_staff;
+
+          setUser({ ...userProfile, is_staff: isStaff });
         } catch (error) {
           // If token is invalid or profile fetch fails, clear everything
           localStorage.removeItem('access_token');
@@ -117,11 +123,17 @@ export const AuthProvider = ({ children }) => {
       api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
       const profileResponse = await api.get('/profile/');
-      setUser(profileResponse.data);
+      const userProfile = profileResponse.data;
+
+      // Fetch staff status after successful login
+      const staffResponse = await api.get('/check-is-staff/');
+      const isStaff = staffResponse.data.is_staff;
+
+      setUser({ ...userProfile, is_staff: isStaff });
 
       navigate('/account');
 
-      return profileResponse.data;
+      return { ...userProfile, is_staff: isStaff };
     } catch (error) {
       throw error;
     } finally {
