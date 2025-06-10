@@ -139,6 +139,7 @@ const Landing = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [fps, setFps] = useState(60)
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -148,9 +149,88 @@ const Landing = () => {
     return () => window.removeEventListener("mousemove", handleMouseMove)
   }, [])
 
+  // Performance monitoring
+  useEffect(() => {
+    let frameCount = 0
+    let lastTime = performance.now()
+    
+    const checkFps = () => {
+      frameCount++
+      const currentTime = performance.now()
+      
+      if (currentTime - lastTime >= 1000) {
+        setFps(Math.round((frameCount * 1000) / (currentTime - lastTime)))
+        frameCount = 0
+        lastTime = currentTime
+      }
+      
+      requestAnimationFrame(checkFps)
+    }
+    
+    requestAnimationFrame(checkFps)
+  }, [])
+
   const handleSearch = (e) => {
     e.preventDefault()
     navigate(`/jobs?search=${encodeURIComponent(search.trim())}`)
+  }
+
+  // Enhanced cursor effect
+  const cursorVariants = {
+    default: {
+      x: mousePosition.x - 10,
+      y: mousePosition.y - 10,
+      transition: { type: "spring", stiffness: 500, damping: 28 }
+    }
+  }
+
+  // Enhanced text animation variants
+  const textVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3
+      }
+    }
+  }
+
+  const letterVariants = {
+    hidden: { 
+      opacity: 0,
+      y: 50,
+      rotateX: -90
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      rotateX: 0,
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 200
+      }
+    }
+  }
+
+  const highlightVariants = {
+    hidden: { 
+      opacity: 0,
+      scale: 0.8,
+      rotate: -10
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      transition: {
+        type: "spring",
+        damping: 12,
+        stiffness: 200,
+        delay: 0.5
+      }
+    }
   }
 
   return (
@@ -176,19 +256,16 @@ const Landing = () => {
           px: { xs: 2, md: 4 },
           textAlign: "center",
           overflow: "hidden",
+          perspective: "1000px",
         }}
-        style={{paddingTop: 32, 
-                height:895}}
+        style={{paddingTop: 32, height:895}}
       >
         <FloatingNames />
 
-        {/* Animated cursor follower */}
+        {/* Enhanced cursor follower with multiple elements */}
         <motion.div
-          animate={{
-            x: mousePosition.x - 10,
-            y: mousePosition.y - 10,
-          }}
-          transition={{ type: "spring", stiffness: 500, damping: 28 }}
+          variants={cursorVariants}
+          animate="default"
           style={{
             position: "fixed",
             width: 20,
@@ -200,18 +277,38 @@ const Landing = () => {
             display: isMobile ? "none" : "block",
           }}
         />
+        <motion.div
+          variants={cursorVariants}
+          animate="default"
+          style={{
+            position: "fixed",
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            border: "2px solid rgba(255, 107, 0, 0.3)",
+            pointerEvents: "none",
+            zIndex: 9998,
+            display: isMobile ? "none" : "block",
+          }}
+        />
 
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          initial="hidden"
+          animate="visible"
+          variants={textVariants}
           style={{ position: "relative", zIndex: 2 }}
         >
-          {/* Animated Logo */}
+          {/* Animated Logo with 3D effect */}
           <motion.div
             variants={pulseVariants}
             animate="animate"
-            style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}
+            style={{ 
+              display: "flex", 
+              justifyContent: "center", 
+              marginBottom: 32,
+              transformStyle: "preserve-3d",
+              perspective: "1000px"
+            }}
           >
             <Box
               sx={{
@@ -224,6 +321,11 @@ const Landing = () => {
                 borderRadius: "50%",
                 background: "#FFFFFF",
                 boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                transform: "translateZ(20px)",
+                transition: "transform 0.3s ease",
+                "&:hover": {
+                  transform: "translateZ(30px) rotateY(10deg)",
+                },
                 "&::before": {
                   content: '""',
                   position: "absolute",
@@ -250,6 +352,7 @@ const Landing = () => {
             </Box>
           </motion.div>
 
+          {/* Enhanced Typography with letter animations */}
           <Typography
             variant={isMobile ? "h3" : "h1"}
             component="h1"
@@ -263,11 +366,49 @@ const Landing = () => {
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               fontSize: { xs: "2.5rem", md: "4rem" },
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "0.5rem",
             }}
           >
-            Your First Job
-            <br />
-            <span style={{ color: "#FF6B00" }}>Starts Here! 🚀</span>
+            <motion.div
+              variants={textVariants}
+              initial="hidden"
+              animate="visible"
+              style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+            >
+              <motion.div style={{ display: "flex", gap: "0.5rem" }}>
+                {"Your First Job".split("").map((char, index) => (
+                  <motion.span
+                    key={index}
+                    variants={letterVariants}
+                    style={{ display: "inline-block" }}
+                  >
+                    {char === " " ? "\u00A0" : char}
+                  </motion.span>
+                ))}
+              </motion.div>
+              <motion.div
+                variants={highlightVariants}
+                style={{
+                  display: "flex",
+                  gap: "0.5rem",
+                  color: "#FF6B00",
+                  transformOrigin: "center",
+                }}
+              >
+                {"Starts Here!".split("").map((char, index) => (
+                  <motion.span
+                    key={index}
+                    variants={letterVariants}
+                    style={{ display: "inline-block" }}
+                  >
+                    {char === " " ? "\u00A0" : char}
+                  </motion.span>
+                ))}
+              </motion.div>
+            </motion.div>
           </Typography>
 
           <Typography
@@ -288,12 +429,18 @@ const Landing = () => {
             thousands of students already making their mark!
           </Typography>
 
-          {/* Enhanced Search Bar */}
+          {/* Enhanced Search Bar with 3D effect */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            style={{ width: "100%", maxWidth: 600, margin: "0 auto 40px" }}
+            style={{ 
+              width: "100%", 
+              maxWidth: 600, 
+              margin: "0 auto 40px",
+              transformStyle: "preserve-3d",
+              perspective: "1000px"
+            }}
           >
             <Box
               component="form"
@@ -309,6 +456,12 @@ const Landing = () => {
                 backdropFilter: "blur(12px)",
                 height: 68,
                 border: "3px solid rgba(255,107,0,0.2)",
+                transform: "translateZ(10px)",
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                "&:hover": {
+                  transform: "translateZ(20px)",
+                  boxShadow: "0 20px 50px rgba(0,0,0,0.3)",
+                },
               }}
             >
               <InputBase
@@ -346,12 +499,16 @@ const Landing = () => {
             </Box>
           </motion.div>
 
-          {/* CTA Button */}
+          {/* Enhanced CTA Button with 3D effect */}
           {!user && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.6 }}
+              style={{
+                transformStyle: "preserve-3d",
+                perspective: "1000px"
+              }}
             >
               <Button
                 variant="contained"
@@ -366,11 +523,12 @@ const Landing = () => {
                   fontSize: "1.4rem",
                   boxShadow: "0 10px 30px rgba(255,107,0,0.5)",
                   textTransform: "none",
+                  transform: "translateZ(10px)",
+                  transition: "all 0.4s ease",
                   "&:hover": {
-                    transform: "translateY(-5px)",
+                    transform: "translateZ(20px) translateY(-5px)",
                     boxShadow: "0 15px 45px rgba(255,107,0,0.7)",
                   },
-                  transition: "all 0.4s ease",
                 }}
                 onClick={() => navigate("/signup")}
               >

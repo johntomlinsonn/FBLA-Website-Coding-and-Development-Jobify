@@ -180,8 +180,9 @@ def api_job_list(request):
         companies = request.query_params.getlist('company[]')
         min_salary = request.query_params.get('min_salary', None)
         max_salary = request.query_params.get('max_salary', None)
+        show_favorited_only = request.query_params.get('showFavoritedOnly', 'false').lower() == 'true'
 
-        print(f"Received query params: search={search_term}, job_types={job_types}, companies={companies}, min_salary={min_salary}, max_salary={max_salary}")
+        print(f"Received query params: search={search_term}, job_types={job_types}, companies={companies}, min_salary={min_salary}, max_salary={max_salary}, show_favorited_only={show_favorited_only}")
 
         # Build up a combined filter using Q objects
         combined_filters = Q()
@@ -230,6 +231,13 @@ def api_job_list(request):
 
         # Apply all combined filters
         queryset = queryset.filter(combined_filters)
+
+        # Apply favorited jobs filter if requested and user is authenticated
+        if show_favorited_only and request.user.is_authenticated:
+            user_profile = request.user.userprofile
+            queryset = queryset.filter(id__in=user_profile.favorited_jobs.all().values_list('id', flat=True))
+            print(f"After applying favorited jobs filter: {queryset.count()}")
+
         print(f"Final queryset count after all filters: {queryset.count()}")
 
         # Default ordering
@@ -804,3 +812,34 @@ def api_admin_delete_job(request, job_id):
     job = get_object_or_404(JobPosting, id=job_id)
     job.delete()
     return Response({'message': 'Job deleted.'})
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_favorite_job(request):
+    job_id = request.data.get('job_id')
+    if not job_id:
+        return Response({'error': 'Job ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        job = JobPosting.objects.get(id=job_id)
+    except JobPosting.DoesNotExist:
+        return Response({'error': 'Job posting not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    user_profile = request.user.userprofile
+
+    if job in user_profile.favorited_jobs.all():
+        user_profile.favorited_jobs.remove(job)
+        message = 'Job removed from favorites.'
+    else:
+        user_profile.favorited_jobs.add(job)
+        message = 'Job added to favorites.'
+    
+    return Response({'message': message}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_favorited_jobs_list(request):
+    user_profile = request.user.userprofile
+    favorited_jobs = user_profile.favorited_jobs.all()
+    serializer = JobPostingSerializer(favorited_jobs, many=True, context={'request': request})
+    return Response(serializer.data)

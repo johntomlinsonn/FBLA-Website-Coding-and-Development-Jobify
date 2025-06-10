@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
           // If token is invalid or profile fetch fails, clear everything
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
-          delete api.defaults.headers.common['Authorization']; // Also remove the header
+          delete api.defaults.headers.common['Authorization'];
           setUser(null);
         }
       } else {
@@ -109,21 +109,39 @@ export const AuthProvider = ({ children }) => {
         password,
       });
 
-      const { access, refresh } = response.data; // Destructure only tokens
+      const { access, refresh } = response.data;
 
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
 
-      // Explicitly set the Authorization header for the api instance
       api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
 
-      // Fetch full user profile after getting tokens
       const profileResponse = await api.get('/profile/');
-      setUser(profileResponse.data); // Set user with full profile data
+      setUser(profileResponse.data);
 
       navigate('/account');
 
-      return profileResponse.data; // Return full user data
+      return profileResponse.data;
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signup = async (first_name, last_name, email, username, password, isJobProvider) => {
+    try {
+      setLoading(true);
+      const response = await api.post('/register/', {
+        first_name,
+        last_name,
+        email,
+        username,
+        password,
+        is_job_provider: isJobProvider,
+      });
+      // No need to set tokens or user here, as the Login component will handle the login after successful registration.
+      return response.data;
     } catch (error) {
       throw error;
     } finally {
@@ -143,6 +161,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
+    signup,
   };
 
   if (loading) {

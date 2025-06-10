@@ -44,6 +44,8 @@ urlpatterns = [
     path('api/profile/education/<int:education_id>/delete/', views.api_delete_education, name='api_delete_education'),
     path('api/grade_applicant_live/', grade_applicant_live, name='grade_applicant_live'),
     path('api/grade_job_live/', views.grade_job_live, name='api_grade_job_live'),
+    path('api/favorite-job/', views.api_favorite_job, name='api_favorite_job'),
+    path('api/favorited-jobs/', views.api_favorited_jobs_list, name='api_favorited_jobs_list'),
     
     # Frontend routes - redirect to appropriate existing views or API endpoints
     # Fixed routes to address 404 errors

@@ -32,6 +32,7 @@ import SortIcon from '@mui/icons-material/Sort';
 import { jobsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { favoriteJobsAPI } from '../services/api';
 
 // Add grade color and formatting functions
 const getGradeColor = (grade) => {
@@ -76,11 +77,13 @@ const JobsList = () => {
     jobTypes: [],
     salaryRange: [0, 50],
     companies: [],
+    showFavoritedOnly: false,
   });
   const [appliedFilters, setAppliedFilters] = useState({
     jobTypes: [],
     salaryRange: [0, 50],
     companies: [],
+    showFavoritedOnly: false,
   });
   const [openFilterModal, setOpenFilterModal] = useState(null);
   const [availableCompanies, setAvailableCompanies] = useState([]);
@@ -91,6 +94,7 @@ const JobsList = () => {
   });
   const [allCompanies, setAllCompanies] = useState([]); // Store all companies
   const [sortBy, setSortBy] = useState('recent'); // Add sorting state
+  const [favoritedJobIds, setFavoritedJobIds] = useState([]); // State to store favorited job IDs
 
   // Add debounced filter application
   useEffect(() => {
@@ -150,6 +154,10 @@ const JobsList = () => {
       if (currentFilters.salaryRange) {
         params.min_salary = currentFilters.salaryRange[0];
         params.max_salary = currentFilters.salaryRange[1];
+      }
+
+      if (currentFilters.showFavoritedOnly) {
+        params.showFavoritedOnly = true;
       }
 
       const response = await jobsAPI.getAll(params);
@@ -315,6 +323,41 @@ const JobsList = () => {
   // Modify the jobs display to use sorted jobs
   const displayJobs = useMemo(() => sortJobs(jobs), [jobs, sortBy]);
 
+  // Effect to fetch favorited jobs on component mount or user change
+  useEffect(() => {
+    const fetchFavoritedJobs = async () => {
+      if (user) {
+        try {
+          const response = await favoriteJobsAPI.getFavorited();
+          setFavoritedJobIds(response.map(job => job.id));
+        } catch (err) {
+          console.error('Error fetching favorited jobs:', err);
+        }
+      }
+    };
+
+    fetchFavoritedJobs();
+  }, [user]); // Re-fetch when user changes (e.g., login/logout)
+
+  // Handle toggling favorite status
+  const handleToggleFavorite = async (jobId) => {
+    if (!user) {
+      navigate('/signin'); // Redirect to login if not authenticated
+      return;
+    }
+    try {
+      const response = await favoriteJobsAPI.toggleFavorite(jobId);
+      if (response.message.includes('added')) {
+        setFavoritedJobIds(prev => [...prev, jobId]);
+      } else {
+        setFavoritedJobIds(prev => prev.filter(id => id !== jobId));
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      // Optionally show a toast notification for the error
+    }
+  };
+
   // Show initial loading only if no jobs are loaded yet
   if (loading && jobs.length === 0 && searchTerm === '' && filters.jobTypes.length === 0 && filters.companies.length === 0 && filters.salaryRange[0] === 0 && filters.salaryRange[1] === 50) {
     return (
@@ -472,6 +515,19 @@ const JobsList = () => {
                   </Box>
                 )}
                 <Divider sx={{ my: 1 }} />
+                {user && (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={filters.showFavoritedOnly}
+                        onChange={(e) => setFilters(prev => ({ ...prev, showFavoritedOnly: e.target.checked }))}
+                        sx={{ color: '#FF6B00' }}
+                      />
+                    }
+                    label="Show Favorited Jobs Only"
+                    sx={{ mb: 1, ml: 1 }} // Adjust margin to align with other filters
+                  />
+                )}
               </Box>
 
               {/* Apply Filters Button for the main panel */}
@@ -537,201 +593,222 @@ const JobsList = () => {
             )}
 
             {/* Show loading indicator while fetching jobs (after initial load) */}
-            {loading && jobs.length > 0 ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '20vh' }}>
+            {loading && jobs.length === 0 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
                 <CircularProgress />
               </Box>
-            ) : (
-              displayJobs.length === 0 ? (
-                <Alert severity="info">No jobs found matching your criteria.</Alert>
-              ) : (
-                <AnimatePresence>
+            )}
+
+            {!loading && jobs.length === 0 && searchTerm === '' && (
+              <Typography variant="h6" color="text.secondary" align="center" sx={{ mt: 4 }}>
+                No jobs found. Try adjusting your filters.
+              </Typography>
+            )}
+
                   <Grid container spacing={3}>
+              <AnimatePresence mode="wait">
                     {displayJobs.map((job) => (
+                  <Grid item key={job.id} xs={12} sm={6} md={4}>
                       <motion.div
-                        key={job.id}
-                        variants={jobCardVariants}
                         initial="initial"
                         animate="animate"
                         exit="exit"
-                        item xs={12} sm={6} md={4}
-                        sx={{ display: 'flex' }}
+                      variants={jobCardVariants}
                       >
                         <Card
+                        elevation={3}
                           sx={{
-                            height: '100%',
+                          borderRadius: 2,
+                          transition: 'transform 0.2s, box-shadow 0.2s',
+                          '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 8px 16px rgba(0,0,0,0.2)' },
                             display: 'flex',
                             flexDirection: 'column',
-                            border: '1px solid #eee',
-                            borderRadius: 2,
-                            boxShadow: 1,
-                            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                          height: '100%',
+                          position: 'relative', // Added for IconButton positioning
+                        }}
+                      >
+                        {user && (
+                          <IconButton 
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              zIndex: 1,
+                              color: favoritedJobIds.includes(job.id) ? '#FF6B00' : '#000000', // Orange for favorited, Black for not
                             '&:hover': {
-                              boxShadow: 6,
-                              cursor: 'pointer',
-                              transform: 'translateY(-4px)',
-                              transition: 'transform 0.2s ease-in-out',
-                            },
-                          }}
-                          onClick={() => handleApply(job.id)}
-                        >
-                          <CardContent>
-                            <Typography variant="h6" component="h2" gutterBottom sx={{ color: '#222' }}>
+                                color: favoritedJobIds.includes(job.id) ? '#e65c00' : '#333333', // Darker orange/black on hover
+                              }
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent card click from triggering
+                              handleToggleFavorite(job.id);
+                            }}
+                            aria-label="favorite job"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill={favoritedJobIds.includes(job.id) ? '#FF6B00' : 'none'}
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="lucide lucide-heart"
+                            >
+                              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                            </svg>
+                          </IconButton>
+                        )}
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Typography variant="h6" component="div" gutterBottom>
                               {job.title}
                             </Typography>
-                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                              {job.company_name}
+                          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                            {job.company_name} - {job.location}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            {job.job_type} | {job.salary}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="body2" sx={{ mr: 1 }}>
+                              Attainability Grade:
                             </Typography>
                             <Typography
-                              variant="body2"
-                              color="text.secondary"
+                              variant="body1"
+                              component="span"
                               sx={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 3,
-                                WebkitBoxOrient: 'vertical',
-                                mb: 2,
+                                color: getGradeColor(job.grade),
+                                fontWeight: 'bold',
+                                border: `1px solid ${getGradeColor(job.grade)}`,
+                                borderRadius: '4px',
+                                px: 1,
+                                py: 0.5,
                               }}
                             >
-                              {job.description}
+                              {formatGrade(job.grade)}
                             </Typography>
-                            <Box sx={{ mt: 'auto' }}>
-                              <Typography variant="body2" sx={{ color: '#FF6B00', fontWeight: 600 }}>
-                                Hourly Wage: ${job.salary}/hr
+                          </Box>
+                          <Typography variant="body2" color="text.secondary" noWrap sx={{ mb: 1 }}>
+                            {job.description}
                               </Typography>
-                              <Typography variant="body2" sx={{ color: getGradeColor(job.grade), fontWeight: 500 }}>
-                                Grade: {formatGrade(job.grade)}
+                          <Typography variant="caption" color="text.secondary">
+                            Posted: {new Date(job.created_at).toLocaleDateString()}
                               </Typography>
+                        </CardContent>
+                        <Box sx={{ p: 2, pt: 0 }}>
+                          <Button 
+                            variant="contained" 
+                            fullWidth 
+                            onClick={() => handleApply(job.id)}
+                            sx={{
+                              background: '#FF6B00',
+                              '&:hover': { background: '#e65c00' },
+                            }}
+                          >
+                            View Details
+                          </Button>
                             </Box>
-                          </CardContent>
                         </Card>
                       </motion.div>
-                    ))}
                   </Grid>
+                ))}
                 </AnimatePresence>
-              )
-            )}
+
+              {!loading && displayJobs.length === 0 && searchTerm !== '' && (
+                <Grid item xs={12}>
+                  <Typography variant="h6" color="text.secondary" align="center" sx={{ mt: 4 }}>
+                    No jobs found for "{searchTerm}". Try a different search or adjust filters.
+                  </Typography>
+                </Grid>
+              )}
+            </Grid>
           </Grid>
         </Grid>
-      </Container>
-      {/* Filter Modal - Only for Hourly Wage Range */}
+
+        {/* Salary Filter Modal */}
       <Modal
-        open={Boolean(openFilterModal)}
-        onClose={handleCloseFilterModal}
-        aria-labelledby="filter-modal-title"
-        aria-describedby="filter-modal-description"
-      >
-        <Box sx={{
+          open={openFilterModal === 'hourlyWage'}
+          onClose={() => setOpenFilterModal(null)}
+          aria-labelledby="salary-range-modal-title"
+          aria-describedby="salary-range-modal-description"
+        >
+          <Box
+            sx={{
           position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: { xs: '90%', sm: 400 },
+              width: 400,
           bgcolor: 'background.paper',
+              border: '2px solid #000',
+              boxShadow: 24,
+              p: 4,
           borderRadius: 2,
-          boxShadow: 24,
           outline: 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '90vh',
-        }}>
-          {/* Modal Header */}
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            p: 2,
-            borderBottom: '1px solid #eee',
-          }}>
-            <Typography id="filter-modal-title" variant="h6" component="h2">
-              Hourly Wage Range
-            </Typography>
-            <IconButton onClick={handleCloseFilterModal} size="small">
+            }}
+          >
+            <IconButton
+              aria-label="close"
+              onClick={() => setOpenFilterModal(null)}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
               <CloseIcon />
             </IconButton>
-          </Box>
-
-          {/* Modal Body - Only Hourly Wage Range */}
-          <Box sx={{ p: 2, overflowY: 'auto' }}>
-            <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, mb: 3, mt: 3 }}>
-                <TextField
-                  size="small"
-                  label="Min"
-                  type="number"
-                  value={filters.salaryRange[0]}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(50, Number(e.target.value)));
-                    setFilters(prev => ({
-                      ...prev,
-                      salaryRange: [value, Math.max(value, prev.salaryRange[1])]
-                    }));
-                  }}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                  sx={{ width: '150px' }}
-                />
-                <TextField
-                  size="small"
-                  label="Max"
-                  type="number"
-                  value={filters.salaryRange[1]}
-                  onChange={(e) => {
-                    const value = Math.max(0, Math.min(50, Number(e.target.value)));
-                    setFilters(prev => ({
-                      ...prev,
-                      salaryRange: [Math.min(value, prev.salaryRange[0]), value]
-                    }));
-                  }}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                  sx={{ width: '150px' }}
-                />
-              </Box>
+            <Typography id="salary-range-modal-title" variant="h6" component="h2" gutterBottom>
+              Filter by Hourly Wage
+            </Typography>
+            <Typography id="salary-range-modal-description" gutterBottom>
+              Select your desired hourly wage range.
+            </Typography>
               <Slider
+              getAriaLabel={() => 'Salary range'}
                 value={filters.salaryRange}
-                onChange={(event, newValue) => setFilters(prev => ({ ...prev, salaryRange: newValue }))}
-                onChangeCommitted={(event, newValue) => setFilters(prev => ({ ...prev, salaryRange: newValue }))}
+              onChange={handleSalaryRangeChange}
                 valueLabelDisplay="auto"
                 min={0}
-                max={50}
-                step={1}
-                sx={{
-                  width: '80%',
-                  color: '#FF6B00',
-                  '& .MuiSlider-thumb': { backgroundColor: '#FF6B00' },
-                  '& .MuiSlider-track': { backgroundColor: '#FF6B00' },
-                  '& .MuiSlider-rail': { color: '#ccc' }
-                }}
-              />
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 3 }}>
-                ${filters.salaryRange[0]}/hr - ${filters.salaryRange[1]}/hr
+              max={200}
+              step={5}
+              marks
+              sx={{ color: '#FF6B00' }}
+            />
+            <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 2 }}>
+              ${filters.salaryRange[0]} - ${filters.salaryRange[1]} per hour
               </Typography>
-            </Box>
-          </Box>
-
-          {/* Modal Footer */}
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            p: 2,
-            borderTop: '1px solid #eee',
-            gap: 1,
-          }}>
-            <Button onClick={handleClearFilter} sx={{ color: 'text.primary' }}>Clear all</Button>
             <Button
               variant="contained"
+              fullWidth
               onClick={handleApplyFilters}
-              sx={{ background: '#FF6B00', '&:hover': { background: '#e65c00' }, color: 'white' }}
+              sx={{
+                background: '#FF6B00',
+                '&:hover': { background: '#e65c00' },
+                mt: 3,
+              }}
             >
-              Close
+              Apply
             </Button>
-          </Box>
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={handleClearFilter}
+              sx={{
+                color: '#FF6B00',
+                borderColor: '#FF6B00',
+                '&:hover': { borderColor: '#e65c00', color: '#e65c00' },
+                mt: 1,
+              }}
+            >
+              Clear Filter
+            </Button>
         </Box>
       </Modal>
+      </Container>
     </Box>
   );
 };

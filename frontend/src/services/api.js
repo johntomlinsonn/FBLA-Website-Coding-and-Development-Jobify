@@ -248,7 +248,6 @@ export const profileAPI = {
 export const adminAPI = {
   getPendingJobs: async (filters = {}) => {
     try {
-      // Use the imported api instance which already handles URL construction and params
       const response = await api.get('/admin/jobs/', { params: filters });
       return response.data;
     } catch (error) {
@@ -283,6 +282,29 @@ export const adminAPI = {
       return response.data;
     } catch (error) {
       console.error(`Error deleting job with id ${jobId}:`, error);
+      throw error;
+    }
+  },
+};
+
+// Favorite Jobs API
+export const favoriteJobsAPI = {
+  toggleFavorite: async (jobId) => {
+    try {
+      const response = await api.post('/favorite-job/', { job_id: jobId });
+      return response.data;
+    } catch (error) {
+      console.error('Error toggling favorite job:', error);
+      throw error;
+    }
+  },
+
+  getFavorited: async () => {
+    try {
+      const response = await api.get('/favorited-jobs/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching favorited jobs:', error);
       throw error;
     }
   },

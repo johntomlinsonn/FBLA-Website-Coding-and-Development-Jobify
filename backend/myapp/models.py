@@ -12,6 +12,7 @@ class UserProfile(models.Model):
     gpa = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
     is_job_provider = models.BooleanField(default=True)
     account_holder_name = models.CharField(max_length=255, blank=True, null=True)
+    favorited_jobs = models.ManyToManyField('JobPosting', related_name='favorited_by', blank=True)
 
     def __str__(self):
         return self.user.username
