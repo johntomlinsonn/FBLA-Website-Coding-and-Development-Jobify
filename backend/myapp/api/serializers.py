@@ -69,6 +69,7 @@ class JobPostingSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         # Convert string back to list for requirements and custom_questions
+        
         if isinstance(instance.requirements, str):
             try:
                 # Try to parse as JSON first

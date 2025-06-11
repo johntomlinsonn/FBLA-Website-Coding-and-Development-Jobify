@@ -19,6 +19,7 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
 
+
 class Reference(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='references')
     name = models.CharField(max_length=255)

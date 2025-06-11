@@ -7,8 +7,19 @@ import json
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff']
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'password']
+        extra_kwargs = {'password': {'write_only': True, 'required': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', '')
+        )
+        return user
+
 
 class ReferenceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,8 +50,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return None
 
 class JobPostingSerializer(serializers.ModelSerializer):
-    requirements = serializers.CharField(required=False, allow_blank=True)
-    custom_questions = serializers.CharField(required=False, allow_blank=True)
+    requirements = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True
+    )
+    custom_questions = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True
+    )
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     status = serializers.CharField(read_only=True)
 

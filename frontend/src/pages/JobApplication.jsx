@@ -44,23 +44,19 @@ const JobApplication = () => {
     name: '',
     email: '',
     resume: null,
-    references: [],
-    education: [],
+    references: [{ name: '', relation: '', contact: '' }],
+    education: [{ school: '', graduationDate: '', gpa: '' }],
     customAnswers: {},
   });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [jobData, profileData, referencesData, educationData] = await Promise.all([
-          jobsAPI.getById(id),
-          profileAPI.get(),
-          profileAPI.getReferences(),
-          profileAPI.getEducation(),
-        ]);
+        // Only fetch job data - profile data will come from a single API call
+        const jobData = await jobsAPI.getById(id);
+        const profileData = await profileAPI.get();
 
         setJobDetails(jobData);
-        setProfile(profileData.data);
         
         // Dynamically set steps based on custom questions
         const baseSteps = ['Personal Information', 'References', 'Education'];
@@ -75,36 +71,54 @@ const JobApplication = () => {
         dynamicSteps.push(reviewStep);
         setSteps(dynamicSteps);
 
-        // Set personal information from profile data
-        if (profileData.data && profileData.data.user) {
-          setFormData(prev => ({
-            ...prev,
-            name: `${profileData.data.user.first_name || ''} ${profileData.data.user.last_name || ''}`,
-            email: profileData.data.user.email || '',
-          }));
+        // Handle the new profile response structure
+        console.log('Profile data received:', profileData);
+        
+        let profileInfo = profileData;
+        // Handle if the response is wrapped in a data property
+        if (profileData.data) {
+          profileInfo = profileData.data;
+        }
+        
+        setProfile(profileInfo);
+
+        // Fill form with user information from the unified profile response
+        const updatedFormData = {
+          name: '',
+          email: '',
+          resume: null,
+          references: [{ name: '', relation: '', contact: '' }],
+          education: [{ school: '', graduationDate: '', gpa: '' }],
+          customAnswers: {},
+        };
+
+        // Set personal information from profile user data
+        if (profileInfo?.user) {
+          updatedFormData.name = `${profileInfo.user.first_name || ''} ${profileInfo.user.last_name || ''}`.trim();
+          updatedFormData.email = profileInfo.user.email || '';
         }
 
-        // Always ensure references are set, even if empty
-        setFormData(prev => {
-          const newReferences = referencesData.data ? referencesData.data.map(ref => ({
+        // Set references from profile references array
+        if (profileInfo?.references && Array.isArray(profileInfo.references) && profileInfo.references.length > 0) {
+          updatedFormData.references = profileInfo.references.map(ref => ({
             name: ref.name || '',
             relation: ref.relation || '',
             contact: ref.contact || ''
-          })) : [];
-          console.log("Updated references in formData:", newReferences);
-          return { ...prev, references: newReferences };
-        });
+          }));
+        }
 
-        // Always ensure education is set, even if empty
-        setFormData(prev => {
-          const newEducation = educationData.data ? educationData.data.map(edu => ({
+        // Set education from profile education array
+        if (profileInfo?.education && Array.isArray(profileInfo.education) && profileInfo.education.length > 0) {
+          updatedFormData.education = profileInfo.education.map(edu => ({
             school: edu.school_name || '',
             graduationDate: edu.graduation_date || '',
             gpa: edu.gpa || ''
-          })) : [];
-          console.log("Updated education in formData:", newEducation);
-          return { ...prev, education: newEducation };
-        });
+          }));
+        }
+
+        console.log('Updated form data:', updatedFormData);
+        setFormData(updatedFormData);
+
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Failed to fetch data');
@@ -515,7 +529,7 @@ const JobApplication = () => {
                   <TextField
                     fullWidth
                     label="School Name"
-                    value={edu.school || ''}
+                    value={edu.school}
                     onChange={(e) => handleInputChange('education', index, 'school', e.target.value)}
                     margin="normal"
                   />
@@ -523,7 +537,7 @@ const JobApplication = () => {
                     fullWidth
                     label="Graduation Date"
                     type="date"
-                    value={edu.graduationDate || ''}
+                    value={edu.graduationDate}
                     onChange={(e) => handleInputChange('education', index, 'graduationDate', e.target.value)}
                     margin="normal"
                     InputLabelProps={{ shrink: true }}
@@ -532,7 +546,7 @@ const JobApplication = () => {
                     fullWidth
                     label="GPA"
                     type="number"
-                    value={edu.gpa || ''}
+                    value={edu.gpa}
                     onChange={(e) => handleInputChange('education', index, 'gpa', e.target.value)}
                     margin="normal"
                   />

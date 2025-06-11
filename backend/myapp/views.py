@@ -642,11 +642,13 @@ def api_register(request):
         # Create UserProfile for the new user
 
         user_profile_serializer = UserProfileSerializer(data=request.data)
-        print("hello")
-        UserProfile.objects.create(user=user,is_job_provider=request.data.get("is_job_provider"))
-        print("hi")
+        if user_profile_serializer.is_valid():
+            user_profile = user_profile_serializer.save(user=user)
+            user_profile.is_job_provider = request.data.get("is_job_provider")
+            user_profile.save()
+
         refresh = RefreshToken.for_user(user)
-        print("shhit")
+     
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
