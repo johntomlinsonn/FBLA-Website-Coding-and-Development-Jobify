@@ -16,9 +16,11 @@ const AdminDashboardStats = () => {
     average_job_grade: null,
   });
   const [studentStats, setStudentStats] = useState([]);
+  const [jobProviderStats, setJobProviderStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentSecondaryChart, setCurrentSecondaryChart] = useState(0);
+  const [currentAccountStatsTab, setCurrentAccountStatsTab] = useState(0);
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
@@ -38,22 +40,30 @@ const AdminDashboardStats = () => {
       }
     };
 
-    const fetchStudentStats = async () => {
+    const fetchAccountStats = async () => {
       try {
-        const response = await axios.get('/api/admin/student-account-stats/', {
+        const studentResponse = await axios.get('/api/admin/student-account-stats/', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
-        setStudentStats(response.data.student_stats);
+        setStudentStats(studentResponse.data.student_stats);
+
+        const jobProviderResponse = await axios.get('/api/job-post-success-rate/', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+        setJobProviderStats(jobProviderResponse.data.job_provider_stats);
+
       } catch (err) {
-        console.error('Error fetching student stats:', err);
-        setError('Failed to load student statistics.');
+        console.error('Error fetching account stats:', err);
+        setError('Failed to load account statistics.');
       }
     };
 
     fetchDashboardStats();
-    fetchStudentStats();
+    fetchAccountStats();
   }, []);
 
   if (loading) {
@@ -76,6 +86,10 @@ const AdminDashboardStats = () => {
 
   const handleSecondaryChartChange = (event, newValue) => {
     setCurrentSecondaryChart(newValue);
+  };
+
+  const handleAccountStatsTabChange = (event, newValue) => {
+    setCurrentAccountStatsTab(newValue);
   };
 
   return (
@@ -199,30 +213,70 @@ const AdminDashboardStats = () => {
 
         <Grid item xs={12}>
           <Paper sx={{ p: 3, borderRadius: '12px', boxShadow: '0 6px 20px rgba(0,0,0,0.08)', border: '1px solid #eeeeee' }}>
-            <Typography variant="h6" gutterBottom sx={{ color: '#222222' }}>
-              Student Account Statistics
-            </Typography>
-            <List sx={{ maxHeight: 300, overflowY: 'auto' }}>
-              {studentStats.length > 0 ? (studentStats.map((student) => (
-                <ListItem key={student.id} divider>
-                  <ListItemIcon>
-                    <AccountCircle />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={student.username}
-                    secondary={
-                      <React.Fragment>
-                        <Typography component="span" variant="body2" color="text.primary">
-                          Applications: {student.num_applications} • Favorited Jobs: {student.num_favorited_jobs}
-                        </Typography>
-                      </React.Fragment>
-                    }
-                  />
-                </ListItem>
-              ))) : (
-                <Typography sx={{ p: 2 }}>No student statistics available.</Typography>
-              )}
-            </List>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs value={currentAccountStatsTab} onChange={handleAccountStatsTabChange} aria-label="account statistics tabs">
+                <Tab label="Student Account Statistics" />
+                <Tab label="Job Provider Statistics" />
+              </Tabs>
+            </Box>
+
+            {currentAccountStatsTab === 0 && (
+              <React.Fragment>
+                <Typography variant="h6" gutterBottom sx={{ color: '#222222' }}>
+                  Student Account Statistics
+                </Typography>
+                <List sx={{ maxHeight: 300, overflowY: 'auto' }}>
+                  {studentStats.length > 0 ? (studentStats.map((student) => (
+                    <ListItem key={student.id} divider>
+                      <ListItemIcon>
+                        <AccountCircle />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={student.username}
+                        secondary={
+                          <React.Fragment>
+                            <Typography component="span" variant="body2" color="text.primary">
+                              Applications: {student.num_applications} • Favorited Jobs: {student.num_favorited_jobs}
+                            </Typography>
+                          </React.Fragment>
+                        }
+                      />
+                    </ListItem>
+                  ))) : (
+                    <Typography sx={{ p: 2 }}>No student statistics available.</Typography>
+                  )}
+                </List>
+              </React.Fragment>
+            )}
+
+            {currentAccountStatsTab === 1 && (
+              <React.Fragment>
+                <Typography variant="h6" gutterBottom sx={{ color: '#222222' }}>
+                  Job Provider Statistics
+                </Typography>
+                <List sx={{ maxHeight: 300, overflowY: 'auto' }}>
+                  {jobProviderStats.length > 0 ? (jobProviderStats.map((provider) => (
+                    <ListItem key={provider.id} divider>
+                      <ListItemIcon>
+                        <Business />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={provider.username}
+                        secondary={
+                          <React.Fragment>
+                            <Typography component="span" variant="body2" color="text.primary">
+                              Job Post Success Rate: {provider.job_post_success_rate !== null ? `${provider.job_post_success_rate.toFixed(2)}%` : 'N/A'}
+                            </Typography>
+                          </React.Fragment>
+                        }
+                      />
+                    </ListItem>
+                  ))) : (
+                    <Typography sx={{ p: 2 }}>No job provider statistics available.</Typography>
+                  )}
+                </List>
+              </React.Fragment>
+            )}
           </Paper>
         </Grid>
       </Grid>

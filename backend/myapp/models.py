@@ -19,6 +19,15 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
 
+    def get_job_post_success_rate(self):
+        total_jobs_posted = self.posted_jobs.count()
+        if total_jobs_posted == 0:
+            return 0.0
+
+        approved_jobs = self.posted_jobs.filter(status='approved').count()
+        return (approved_jobs / total_jobs_posted) * 100
+    
+
 
 class Reference(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='references')
@@ -33,7 +42,7 @@ class Education(models.Model):
     gpa = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
 
 class JobPosting(models.Model):
-    #Saving all of the fields
+    posted_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='posted_jobs',default=1)
     title = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255)
     company_email = models.EmailField()

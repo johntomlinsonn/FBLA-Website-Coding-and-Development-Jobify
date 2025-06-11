@@ -47,9 +47,9 @@ urlpatterns = [
     path('api/favorite-job/', views.api_favorite_job, name='api_favorite_job'),
     path('api/favorited-jobs/', views.api_favorited_jobs_list, name='api_favorited_jobs_list'),
     path('api/check-is-staff/', views.api_check_is_staff, name='api_check_is_staff'),
+    path('api/job-post-success-rate/', views.job_post_success_rate, name='api_job_post_success_rate'),
     
     # Frontend routes - redirect to appropriate existing views or API endpoints
-    # Fixed routes to address 404 errors
     path('jobs/', views.search, name='frontend_jobs'),  # Redirect to search view instead of api_job_list
     path('jobs/<int:job_id>/', views.apply, name='frontend_job_detail'),  # Redirect to apply view
     path('profile/', views.account, name='frontend_profile'),  # Direct mapping to account view

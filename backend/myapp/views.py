@@ -976,3 +976,17 @@ def api_admin_student_account_stats(request):
         return Response({'student_stats': student_stats_list})
     except Exception as e:
         return Response({'error': f'Failed to retrieve student stats: {str(e)}'}, status=500)
+
+@api_view(['GET'])
+def job_post_success_rate(request):
+    job_provider_profiles = UserProfile.objects.filter(is_job_provider=True)
+    provider_stat_list = []
+
+    for provider in job_provider_profiles:
+        provider_stat_list.append({
+            'id': provider.id,
+            'username': provider.user.username,
+            'job_post_success_rate': provider.get_job_post_success_rate(),
+        })
+
+    return Response({'job_provider_stats':provider_stat_list})
