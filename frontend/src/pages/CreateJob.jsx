@@ -332,7 +332,6 @@ const CreateJob = () => {
               <TextField
                 fullWidth
                 select
-                label="Job Type"
                 name="job_type"
                 value={formik.values.job_type}
                 onChange={formik.handleChange}
