@@ -70,9 +70,6 @@ const JobApplication = () => {
         
         dynamicSteps.push(reviewStep);
         setSteps(dynamicSteps);
-
-        // Handle the new profile response structure
-        console.log('Profile data received:', profileData);
         
         let profileInfo = profileData;
         // Handle if the response is wrapped in a data property
@@ -116,7 +113,7 @@ const JobApplication = () => {
           }));
         }
 
-        console.log('Updated form data:', updatedFormData);
+
         setFormData(updatedFormData);
 
       } catch (err) {
@@ -209,8 +206,6 @@ const JobApplication = () => {
         description: jobDetails?.description || ''
       });
 
-      console.log('Grade response:', gradeResponse); // Debug log
-
       if (!gradeResponse.data) {
         console.error('No data received from grade calculation');
         throw new Error('Failed to calculate grade: No data received');
@@ -218,7 +213,6 @@ const JobApplication = () => {
 
       // Extract the grade from the response
       const gradeText = gradeResponse.data.grade || gradeResponse.data;
-      console.log('Grade text:', gradeText); // Debug log
 
       // If it's already a number, use it directly
       if (typeof gradeText === 'number') {
@@ -244,9 +238,13 @@ const JobApplication = () => {
       // Submit application
       const response = await jobsAPI.apply(id, applicationFormData);
       
-      if (response.ok) {
+
+      if(response.message || response.data.message === "Application submitted successfully") {
         navigate('/jobs');
       } else {
+        console.log(response.data);
+        console.log(response.data.message);
+        console.log(response.status);
         setError('Failed to submit application');
       }
     } catch (err) {
@@ -596,7 +594,6 @@ const JobApplication = () => {
                 <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>Custom Questions</Typography>
                 {(() => {
                   // Debug log to see the format of custom_questions
-                  console.log("jobDetails.custom_questions:", jobDetails?.custom_questions);
 
                   // Parse the questions into an array of full questions
                   const parseQuestions = (input) => {
