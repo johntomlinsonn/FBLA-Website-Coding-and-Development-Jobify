@@ -121,6 +121,8 @@ const FindApplicantsPage = () => {
                 >
                   <MenuItem value="recent">Most Recent</MenuItem>
                   <MenuItem value="alphabetical">Alphabetical</MenuItem>
+                  <MenuItem value="gpa_high_to_low">GPA (High to Low)</MenuItem>
+                  <MenuItem value="gpa_low_to_high">GPA (Low to High)</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -169,4 +171,4 @@ const FindApplicantsPage = () => {
   );
 };
 
-export default FindApplicantsPage; 
+export default FindApplicantsPage;

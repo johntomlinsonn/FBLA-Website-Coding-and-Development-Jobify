@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Grid, Card, CardContent, Paper, List, ListItem, ListItemText, ListItemIcon, Tabs, Tab } from '@mui/material';
+import { Box, Typography, Grid, Card, CardContent, Paper, List, ListItem, ListItemText, ListItemIcon, Tabs, Tab, Avatar } from '@mui/material';
 import axios from 'axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { AccountCircle, Business, Work, CheckCircleOutline, GroupAdd } from '@mui/icons-material';
@@ -229,7 +229,11 @@ const AdminDashboardStats = () => {
                   {studentStats.length > 0 ? (studentStats.map((student) => (
                     <ListItem key={student.id} divider>
                       <ListItemIcon>
-                        <AccountCircle />
+                        {student.profile_picture ? (
+                          <Avatar src={student.profile_picture} alt={student.username} />
+                        ) : (
+                          <AccountCircle />
+                        )}
                       </ListItemIcon>
                       <ListItemText
                         primary={student.username}
@@ -258,7 +262,11 @@ const AdminDashboardStats = () => {
                   {jobProviderStats.length > 0 ? (jobProviderStats.map((provider) => (
                     <ListItem key={provider.id} divider>
                       <ListItemIcon>
-                        <Business />
+                        {provider.profile_picture ? (
+                          <Avatar src={provider.profile_picture} alt={provider.username} />
+                        ) : (
+                          <Business />
+                        )}
                       </ListItemIcon>
                       <ListItemText
                         primary={provider.username}

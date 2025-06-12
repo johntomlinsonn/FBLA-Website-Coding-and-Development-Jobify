@@ -979,12 +979,20 @@ def api_admin_student_account_stats(request):
             # Number of favorited jobs is directly available
             num_favorited_jobs = profile.favorited_jobs.count()
 
-            #
+            # Get profile picture URL
+            profile_picture_url = None
+            if profile.profile_picture:
+                profile_picture_url = request.build_absolute_uri(profile.profile_picture.url)
+            else:
+                # Fallback to UI Avatars if no profile picture is set
+                profile_picture_url = f"https://ui-avatars.com/api/?name={profile.user.first_name}+{profile.user.last_name}&background=FF6B00&color=fff"
+
             num_applications = profile.num_applications
 
             student_stats_list.append({
                 'id': profile.id,
                 'username': profile.user.username,
+                'profile_picture': profile_picture_url, 
                 'num_applications': num_applications,
                 'num_favorited_jobs': num_favorited_jobs,
                 'is_active': profile.user.is_active, # Example: could indicate active students
@@ -1002,6 +1010,7 @@ def job_post_success_rate(request):
         provider_stat_list.append({
             'id': provider.id,
             'username': provider.user.username,
+            'profile_picture': request.build_absolute_uri(provider.profile_picture.url) if provider.profile_picture else f"https://ui-avatars.com/api/?name={provider.user.first_name}+{provider.user.last_name}&background=FF6B00&color=fff",
             'job_post_success_rate': provider.get_job_post_success_rate(),
         })
 
@@ -1031,12 +1040,8 @@ def get_applicants(request):
 
     # Apply filters
     if skill_filter:
-        # Filter by skills in requirements
-        applicants = applicants.filter(
-            Q(education__school_name__icontains=skill_filter) |
-            Q(user__first_name__icontains=skill_filter) |
-            Q(user__last_name__icontains=skill_filter)
-        ).distinct()
+        # Filter by skills linked to the UserProfile
+        applicants = applicants.filter(skills__name__icontains=skill_filter).distinct()
 
     if job_filter:
         # Filter by jobs they've applied to
@@ -1047,6 +1052,10 @@ def get_applicants(request):
     # Apply sorting
     if sort_by == 'alphabetical':
         applicants = applicants.order_by('user__last_name', 'user__first_name')
+    elif sort_by == 'gpa_high_to_low':
+        applicants = applicants.order_by('-gpa')  # Assuming 'gpa' field exists in UserProfile
+    elif sort_by == 'gpa_low_to_high':
+        applicants = applicants.order_by('gpa')   # Assuming 'gpa' field exists in UserProfile
     else:  # default to 'recent'
         applicants = applicants.order_by('-user__date_joined')
 
