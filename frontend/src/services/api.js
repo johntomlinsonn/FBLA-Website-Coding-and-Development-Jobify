@@ -205,7 +205,7 @@ export const profileAPI = {
 
   deleteReference: async (referenceId) => {
     try {
-      const response = await api.delete(`/profile/references/${referenceId}/`);
+      const response = await api.delete(`/profile/references/${referenceId}/delete/`);
       return response.data; // Assuming backend returns data
     } catch (error) {
       console.error(`Error deleting reference with id ${referenceId}:`, error);
@@ -235,7 +235,7 @@ export const profileAPI = {
 
   deleteEducation: async (educationId) => {
     try {
-      const response = await api.delete(`/profile/education/${educationId}/`);
+      const response = await api.delete(`/profile/education/${educationId}/delete/`);
       return response.data; // Assuming backend returns data
     } catch (error) {
       console.error(`Error deleting education with id ${educationId}:`, error);
@@ -311,4 +311,4 @@ export const favoriteJobsAPI = {
 };
 
 // Remove default export of the local api instance
-// export default api; 
+// export default api;

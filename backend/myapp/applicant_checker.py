@@ -56,12 +56,14 @@ Here is the job desctiption and the resume
 #setting up client
 
 from cerebras.cloud.sdk import Cerebras
-client = Cerebras(
-    api_key=api_key_me,  # This is the default and can be omitted
-)
+
 
 # Initialize with a default response in case of API failure
 try:
+    client = Cerebras(
+    api_key=api_key_me,  # This is the default and can be omitted
+    
+    )
     stream = client.chat.completions.create(
     messages=[
         {

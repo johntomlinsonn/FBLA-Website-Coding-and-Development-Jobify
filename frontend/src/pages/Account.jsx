@@ -173,8 +173,12 @@ const Account = () => {
 
   const handleAddEducation = async () => {
     try {
-      const response = await profileAPI.addEducation(newEducation);
-      setEducation([...education, response.data]);
+      const addedEducation = await profileAPI.addEducation(newEducation);
+      setEducation(prev => {
+        // Remove any undefined or malformed entries
+        const valid = prev.filter(e => e && e.id != null);
+        return [...valid, addedEducation];
+      });
       setNewEducation({ school_name: '', graduation_date: '', gpa: '' });
       setSuccess('Education added successfully');
       setShowNewEducationForm(false);
@@ -417,7 +421,7 @@ const Account = () => {
               Education
             </Typography>
             <Grid container spacing={3}>
-              {education.map((edu) => (
+              {education.filter((edu) => edu).map((edu) => (
                 <Grid item xs={12} md={6} key={edu.id}>
                   <Card>
                     <CardContent>

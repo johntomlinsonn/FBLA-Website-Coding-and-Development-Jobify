@@ -733,18 +733,17 @@ def api_references(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def api_add_reference(request):
-    """API endpoint for adding a reference"""
+    """API endpoint for adding refrences"""
     try:
         user_profile = UserProfile.objects.get(user=request.user)
     except UserProfile.DoesNotExist:
         return Response({'error': 'User profile not found'}, status=404)
     
-        serializer = ReferenceSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user_profile=user_profile)
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
-
+    serializer = ReferenceSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user_profile=user_profile)
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def api_delete_reference(request, reference_id):
@@ -777,11 +776,11 @@ def api_add_education(request):
     except UserProfile.DoesNotExist:
         return Response({'error': 'User profile not found'}, status=404)
     
-        serializer = EducationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user_profile=user_profile)
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
+    serializer = EducationSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save(user_profile=user_profile)
+        return Response(serializer.data, status=201)
+    return Response(serializer.errors, status=400)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
