@@ -83,7 +83,7 @@ const features = [
     icon: <WorkIcon sx={{ fontSize: 40, color: "#fff" }} />,
     title: "For Students",
     description:
-      "Discover amazing job opportunities tailored for high school students. From part-time gigs to internships that kickstart your career!",
+      "Ironmen, discover job opportunities in Normal and beyond, tailored for NCHS students. From part-time gigs to internships that sharpen your skills and kickstart your career!",
     color: "#FF6B35",
     bgGradient: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
   },
@@ -91,7 +91,7 @@ const features = [
     icon: <GroupIcon sx={{ fontSize: 40, color: "#fff" }} />,
     title: "For Employers",
     description:
-      "Connect with motivated young talent. Post opportunities and find the perfect student candidates for your business.",
+      "Connect with motivated young talent from Normal Community High School. Post opportunities and find the perfect student candidates to sharpen your team!",
     color: "#4ECDC4",
     bgGradient: "linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)",
   },
@@ -99,7 +99,7 @@ const features = [
     icon: <SchoolIcon sx={{ fontSize: 40, color: "#fff" }} />,
     title: "For Schools",
     description:
-      "Manage your school's job board with ease. Approve postings and help your students find their first professional experiences.",
+      "NCHS Guidance Department, manage your school's job board with ease. Approve postings and help your Ironmen find their first professional experiences, aligning with our mission of personal excellence!",
     color: "#A8E6CF",
     bgGradient: "linear-gradient(135deg, #FFAA00 0%, #FFD6B0 100%)",
   },
@@ -379,7 +379,7 @@ const Landing = () => {
               style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
             >
               <motion.div style={{ display: "flex", gap: "0.5rem" }}>
-                {"Your First Job".split("").map((char, index) => (
+                {"Your Future,".split("").map((char, index) => (
                   <motion.span
                     key={index}
                     variants={letterVariants}
@@ -398,7 +398,7 @@ const Landing = () => {
                   transformOrigin: "center",
                 }}
               >
-                {"Starts Here!".split("").map((char, index) => (
+                {"Starts Here Ironmen!".split("").map((char, index) => (
                   <motion.span
                     key={index}
                     variants={letterVariants}
@@ -425,8 +425,7 @@ const Landing = () => {
               lineHeight: 1.6,
             }}
           >
-            Discover amazing opportunities, build your future, and take the first step toward your dream career. Join
-            thousands of students already making their mark!
+            Normal Community High School students, discover opportunities tailored for you. Build your future, gain valuable experience, and take the first step toward your dream career as an Ironman!
           </Typography>
 
           {/* Enhanced Search Bar with 3D effect */}
@@ -726,7 +725,7 @@ const Landing = () => {
               letterSpacing: "-0.02em",
               }}
             >
-            Join Our Growing Community{" "}
+            Join the Ironmen Community{" "}
             <span role="img" aria-label="rocket">
               🚀
             </span>
@@ -745,22 +744,22 @@ const Landing = () => {
               {[
               {
                 emoji: "👥",
-                number: "5,000+",
+                number: "1,500+",
                 label: "Students Connected",
               },
               {
                 emoji: "💼",
-                number: "1,200+",
+                number: "400+",
                 label: "Jobs Posted",
               },
               {
                 emoji: "⭐",
-                number: "850+",
+                number: "250+",
                 label: "Success Stories",
               },
               {
                 emoji: "🏢",
-                number: "200+",
+                number: "30+",
                 label: "Partner Companies",
               },
             ].map((stat) => (
@@ -1012,7 +1011,7 @@ const Landing = () => {
                 fontSize: { xs: "2.8rem", md: "4rem" },
               }}
             >
-              Ready to Start Your Journey? 🚀
+              Ironmen, Ready to Launch Your Future? 🚀
             </Typography>
 
             <Typography
@@ -1025,8 +1024,8 @@ const Landing = () => {
                 fontSize: { xs: "1.3rem", md: "1.5rem" },
               }}
             >
-              Join thousands of students who have already found their perfect opportunities. Your dream job is just one
-              click away!
+              Join fellow NCHS students who have already found their perfect opportunities. Your dream job is just one
+              click away – let's sharpen your future!
             </Typography>
 
             {!user && (
