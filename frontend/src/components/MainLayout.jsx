@@ -111,8 +111,8 @@ const MainLayout = () => {
 
   // Navigation links for AppBar and Drawer (excluding Account/Logout for logged-in users, which are in the menu)
   const navLinkItems = [
-    { label: 'Post a Job', onClick: () => navigate('/post-job') }, // Ensure path is correct
-    user && { label: 'Browse Jobs', onClick: () => navigate('/jobs') },
+    user?.is_job_provider && { label: 'Post a Job', onClick: () => navigate('/post-job') }, // Ensure path is correct
+    user && !user.is_job_provider && { label: 'Browse Jobs', onClick: () => navigate('/jobs') },
     user?.is_staff && { label: 'Admin Panel', onClick: () => navigate('/admin') },
     user?.is_job_provider && { label: 'Find Applicants', onClick: () => navigate('/find-applicants') },
     !user && { label: 'Login', onClick: () => navigate('/login') },
@@ -152,7 +152,7 @@ const MainLayout = () => {
           zIndex: 1200,
           transition: 'all 0.3s ease-in-out',
           '&:hover': {
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.08)',
+            boxShadow: '0 4px 20px 0 rgba(255,255,255,0.2)',
           }
         }}
       >
