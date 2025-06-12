@@ -581,6 +581,7 @@ def api_apply_job(request, job_id):
     
         # Increment num_applications for the user profile
         user_profile.num_applications = (user_profile.num_applications or 0) + 1
+        user_profile.applied_jobs.add(job_posting)
         user_profile.save()
 
         # Calculate grade if resume is present
@@ -595,7 +596,8 @@ def api_apply_job(request, job_id):
 
         return Response({
             'message': 'Application submitted successfully',
-            'grade': grade
+            'grade': grade,
+            'jobs_applied_to': str(user_profile.applied_jobs)
         }, status=200)
 
     except UserProfile.DoesNotExist:

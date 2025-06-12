@@ -10,7 +10,7 @@ alwaysApply: true
 - You can use markdown but dont have to
 Before you make any changes make sure to look over all code, then make a plan on what to do then search the web to see the best solution, then think again , revise the plan, and double check all code befroe you implement, then while implementing add your code and make sure there are no errors. Make sure it is desgined correctly. DO this all in one step and implement the code into the existing code in the repo. U
 
-This  is a job positng website, its colors are orange and white and black/ You must stick to around these colors. This website is for the fbla website and coding development competition. We want hte website to be built in react wiht django as the backend. However there is no react frontend right now. All of hte funcitons for the website is in the views file and any other files refrenced by django. We currently have a front end with dajngo hwoever it should be forgotten. YOur goal is to help me convert the front end to django while having the front end point back to my current backend. Here is the rubric for the fbla competition to ensure this website is the best
+This  is a job positng website, its colors are orange and white and black/ You must stick to around these colors. This website is for the fbla website and coding development competition. We want hte website to be built in react wiht django as the backend. Here is the fbla rubric to ensure it is the best
 
 "
 2024-25 Competitive Events Guidelines

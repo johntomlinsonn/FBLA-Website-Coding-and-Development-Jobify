@@ -15,6 +15,7 @@ class UserProfile(models.Model):
     account_holder_name = models.CharField(max_length=255, blank=True, null=True)
     favorited_jobs = models.ManyToManyField('JobPosting', related_name='favorited_by', blank=True)
     num_applications = models.IntegerField(blank=True, null=True,default=0)
+    applied_jobs = models.ManyToManyField('JobPosting', related_name='applicants', blank=True)
 
     def __str__(self):
         return self.user.username
