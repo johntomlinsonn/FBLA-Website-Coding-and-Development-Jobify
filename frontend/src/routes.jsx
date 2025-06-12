@@ -44,6 +44,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/post-job"
+        element={
+          <ProtectedRoute>
+            <CreateJob />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/account"
         element={
           <ProtectedRoute>
