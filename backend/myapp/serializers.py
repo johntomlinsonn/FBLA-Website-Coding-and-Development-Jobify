@@ -41,11 +41,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     references = ReferenceSerializer(many=True, read_only=True)
     education = EducationSerializer(many=True, read_only=True)
     resume_url = serializers.SerializerMethodField()
+    profile_picture_url = serializers.SerializerMethodField() # Add this line
     
     class Meta:
         model = UserProfile
         fields = [
-            'id', 'user', 'resume', 'resume_url', 'gpa',
+            'id', 'user', 'resume', 'resume_url', 'profile_picture', 'profile_picture_url', 'gpa', # Add 'profile_picture' and 'profile_picture_url'
             'is_job_provider', 'account_holder_name', 'skills',
             'references', 'education'
         ]
@@ -53,6 +54,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_resume_url(self, obj):
         if obj.resume:
             return self.context['request'].build_absolute_uri(obj.resume.url)
+        return None
+
+    def get_profile_picture_url(self, obj): # Add this method
+        if obj.profile_picture:
+            return self.context['request'].build_absolute_uri(obj.profile_picture.url)
         return None
 
 class JobPostingSerializer(serializers.ModelSerializer):

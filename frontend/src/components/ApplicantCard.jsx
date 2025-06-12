@@ -15,7 +15,7 @@ import PersonIcon from '@mui/icons-material/Person';
 const ApplicantCard = ({ applicant }) => {
   const {
     account_holder_name,
-    profile_picture,
+    profile_picture_url, // Use profile_picture_url from serializer
     email,
     school_year,
     graduation_year,
@@ -26,7 +26,22 @@ const ApplicantCard = ({ applicant }) => {
     resume_url,
   } = applicant;
   const name = account_holder_name || `${applicant.user?.first_name || ''} ${applicant.user?.last_name || ''}`.trim();
-  const profilePicture = profile_picture;
+  const profilePicture = profile_picture_url; // Use profile_picture_url
+
+  // Helper function to get initials
+  const getInitials = (firstName, lastName) => {
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    if (firstName) {
+      return `${firstName[0]}`.toUpperCase();
+    }
+    if (lastName) {
+      return `${lastName[0]}`.toUpperCase();
+    }
+    return ''; // Return empty if no name parts
+  };
+
   const schoolYear = school_year;
   const graduationYear = graduation_year;
   const appliedJobs = applied_jobs;
@@ -66,7 +81,7 @@ const ApplicantCard = ({ applicant }) => {
           }}
         >
           <Avatar
-            src={profilePicture}
+            src={profilePicture} // This should now be profile_picture_url
             alt={name}
             sx={{
               width: 64,
@@ -74,7 +89,10 @@ const ApplicantCard = ({ applicant }) => {
               border: '3px solid #fff',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             }}
-          />
+          >
+            {/* Display initials if no profile picture */}
+            {!profilePicture && name && getInitials(applicant.user?.first_name, applicant.user?.last_name)}
+          </Avatar>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               {name}

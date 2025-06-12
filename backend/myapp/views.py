@@ -1094,3 +1094,36 @@ def get_applicants(request):
         'applicants': enhanced_data,
         'total': len(enhanced_data)
     })
+
+@api_view(['GET', 'PUT']) # Allow PUT for updates
+@permission_classes([IsAuthenticated])
+def user_profile_detail(request):
+    try:
+        profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = UserProfileSerializer(profile, context={'request': request})
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        # Log incoming data for debugging
+        print("Request data:", request.data)
+        print("Request files:", request.FILES)
+
+        serializer = UserProfileSerializer(profile, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            # Manually handle profile_picture if it's in request.FILES
+            if 'profile_picture' in request.FILES:
+                profile.profile_picture = request.FILES['profile_picture']
+            
+            # Manually handle resume if it's in request.FILES
+            if 'resume' in request.FILES:
+                profile.resume = request.FILES['resume']
+
+            serializer.save() # Save other fields
+            profile.save() # Ensure file fields are saved if updated manually
+            return Response(UserProfileSerializer(profile, context={'request': request}).data)
+        print("Serializer errors:", serializer.errors) # Log errors if invalid
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -15,9 +15,14 @@ import {
   ListItemButton,
   ListItemText,
   Grid,
+  Avatar,
+  Menu,
+  MenuItem,
+  ListItemIcon
 } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -47,7 +52,41 @@ const MainLayout = () => {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isMobile = useMediaQuery('(max-width:900px)');
 
+  const [anchorElUserMenu, setAnchorElUserMenu] = React.useState(null);
+
   const handleDrawerToggle = () => setMobileOpen((prev) => !prev);
+
+  const handleOpenUserMenu = (event) => {
+    setAnchorElUserMenu(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUserMenu(null);
+  };
+
+  const getInitials = (firstName, lastName) => {
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    if (firstName) {
+      return `${firstName[0]}`.toUpperCase();
+    }
+    if (lastName) {
+      return `${lastName[0]}`.toUpperCase();
+    }
+    return 'U'; // Default if no name
+  };
+
+  const navigateToAccount = () => {
+    navigate('/account');
+    handleCloseUserMenu();
+  };
+
+  const performUserLogout = () => {
+    logout(); // Call existing logout function from useAuth
+    handleCloseUserMenu();
+    // navigate('/'); // Optional: navigate to home or login after logout
+  };
 
   // Add useEffect for chatbot script
   React.useEffect(() => {
@@ -61,27 +100,22 @@ const MainLayout = () => {
     };
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = () => { // This is the original handleLogout, now wrapped by performUserLogout for menu
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   const isLandingPage = location.pathname === '/';
-
-  // Render either Container or Box based on isLandingPage
   const MainContentWrapper = isLandingPage ? Box : Container;
-  const wrapperSx = isLandingPage ? { width: '100%', flexGrow: 1 } : { flexGrow: 1, py: 4, pb: 16, px: { xs: 2, md: 'auto' } }; // Adjust padding for non-landing pages as needed
+  const wrapperSx = isLandingPage ? { width: '100%', flexGrow: 1 } : { flexGrow: 1, py: 4, pb: 16, px: { xs: 2, md: 'auto' } };
 
-  // Navigation links (reuse for desktop and mobile)
-  const navLinks = [
-    { label: 'Post a Job', onClick: () => { user ? navigate('/jobs/create') : navigate('/login'); } },
-    user && { label: 'Account', onClick: () => navigate('/account'), icon: <SettingsIcon /> },
+  // Navigation links for AppBar and Drawer (excluding Account/Logout for logged-in users, which are in the menu)
+  const navLinkItems = [
+    { label: 'Post a Job', onClick: () => navigate('/post-job') }, // Ensure path is correct
     user && { label: 'Browse Jobs', onClick: () => navigate('/jobs') },
     user?.is_staff && { label: 'Admin Panel', onClick: () => navigate('/admin') },
     user?.is_job_provider && { label: 'Find Applicants', onClick: () => navigate('/find-applicants') },
-    user
-      ? { label: 'Logout', onClick: handleLogout, icon: <LogoutIcon /> }
-      : { label: 'Login', onClick: () => navigate('/login') },
+    !user && { label: 'Login', onClick: () => navigate('/login') },
     !user && { label: 'Get Started', onClick: () => navigate('/signup'), isButton: true },
   ].filter(Boolean);
 
@@ -187,7 +221,7 @@ const MainLayout = () => {
                 gap: { xs: 1, sm: 2 },
                 flexWrap: { xs: 'wrap', sm: 'nowrap' }
               }}>
-                {navLinks.map((link, i) => (
+                {navLinkItems.map((link, i) => (
                   link.isButton ? (
                     <Button 
                       key={link.label}
@@ -236,6 +270,45 @@ const MainLayout = () => {
                     </Button>
                   )
                 ))}
+                {/* User Avatar and Menu for logged-in users */}
+                {user && (
+                  <Box sx={{ flexGrow: 0 }}>
+                    <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                      <Avatar alt={user.first_name || user.username || 'User'} src={user.profile_picture_url}>
+                        {(!user.profile_picture_url && (user.first_name || user.username)) && getInitials(user.first_name, user.last_name)}
+                      </Avatar>
+                    </IconButton>
+                    <Menu
+                      sx={{ mt: '45px' }}
+                      id="menu-appbar-user"
+                      anchorEl={anchorElUserMenu}
+                      anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                      }}
+                      keepMounted
+                      transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                      }}
+                      open={Boolean(anchorElUserMenu)}
+                      onClose={handleCloseUserMenu}
+                    >
+                      <MenuItem onClick={navigateToAccount}>
+                        <ListItemIcon>
+                          <AccountCircleIcon fontSize="small" />
+                        </ListItemIcon>
+                        Account
+                      </MenuItem>
+                      <MenuItem onClick={performUserLogout}>
+                        <ListItemIcon>
+                          <LogoutIcon fontSize="small" />
+                        </ListItemIcon>
+                        Logout
+                      </MenuItem>
+                    </Menu>
+                  </Box>
+                )}
               </Box>
             )}
             {/* Mobile Hamburger */}
@@ -323,7 +396,7 @@ const MainLayout = () => {
             </Box>
 
             <List>
-              {navLinks.map((item) => (
+              {navLinkItems.map((item) => (
                 <ListItem key={item.label} disablePadding>
                   <ListItemButton
                     sx={{ textAlign: "center", py: 1.5 }}
@@ -336,6 +409,33 @@ const MainLayout = () => {
                   </ListItemButton>
                 </ListItem>
               ))}
+              {/* Additional items for Account and Logout in mobile drawer */}
+              {user && (
+                <>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      sx={{ textAlign: "center", py: 1.5 }}
+                      onClick={() => { handleDrawerToggle(); navigateToAccount(); }}
+                    >
+                      <ListItemText
+                        primary="Account"
+                        primaryTypographyProps={{ fontSize: "1.1rem", fontWeight: 600, color: "#333" }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      sx={{ textAlign: "center", py: 1.5 }}
+                      onClick={() => { handleDrawerToggle(); performUserLogout(); }}
+                    >
+                      <ListItemText
+                        primary="Logout"
+                        primaryTypographyProps={{ fontSize: "1.1rem", fontWeight: 600, color: "#333" }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                </>
+              )}
             </List>
           </Box>
         </Drawer>
@@ -450,4 +550,4 @@ const MainLayout = () => {
   );
 };
 
-export default MainLayout; 
+export default MainLayout;

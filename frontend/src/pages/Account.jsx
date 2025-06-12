@@ -16,7 +16,8 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Chip
+  Chip,
+  Avatar
 } from '@mui/material';
 import { profileAPI } from '../services/api';
 import AddIcon from '@mui/icons-material/Add';
@@ -33,6 +34,7 @@ const Account = () => {
   const [success, setSuccess] = useState(null);
   const [formData, setFormData] = useState({
     resume: null,
+    profile_picture: null, // Add profile_picture to formData
     gpa: '',
     is_job_provider: false,
     account_holder_name: '',
@@ -91,6 +93,7 @@ const Account = () => {
           setEducation(educationData);
           setFormData({
             resume: null,
+            profile_picture: null, // Reset profile_picture on fetch
             is_job_provider: profileData.is_job_provider || false,
             account_holder_name: profileData.account_holder_name || '',
             skills: profileData.skills || []
@@ -107,7 +110,7 @@ const Account = () => {
         setProfile(null);
         setReferences([]);
         setEducation([]);
-        setFormData({ resume: null, gpa: '', is_job_provider: false, account_holder_name: '' });
+        setFormData({ resume: null, profile_picture: null, gpa: '', is_job_provider: false, account_holder_name: '' }); // Reset profile_picture
         setLoading(false);
       }
     };
@@ -119,6 +122,13 @@ const Account = () => {
     setFormData({
       ...formData,
       resume: e.target.files[0],
+    });
+  };
+
+  const handleProfilePictureChange = (e) => { // Add handler for profile picture
+    setFormData({
+      ...formData,
+      profile_picture: e.target.files[0],
     });
   };
 
@@ -197,6 +207,19 @@ const Account = () => {
     }
   };
 
+  const getInitials = (firstName, lastName) => {
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    if (firstName) {
+      return `${firstName[0]}`.toUpperCase();
+    }
+    if (lastName) {
+      return `${lastName[0]}`.toUpperCase();
+    }
+    return 'U'; // Default User initial
+  };
+
   if (loading) {
     return (
       <Container sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -223,17 +246,50 @@ const Account = () => {
         {/* Profile Section */}
         <Grid item xs={12}>
           <Paper sx={{ p: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              My Account
-            </Typography>
-            {profile?.user && (
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6">{`${profile.user.first_name} ${profile.user.last_name}`}</Typography>
-                <Typography color="textSecondary">{profile.user.email}</Typography>
-              </Box>
-            )}
+            <Grid container spacing={2} justifyContent="space-between" alignItems="flex-start">
+              <Grid item xs={12} md>
+                <Typography variant="h4" component="h1" gutterBottom>
+                  My Account
+                </Typography>
+                {profile?.user && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6">{`${profile.user.first_name || ''} ${profile.user.last_name || ''}`.trim()}</Typography>
+                    <Typography color="textSecondary">{profile.user.email}</Typography>
+                  </Box>
+                )}
+              </Grid>
+              <Grid item xs={12} md="auto">
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, mb: { xs: 2, md: 0 } }}>
+                  <label htmlFor="profile-picture-input" style={{ cursor: 'pointer' }}>
+                    <Avatar
+                      src={formData.profile_picture ? URL.createObjectURL(formData.profile_picture) : profile?.profile_picture_url}
+                      alt="Profile Picture"
+                      sx={{ width: 100, height: 100, mb: 1, border: '2px solid lightgray' }}
+                    >
+                      {(!profile?.profile_picture_url && !formData.profile_picture && profile?.user) && getInitials(profile.user.first_name, profile.user.last_name)}
+                    </Avatar>
+                  </label>
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    id="profile-picture-input"
+                    onChange={handleProfilePictureChange}
+                  />
+                   <Button
+                      variant="outlined"
+                      size="small"
+                      component="label"
+                      htmlFor="profile-picture-input"
+                    >
+                      Change Picture
+                    </Button>
+                </Box>
+              </Grid>
+            </Grid>
+
             <form onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
+              <Grid container spacing={3} sx={{ mt: 1}}>
                 <Grid item xs={12}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Button
@@ -249,7 +305,8 @@ const Account = () => {
                         onChange={handleResumeChange}
                       />
                     </Button>
-                    {profile?.resume_url && (
+                    {formData.resume && <Typography variant="caption">{formData.resume.name}</Typography>}
+                    {(!formData.resume && profile?.resume_url) && (
                       <Button
                         variant="text"
                         href={profile.resume_url}
