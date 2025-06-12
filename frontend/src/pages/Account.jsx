@@ -13,11 +13,16 @@ import {
   IconButton,
   Card,
   CardContent,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Chip
 } from '@mui/material';
 import { profileAPI } from '../services/api';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useAuth } from '../contexts/AuthContext';
 
 const Account = () => {
@@ -31,6 +36,7 @@ const Account = () => {
     gpa: '',
     is_job_provider: false,
     account_holder_name: '',
+    skills: []
   });
   const [references, setReferences] = useState([]);
   const [education, setEducation] = useState([]);
@@ -38,6 +44,31 @@ const Account = () => {
   const [newEducation, setNewEducation] = useState({ school_name: '', graduation_date: '', gpa: '' });
   const [showNewReferenceForm, setShowNewReferenceForm] = useState(false);
   const [showNewEducationForm, setShowNewEducationForm] = useState(false);
+
+  // Categorized skills list
+  const skillCategories = {
+    'Academic & Core Skills': [
+      'Time Management', 'Study Skills', 'Critical Thinking', 'Problem Solving',
+      'Public Speaking', 'Research & Writing', 'Note-Taking', 'Test Preparation',
+      'Foreign Language', 'Math Proficiency', 'Scientific Reasoning'
+    ],
+    'Soft & Interpersonal Skills': [
+      'Leadership', 'Teamwork', 'Communication', 'Creativity', 'Adaptability',
+      'Organization', 'Conflict Resolution', 'Responsibility', 'Initiative',
+      'Empathy', 'Collaboration'
+    ],
+    'Technical & Computer Skills': [
+      'Python Programming', 'Java Programming', 'HTML/CSS', 'JavaScript',
+      'Microsoft Excel', 'Google Workspace', 'Graphic Design', 'Video Editing',
+      'Coding Fundamentals', 'Website Development', 'Spreadsheets & Data Analysis',
+      'App Development'
+    ],
+    'Career & Project Skills': [
+      'Resume Writing', 'Interviewing', 'Event Planning', 'Fundraising',
+      'Social Media Management', 'Customer Service', 'Tutoring / Mentoring',
+      'Volunteering / Community Engagement', 'Entrepreneurship', 'Marketing Basics'
+    ]
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -61,6 +92,8 @@ const Account = () => {
           setFormData({
             resume: null,
             is_job_provider: profileData.is_job_provider || false,
+            account_holder_name: profileData.account_holder_name || '',
+            skills: profileData.skills || []
           });
           setLoading(false);
         } catch (err) {
@@ -99,9 +132,13 @@ const Account = () => {
       const formDataToSend = new FormData();
       Object.keys(formData).forEach(key => {
         if (formData[key] !== null) {
-          formDataToSend.append(key, formData[key]);
+          if (key !== 'skills') {
+            formDataToSend.append(key, formData[key]);
+          }
         }
       });
+      // Append skills array
+      formData.skills.forEach(skill => formDataToSend.append('skills', skill));
 
       await profileAPI.update(formDataToSend);
       setSuccess('Profile updated successfully');
@@ -219,8 +256,62 @@ const Account = () => {
                     )}
                   </Box>
                 </Grid>
+                {/* Save Profile Changes */}
+                <Grid item xs={12}>
+                  <Button type="submit" variant="contained" color="primary">
+                    Save Changes
+                  </Button>
+                </Grid>
               </Grid>
             </form>
+          </Paper>
+        </Grid>
+
+        {/* Skills Section */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              Skills
+            </Typography>
+            {Object.entries(skillCategories).map(([category, skillsList]) => (
+              <Accordion key={category} sx={{ mb: 1 }}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography>{category}</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                    {skillsList.map(skill => (
+                      !formData.skills.includes(skill) && (
+                        <Chip
+                          key={skill}
+                          label={skill}
+                          clickable
+                          onClick={() => setFormData({
+                            ...formData,
+                            skills: [...formData.skills, skill]
+                          })}
+                          sx={{ backgroundColor: 'rgba(0,0,0,0.05)' }}
+                        />
+                      )
+                    ))}
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+            {/* Selected Skills */}
+            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {formData.skills.map(skill => (
+                <Chip
+                  key={skill}
+                  label={skill}
+                  onDelete={() => setFormData({
+                    ...formData,
+                    skills: formData.skills.filter(s => s !== skill)
+                  })}
+                  color="primary"
+                />
+              ))}
+            </Box>
           </Paper>
         </Grid>
 
@@ -424,4 +515,4 @@ const Account = () => {
   );
 };
 
-export default Account; 
+export default Account;

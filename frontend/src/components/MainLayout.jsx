@@ -78,6 +78,7 @@ const MainLayout = () => {
     user && { label: 'Account', onClick: () => navigate('/account'), icon: <SettingsIcon /> },
     user && { label: 'Browse Jobs', onClick: () => navigate('/jobs') },
     user?.is_staff && { label: 'Admin Panel', onClick: () => navigate('/admin') },
+    user?.is_job_provider && { label: 'Find Applicants', onClick: () => navigate('/find-applicants') },
     user
       ? { label: 'Logout', onClick: handleLogout, icon: <LogoutIcon /> }
       : { label: 'Login', onClick: () => navigate('/login') },

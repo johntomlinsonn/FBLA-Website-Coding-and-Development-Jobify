@@ -7,7 +7,8 @@ from .views import (
     grade_job_live, grade_applicant_live,
     api_job_list, api_job_detail, api_apply_job, 
     api_user_profile, api_update_profile, api_register,
-    api_login, api_logout, api_user_applications
+    api_login, api_logout, api_user_applications,
+    get_applicants
 )
 
 urlpatterns = [
@@ -48,6 +49,7 @@ urlpatterns = [
     path('api/favorited-jobs/', views.api_favorited_jobs_list, name='api_favorited_jobs_list'),
     path('api/check-is-staff/', views.api_check_is_staff, name='api_check_is_staff'),
     path('api/job-post-success-rate/', views.job_post_success_rate, name='api_job_post_success_rate'),
+    path('api/applicants/', get_applicants, name='get_applicants'),
     
     # Frontend routes - redirect to appropriate existing views or API endpoints
     path('jobs/', views.search, name='frontend_jobs'),  # Redirect to search view instead of api_job_list

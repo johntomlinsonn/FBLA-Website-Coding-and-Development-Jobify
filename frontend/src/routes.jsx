@@ -8,6 +8,7 @@ import CreateJob from './pages/CreateJob';
 import EditJob from './pages/EditJob';
 import Account from './pages/Account';
 import JobApplication from './pages/JobApplication';
+import FindApplicantsPage from './pages/FindApplicantsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -16,9 +17,8 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path='/signup' element={<Login />} />
       <Route path="/register" element={<Register />} />
-        <Route path="/jobs" element={<JobsList />} />
-        <Route path="/jobs/:id" element={<JobDetails />} />
-
+      <Route path="/jobs" element={<JobsList />} />
+      <Route path="/jobs/:id" element={<JobDetails />} />
       <Route
         path="/jobs/:id/apply"
         element={
@@ -27,30 +27,38 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-        <Route
-          path="/jobs/create"
-          element={
-            <ProtectedRoute>
-              <CreateJob />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/jobs/:id/edit"
-          element={
-            <ProtectedRoute>
-              <EditJob />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/account"
-          element={
-            <ProtectedRoute>
-              <Account />
-            </ProtectedRoute>
-          }
-        />
+      <Route
+        path="/jobs/create"
+        element={
+          <ProtectedRoute>
+            <CreateJob />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/jobs/:id/edit"
+        element={
+          <ProtectedRoute>
+            <EditJob />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/account"
+        element={
+          <ProtectedRoute>
+            <Account />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/find-applicants"
+        element={
+          <ProtectedRoute>
+            <FindApplicantsPage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };

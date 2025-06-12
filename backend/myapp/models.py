@@ -16,6 +16,7 @@ class UserProfile(models.Model):
     favorited_jobs = models.ManyToManyField('JobPosting', related_name='favorited_by', blank=True)
     num_applications = models.IntegerField(blank=True, null=True,default=0)
     applied_jobs = models.ManyToManyField('JobPosting', related_name='applicants', blank=True)
+    skills = models.ManyToManyField('Skill', related_name='users', blank=True)
 
     def __str__(self):
         return self.user.username
@@ -92,3 +93,9 @@ class JobPosting(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+class Skill(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name

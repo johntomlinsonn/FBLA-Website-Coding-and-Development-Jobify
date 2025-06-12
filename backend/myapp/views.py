@@ -29,6 +29,7 @@ from cerebras.cloud.sdk import Cerebras
 from rest_framework import status
 from django.db.models.functions import TruncMonth
 from django.db.models import Count, Avg
+from datetime import datetime
 
 Api = os.getenv("API_KEY")
 
@@ -628,10 +629,24 @@ def api_update_profile(request):
     except UserProfile.DoesNotExist:
         return Response({'error': 'User profile not found'}, status=404)
     
+    # Pre-create any new Skill entries so SlugRelatedField can match
+    skill_names = request.data.getlist('skills') if hasattr(request.data, 'getlist') else request.data.get('skills')
+    if skill_names:
+        from .models import Skill
+        for name in skill_names:
+            Skill.objects.get_or_create(name=name)
     serializer = UserProfileSerializer(profile, data=request.data, partial=True, context={'request': request})
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
+        # Save profile fields
+        profile_instance = serializer.save()
+        # Handle skills m2m explicitly if provided
+        skill_names = request.data.getlist('skills') if hasattr(request.data, 'getlist') else request.data.get('skills')
+        if skill_names is not None:
+            from .models import Skill
+            # Set skills by matching names
+            skills_qs = Skill.objects.filter(name__in=skill_names)
+            profile_instance.skills.set(skills_qs)
+        return Response(UserProfileSerializer(profile_instance, context={'request': request}).data)
     return Response(serializer.errors, status=400)
 
 @api_view(['POST'])
@@ -992,3 +1007,91 @@ def job_post_success_rate(request):
         })
 
     return Response({'job_provider_stats':provider_stat_list})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_applicants(request):
+    """
+    Get a list of applicants with filtering and sorting capabilities.
+    Only accessible by job providers.
+    """
+    # Check if the user is a job provider
+    if not request.user.userprofile.is_job_provider:
+        return Response(
+            {"error": "Only job providers can access this endpoint"},
+            status=403
+        )
+
+    # Get query parameters
+    skill_filter = request.query_params.get('skill', '')
+    job_filter = request.query_params.get('job', '')
+    sort_by = request.query_params.get('sort_by', 'recent')
+
+    # Base queryset - get all users who are not job providers
+    applicants = UserProfile.objects.filter(is_job_provider=False)
+
+    # Apply filters
+    if skill_filter:
+        # Filter by skills in requirements
+        applicants = applicants.filter(
+            Q(education__school_name__icontains=skill_filter) |
+            Q(user__first_name__icontains=skill_filter) |
+            Q(user__last_name__icontains=skill_filter)
+        ).distinct()
+
+    if job_filter:
+        # Filter by jobs they've applied to
+        applicants = applicants.filter(
+            applied_jobs__title__icontains=job_filter
+        ).distinct()
+
+    # Apply sorting
+    if sort_by == 'alphabetical':
+        applicants = applicants.order_by('user__last_name', 'user__first_name')
+    else:  # default to 'recent'
+        applicants = applicants.order_by('-user__date_joined')
+
+    # Serialize the data
+    serializer = UserProfileSerializer(
+        applicants,
+        many=True,
+        context={'request': request}
+    )
+
+    # Add additional data for each applicant
+    enhanced_data = []
+    for applicant_data in serializer.data:
+        # Get the applicant's applied jobs
+        applied_jobs = JobPosting.objects.filter(
+            applicants=applicant_data['id']
+        ).values_list('title', flat=True)
+
+        # Get the applicant's education info
+        education = applicant_data.get('education', [])
+        graduation_year = None
+        school_year = None
+        if education:
+            latest_education = max(education, key=lambda x: x.get('graduation_date', ''))
+            if latest_education.get('graduation_date'):
+                graduation_year = latest_education['graduation_date'][:4]
+                # Calculate school year based on graduation date
+                current_year = datetime.now().year
+                years_until_graduation = int(graduation_year) - current_year
+                if years_until_graduation > 0:
+                    school_year = f"Class of {graduation_year}"
+                else:
+                    school_year = "Graduated"
+
+        # Enhance the applicant data
+        enhanced_data.append({
+            **applicant_data,
+            'applied_jobs': list(applied_jobs),
+            'graduation_year': graduation_year,
+            'school_year': school_year,
+            'profile_picture': f"https://ui-avatars.com/api/?name={applicant_data['user']['first_name']}+{applicant_data['user']['last_name']}&background=FF6B00&color=fff"
+        })
+
+    return Response({
+        'applicants': enhanced_data,
+        'total': len(enhanced_data)
+    })

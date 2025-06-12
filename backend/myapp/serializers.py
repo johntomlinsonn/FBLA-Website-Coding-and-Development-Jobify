@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import JobPosting, UserProfile, Reference, Education, TodoItem
+from .models import JobPosting, UserProfile, Reference, Education, TodoItem, Skill
 from datetime import datetime, timezone
 import json
 
@@ -32,6 +32,11 @@ class EducationSerializer(serializers.ModelSerializer):
         fields = ['id', 'school_name', 'graduation_date', 'gpa']
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    skills = serializers.SlugRelatedField(
+        many=True,
+        queryset=Skill.objects.all(),
+        slug_field='name'
+    )
     user = UserSerializer(read_only=True)
     references = ReferenceSerializer(many=True, read_only=True)
     education = EducationSerializer(many=True, read_only=True)
@@ -40,8 +45,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = [
-            'id', 'user', 'resume', 'resume_url', 'gpa', 
-            'is_job_provider', 'account_holder_name', 'references', 'education'
+            'id', 'user', 'resume', 'resume_url', 'gpa',
+            'is_job_provider', 'account_holder_name', 'skills',
+            'references', 'education'
         ]
     
     def get_resume_url(self, obj):
