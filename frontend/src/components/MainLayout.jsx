@@ -272,10 +272,22 @@ const MainLayout = () => {
                 ))}
                 {/* User Avatar and Menu for logged-in users */}
                 {user && (
-                  <Box sx={{ flexGrow: 0 }}>
+                  <Box sx={{ flexGrow: 0, ml: 2 }}>
                     <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                      <Avatar alt={user.first_name || user.username || 'User'} src={user.profile_picture_url}>
-                        {(!user.profile_picture_url && (user.first_name || user.username)) && getInitials(user.first_name, user.last_name)}
+                      <Avatar 
+                        alt={user.first_name || 'User'} 
+                        src={user.profile_picture_url || ''}
+                        sx={{ 
+                          width: { xs: 36, sm: 42 }, 
+                          height: { xs: 36, sm: 42 },
+                          background: user.profile_picture_url ? 'transparent' : 'linear-gradient(45deg, #FF6B00, #FF8C00)',
+                          color: '#fff',
+                          fontSize: { xs: '0.9rem', sm: '1rem' },
+                          fontWeight: 'bold',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                        }}
+                      >
+                        {!user.profile_picture_url && getInitials(user.first_name, user.last_name)}
                       </Avatar>
                     </IconButton>
                     <Menu
