@@ -1,14 +1,15 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from .serializers import UserProfileSerializer, JobPostingSerializer, UserSerializer, ReferenceSerializer, EducationSerializer
+from .serializers import UserProfileSerializer, JobPostingSerializer, UserSerializer, ReferenceSerializer, EducationSerializer, MessageSerializer, ConversationSerializer
+from .models import UserProfile, Reference, Education, JobPosting, Message
+from django.db import models
 import mimetypes
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
 from .forms import SignUpForm, SignInForm, UserProfileForm, ReferenceFormSet, EducationFormSet, JobPostingForm
-from .models import UserProfile, Reference, Education, JobPosting
 from django.db.models import Q
 from django.core.mail import EmailMultiAlternatives
 from dotenv import find_dotenv, load_dotenv
@@ -121,7 +122,7 @@ def postjob(request):
         if form.is_valid():
             #Saving all of the info from the form
             job_posting = form.save(commit=False)
-            job_posting.user = request.user
+            job_posting.posted_by = request.user.userprofile  # Set the user profile as the poster
             job_posting.status = 'pending'
             # Assign the list directly. The model's save method will handle JSON dumping.
             job_posting.requirements = form.cleaned_data['requirements']
@@ -663,6 +664,7 @@ def api_register(request):
             user_profile = user_profile_serializer.save(user=user)
             user_profile.is_job_provider = request.data.get("is_job_provider")
             user_profile.save()
+            print(user_profile.is_job_provider)
 
         refresh = RefreshToken.for_user(user)
      
@@ -1136,3 +1138,139 @@ def user_profile_detail(request):
             return Response(UserProfileSerializer(profile, context={'request': request}).data)
         print("Serializer errors:", serializer.errors) # Log errors if invalid
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_get_conversations(request):
+    """API endpoint for fetching all conversations for a user"""
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)        # Get all messages where the user is either sender or recipient
+        all_messages = Message.objects.filter(
+            Q(sender=user_profile) | Q(recipient=user_profile)
+        ).order_by('timestamp')
+        
+        # Group messages by conversation partner
+        conversations = {}
+        
+        for message in all_messages:
+            # Determine the other user (conversation partner)
+            if message.sender.id == user_profile.id:
+                other_user = message.recipient
+            else:
+                other_user = message.sender
+            
+            other_user_id = other_user.id
+            
+            # Initialize conversation if not exists
+            if other_user_id not in conversations:
+                conversations[other_user_id] = {
+                    'other_user': other_user,
+                    'messages': [],
+                    'last_message_timestamp': message.timestamp,
+                    'unread_count': 0
+                }
+            
+            # Add message to conversation
+            conversations[other_user_id]['messages'].append(message)
+            
+            # Update last message timestamp if this message is newer
+            if message.timestamp > conversations[other_user_id]['last_message_timestamp']:
+                conversations[other_user_id]['last_message_timestamp'] = message.timestamp
+            
+            # Count unread messages (messages sent by the other user that are unread)
+            if message.sender.id == other_user_id and not message.is_read:
+                conversations[other_user_id]['unread_count'] += 1
+        
+        # Convert to list and sort by last message timestamp (newest first)
+        conversation_list = list(conversations.values())
+        conversation_list.sort(key=lambda x: x['last_message_timestamp'], reverse=True)
+        
+        # Serialize the conversations
+        serializer = ConversationSerializer(conversation_list, many=True, context={'request': request})
+        return Response(serializer.data)
+        
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User profile not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_inbox(request):
+    """API endpoint for fetching a user's inbox (received messages)"""
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        messages = Message.objects.filter(recipient=user_profile).order_by('-timestamp')
+        serializer = MessageSerializer(messages, many=True, context={'request': request})
+        return Response(serializer.data)
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User profile not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_sent_messages(request):
+    """API endpoint for fetching a user's sent messages"""
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        messages = Message.objects.filter(sender=user_profile).order_by('-timestamp')
+        serializer = MessageSerializer(messages, many=True, context={'request': request})
+        return Response(serializer.data)
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User profile not found'}, status=404)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_send_message(request):
+    """API endpoint for sending a message"""
+    try:
+        sender_profile = UserProfile.objects.get(user=request.user)
+        
+            
+        recipient_id = request.data.get('recipient_id')
+        content = request.data.get('content')
+        
+        if not recipient_id or not content:
+            return Response({'error': 'Recipient ID and content are required'}, status=400)
+            
+        try:
+            recipient_profile = UserProfile.objects.get(id=recipient_id)
+        except UserProfile.DoesNotExist:
+            return Response({'error': 'Recipient not found'}, status=404)
+            
+        # Create the message
+        message = Message.objects.create(
+            sender=sender_profile,
+            recipient=recipient_profile,
+            content=content
+        )
+        
+        serializer = MessageSerializer(message, context={'request': request})
+        return Response(serializer.data, status=201)
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User profile not found'}, status=404)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def api_mark_message_read(request, message_id):
+    """API endpoint for marking a message as read"""
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        message = Message.objects.get(id=message_id, recipient=user_profile)
+        
+        message.is_read = True
+        message.save()
+        
+        return Response({'status': 'Message marked as read'})
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User profile not found'}, status=404)
+    except Message.DoesNotExist:
+        return Response({'error': 'Message not found or you don\'t have permission to access it'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_unread_message_count(request):
+    """API endpoint for getting the count of unread messages"""
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+        count = Message.objects.filter(recipient=user_profile, is_read=False).count()
+        return Response({'unread_count': count})
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User profile not found'}, status=404)

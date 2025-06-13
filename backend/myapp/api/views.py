@@ -84,11 +84,7 @@ class JobPostingViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        logger.info("=== Single Job API Response ===")
-        logger.info(f"Job ID: {instance.id}")
-        logger.info(f"Raw grade from model: {instance.grade}")
-        logger.info(f"Serialized data: {serializer.data}")
-        logger.info("=== End Single Job Response ===")
+    
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])

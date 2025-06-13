@@ -60,6 +60,13 @@ const MainLayout = ({ children }) => {
                 )}
                 <Button
                   color="inherit"
+                  component={RouterLink}
+                  to="/inbox"
+                >
+                  Inbox
+                </Button>
+                <Button
+                  color="inherit"
                   onClick={handleLogout}
                 >
                   Logout
@@ -112,4 +119,4 @@ const MainLayout = ({ children }) => {
   );
 };
 
-export default MainLayout; 
+export default MainLayout;

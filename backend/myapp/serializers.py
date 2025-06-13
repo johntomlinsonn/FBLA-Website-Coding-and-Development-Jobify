@@ -1,8 +1,47 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-from .models import JobPosting, UserProfile, Reference, Education, TodoItem, Skill
+from django.contrib.auth.models import User # Keep for UserProfile.user relation if UserProfile is AUTH_USER_MODEL
+# Or preferably: from django.contrib.auth import get_user_model
+# User = get_user_model() # This would be UserProfile if set as AUTH_USER_MODEL
+from .models import JobPosting, UserProfile, Reference, Education, TodoItem, Skill, Message # Ensure UserProfile is imported
 from datetime import datetime, timezone
 import json
+
+class UserBasicInfoSerializer(serializers.ModelSerializer):
+    # Assuming 'obj' passed to methods will be a UserProfile instance
+    username = serializers.CharField(source='user.username', read_only=True)
+    profile_picture = serializers.SerializerMethodField() # Will call get_profile_picture
+    profile_name = serializers.SerializerMethodField()    # Will call get_profile_name
+
+    class Meta:
+        model = UserProfile # Changed from User, assuming UserProfile is the active user model
+        fields = [
+            'id',                   # This will be UserProfile.id
+            'username',             # Sourced from UserProfile.user.username
+            'profile_picture',      # Method field
+            'profile_name'          # Method field
+        ]
+
+
+    def get_profile_picture(self, obj: UserProfile):
+        # obj is expected to be a UserProfile instance
+        if obj.profile_picture:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.profile_picture.url)
+        return None
+
+    def get_profile_name(self, obj: UserProfile):
+        # obj is expected to be a UserProfile instance
+        if obj.account_holder_name:
+            return obj.account_holder_name
+        
+        # Fallback to username from the related User model
+        if hasattr(obj, 'user') and obj.user: # Check if UserProfile has 'user' and it's not None
+            name = obj.user.get_full_name()
+            if name:
+                return name
+            return obj.user.username # obj.user is the Django User instance
+        return None # Should ideally not happen if UserProfile always has a user
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +59,6 @@ class UserSerializer(serializers.ModelSerializer):
         )
         return user
 
-
 class ReferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reference
@@ -35,7 +73,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     skills = serializers.SlugRelatedField(
         many=True,
         queryset=Skill.objects.all(),
-        slug_field='name'
+        slug_field='name',
+        required=False,
     )
     user = UserSerializer(read_only=True)
     references = ReferenceSerializer(many=True, read_only=True)
@@ -72,12 +111,12 @@ class JobPostingSerializer(serializers.ModelSerializer):
         required=False,
         allow_empty=True
     )
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
     status = serializers.CharField(read_only=True)
 
     class Meta:
         model = JobPosting
-        fields = ['id', 'title', 'company_name', 'company_email', 'description', 'salary', 'location', 'job_type', 'requirements', 'custom_questions', 'user', 'status', 'created_at', 'updated_at','grade']
+        fields = ['id', 'title', 'company_name', 'company_email', 'description', 'salary', 'location', 'job_type', 'requirements', 'custom_questions', 'posted_by', 'status', 'created_at', 'updated_at','grade']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def to_representation(self, instance):
@@ -97,31 +136,24 @@ class JobPostingSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Debug print to inspect validated_data
         print("Validated Data in create (final attempt to exclude user keyword):", validated_data)
+        # Ensure 'user' is not in validated_data if it's meant to be set automatically
+        # validated_data.pop('user', None) # Example: remove if it causes issues
 
-        # Construct the dictionary of arguments for JobPosting.objects.create()
-        # This dictionary will contain fields from validated_data, explicitly excluding 'user'.
-        create_args_excluding_user = {}
-        for key, value in validated_data.items():
-            if key != 'user': # Explicitly exclude the 'user' key
-                create_args_excluding_user[key] = value
+        # Convert lists to JSON strings if they are not already
+        if 'requirements' in validated_data and isinstance(validated_data['requirements'], list):
+            validated_data['requirements'] = json.dumps(validated_data['requirements'])
+        if 'custom_questions' in validated_data and isinstance(validated_data['custom_questions'], list):
+            validated_data['custom_questions'] = json.dumps(validated_data['custom_questions'])
+        
+        # Set the user from the request context
+        request = self.context.get("request")
+        if request and hasattr(request, "user") and request.user.is_authenticated: # request.user is AUTH_USER_MODEL instance
+            validated_data['posted_by'] = request.user.userprofile 
+        else:
+            # Handle cases where user is not available in context
+            pass 
 
-        # Debug print the final arguments for create
-        print("Arguments for JobPosting.objects.create() (user excluded):", create_args_excluding_user)
-
-        # Create the job posting instance using the carefully constructed arguments
-        # This dictionary should now NOT have the 'user' key
-        job_posting = JobPosting.objects.create(**create_args_excluding_user)
-
-        # Set status to pending (assuming this is desired)
-        job_posting.status = 'pending'
-
-        # Save the instance to persist changes (status)
-        job_posting.save()
-
-        # Debug print the created object
-        print("Created Job Posting object (user not set via create args):", job_posting)
-
-        return job_posting
+        return super().create(validated_data)
 
 class JobSearchSerializer(serializers.Serializer):
     """
@@ -146,33 +178,61 @@ class JobApplicationSerializer(serializers.Serializer):
 class TodoItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = TodoItem
-        fields = ['id', 'title', 'completed']
+        fields = '__all__'
 
-class ApplicationStatusSerializer(serializers.Serializer):
-    """
-    Serializer for tracking application status
-    """
-    JOB_STATUS_CHOICES = [
-        ('applied', 'Applied'),
-        ('reviewing', 'Reviewing'),
-        ('interview', 'Interview'),
-        ('offer', 'Offer'),
-        ('rejected', 'Rejected'),
-        ('accepted', 'Accepted')
-    ]
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = ['id', 'name']
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender = UserBasicInfoSerializer(read_only=True)
+    recipient = UserBasicInfoSerializer(read_only=True)
     
-    job = JobPostingSerializer(read_only=True)
-    status = serializers.ChoiceField(choices=JOB_STATUS_CHOICES)
-    applied_date = serializers.DateTimeField()
-    last_updated = serializers.DateTimeField()
-    notes = serializers.CharField(required=False, allow_blank=True)
+    # Assuming Message.sender and Message.recipient are ForeignKeys to UserProfile (settings.AUTH_USER_MODEL)
+    sender_id = serializers.PrimaryKeyRelatedField(
+        queryset=UserProfile.objects.all(), # Changed from User.objects.all()
+        source='sender', 
+        write_only=True, 
+        required=False # Sender is set from request.user
+    )
+    recipient_id = serializers.PrimaryKeyRelatedField(
+        queryset=UserProfile.objects.all(), # Changed from User.objects.all()
+        source='recipient', 
+        write_only=True
+    )
+    timestamp_display = serializers.SerializerMethodField()
 
-class FilterOptionSerializer(serializers.Serializer):
-    """
-    Serializer for job filter options on the frontend
-    """
-    id = serializers.CharField()
-    value = serializers.CharField()
-    label = serializers.CharField()
-    count = serializers.IntegerField()
-    group = serializers.CharField()
+    class Meta:
+        model = Message
+        fields = ['id', 'sender', 'recipient', 'sender_id', 'recipient_id', 'content', 'timestamp', 'timestamp_display', 'is_read']
+        read_only_fields = ['sender', 'recipient', 'timestamp', 'timestamp_display', 'is_read']
+
+    def get_timestamp_display(self, obj):
+        return obj.timestamp.strftime("%B %d, %Y, %I:%M %p")
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        # request.user is an instance of settings.AUTH_USER_MODEL (assumed to be UserProfile)
+        # Message.sender is an FK to settings.AUTH_USER_MODEL
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
+            validated_data['sender'] = request.user
+        else:
+            # This should be caught by authentication_classes at the view level
+            raise serializers.ValidationError("User not authenticated for sending message.")
+        
+        # 'recipient' will be set from 'recipient_id' by PrimaryKeyRelatedField's source mapping
+        return super().create(validated_data)
+
+
+class ConversationSerializer(serializers.Serializer): # Use serializers.Serializer for custom structure
+    other_user = UserBasicInfoSerializer(read_only=True)
+    messages = MessageSerializer(many=True, read_only=True)
+    last_message_timestamp = serializers.DateTimeField(read_only=True)
+    unread_count = serializers.IntegerField(read_only=True)
+    # Use other_user.id as the unique identifier for a conversation on the frontend
+    id = serializers.IntegerField(source='other_user.id', read_only=True) 
+
+    def to_representation(self, instance):
+        # instance is expected to be a dictionary prepared in the view
+        return super().to_representation(instance)

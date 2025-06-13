@@ -8,7 +8,8 @@ from .views import (
     api_job_list, api_job_detail, api_apply_job, 
     api_user_profile, api_update_profile, api_register,
     api_login, api_logout, api_user_applications,
-    get_applicants
+    get_applicants, api_inbox, api_sent_messages, api_send_message, 
+    api_mark_message_read, api_unread_message_count, api_get_conversations
 )
 
 urlpatterns = [
@@ -50,6 +51,13 @@ urlpatterns = [
     path('api/check-is-staff/', views.api_check_is_staff, name='api_check_is_staff'),
     path('api/job-post-success-rate/', views.job_post_success_rate, name='api_job_post_success_rate'),
     path('api/applicants/', get_applicants, name='get_applicants'),
+      # Message API endpoints
+    path('api/conversations/', api_get_conversations, name='api_get_conversations'),
+    path('api/inbox/', api_inbox, name='api_inbox'),
+    path('api/sent-messages/', api_sent_messages, name='api_sent_messages'),
+    path('api/send-message/', api_send_message, name='api_send_message'),
+    path('api/messages/<int:message_id>/read/', api_mark_message_read, name='api_mark_message_read'),
+    path('api/messages/unread-count/', api_unread_message_count, name='api_unread_message_count'),
     
     # Frontend routes - redirect to appropriate existing views or API endpoints
     path('jobs/', views.search, name='frontend_jobs'),  # Redirect to search view instead of api_job_list

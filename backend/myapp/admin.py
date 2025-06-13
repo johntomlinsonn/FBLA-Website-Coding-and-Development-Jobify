@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from .models import TodoItem, UserProfile, JobPosting, Reference, Education
+from .models import TodoItem, UserProfile, JobPosting, Reference, Education, Message
 
 # Register your models here.
 admin.site.register(TodoItem)
@@ -57,3 +57,9 @@ class JobPostingAdmin(admin.ModelAdmin):
     def deny_jobs(self, request, queryset):
         queryset.update(status='denied')
     deny_jobs.short_description = "Deny selected job postings"
+
+@admin.register(Message)
+class MessageAdmin(admin.ModelAdmin):
+    list_display = ('sender', 'recipient', 'timestamp', 'is_read')
+    list_filter = ('is_read', 'timestamp')
+    search_fields = ('sender__user__username', 'recipient__user__username', 'content')

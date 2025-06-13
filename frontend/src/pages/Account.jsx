@@ -162,7 +162,8 @@ const Account = () => {
   const handleAddReference = async () => {
     try {
       const response = await profileAPI.addReference(newReference);
-      setReferences([...references, response.data]);
+      // The backend returns the reference data directly, not wrapped in a data property
+      setReferences([...references, response]);
       setNewReference({ name: '', relation: '', contact: '' });
       setSuccess('Reference added successfully');
       setShowNewReferenceForm(false);

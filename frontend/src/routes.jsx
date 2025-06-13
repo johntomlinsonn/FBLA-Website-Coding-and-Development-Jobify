@@ -9,6 +9,7 @@ import EditJob from './pages/EditJob';
 import Account from './pages/Account';
 import JobApplication from './pages/JobApplication';
 import FindApplicantsPage from './pages/FindApplicantsPage';
+import InboxPage from './pages/InboxPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -67,8 +68,16 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/inbox"
+        element={
+          <ProtectedRoute>
+            <InboxPage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 };
 
-export default AppRoutes; 
+export default AppRoutes;

@@ -23,6 +23,7 @@ import {
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import EmailIcon from '@mui/icons-material/Email';
 import { useAuth } from '../contexts/AuthContext';
 import { motion } from 'framer-motion';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
@@ -312,6 +313,12 @@ const MainLayout = () => {
                         </ListItemIcon>
                         Account
                       </MenuItem>
+                      <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/inbox'); }}>
+                        <ListItemIcon>
+                          <EmailIcon fontSize="small" />
+                        </ListItemIcon>
+                        Inbox
+                      </MenuItem>
                       <MenuItem onClick={performUserLogout}>
                         <ListItemIcon>
                           <LogoutIcon fontSize="small" />
@@ -431,6 +438,17 @@ const MainLayout = () => {
                     >
                       <ListItemText
                         primary="Account"
+                        primaryTypographyProps={{ fontSize: "1.1rem", fontWeight: 600, color: "#333" }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      sx={{ textAlign: "center", py: 1.5 }}
+                      onClick={() => { handleDrawerToggle(); navigate('/inbox'); }}
+                    >
+                      <ListItemText
+                        primary="Inbox"
                         primaryTypographyProps={{ fontSize: "1.1rem", fontWeight: 600, color: "#333" }}
                       />
                     </ListItemButton>

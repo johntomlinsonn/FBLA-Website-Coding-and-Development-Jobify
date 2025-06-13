@@ -266,10 +266,7 @@ const Login = () => {
 
         console.log(isJobProvider);
         await signup(formData.first_name, formData.last_name, formData.email, formData.username, formData.password, isJobProvider);
-        alert('Registration successful! Please login.');
-        setIsLogin(true); // Switch to login mode after successful registration
-        setCurrentStep(0); // Go back to the initial step (or login step)
-        setDirection(0); // Reset direction
+        // User is automatically logged in and redirected by the signup function
       }
     } catch (err) {
       setError(err.response?.data?.detail || 'An error occurred. Please check your credentials.');

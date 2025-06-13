@@ -152,8 +152,28 @@ export const AuthProvider = ({ children }) => {
         password,
         is_job_provider: isJobProvider,
       });
-      // No need to set tokens or user here, as the Login component will handle the login after successful registration.
-      return response.data;
+
+      // Automatically log the user in after successful registration
+      const { access, refresh } = response.data;
+
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+
+      api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+
+      // Fetch user profile and staff status
+      const profileResponse = await api.get('/profile/');
+      const userProfile = profileResponse.data;
+
+      const staffResponse = await api.get('/check-is-staff/');
+      const isStaff = staffResponse.data.is_staff;
+
+      setUser({ ...userProfile, is_staff: isStaff });
+
+      // Redirect to account page after successful signup and auto-login
+      navigate('/account');
+
+      return { ...userProfile, is_staff: isStaff };
     } catch (error) {
       throw error;
     } finally {

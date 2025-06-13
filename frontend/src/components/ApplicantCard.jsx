@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -7,12 +7,24 @@ import {
   Chip,
   Button,
   Avatar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import MessageIcon from '@mui/icons-material/Message';
 import PersonIcon from '@mui/icons-material/Person';
+import { api } from '../contexts/AuthContext';
 
 const ApplicantCard = ({ applicant }) => {
+  const [messageDialogOpen, setMessageDialogOpen] = useState(false);
+  const [messageContent, setMessageContent] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageSent, setMessageSent] = useState(false);
+  const [error, setError] = useState(null);
+
   const {
     account_holder_name,
     profile_picture_url, // Use profile_picture_url from serializer
@@ -49,6 +61,42 @@ const ApplicantCard = ({ applicant }) => {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
+  };
+
+  const handleOpenMessageDialog = () => {
+    setMessageDialogOpen(true);
+    setMessageContent('');
+    setMessageSent(false);
+    setError(null);
+  };
+
+  const handleCloseMessageDialog = () => {
+    setMessageDialogOpen(false);
+  };
+
+  const handleSendMessage = async () => {
+    if (!messageContent.trim()) {
+      setError('Message content cannot be empty');
+      return;
+    }
+
+    setSendingMessage(true);
+    setError(null);
+
+    try {
+      await api.post('/send-message/', {
+        recipient_id: applicant.id,
+        content: messageContent
+      });
+      setMessageSent(true);
+      setTimeout(() => {
+        handleCloseMessageDialog();
+      }, 1500);
+    } catch (error) {
+      setError(error.response?.data?.error || 'Failed to send message');
+    } finally {
+      setSendingMessage(false);
+    }
   };
 
   return (
@@ -204,6 +252,7 @@ const ApplicantCard = ({ applicant }) => {
             fullWidth
             variant="contained"
             startIcon={<MessageIcon />}
+            onClick={handleOpenMessageDialog}
             sx={{
               background: 'linear-gradient(45deg, #FF6B00, #FF8C00)',
               color: '#fff',
@@ -218,6 +267,56 @@ const ApplicantCard = ({ applicant }) => {
           </Button>
         </Box>
       </Card>
+
+      {/* Message Dialog */}
+      <Dialog open={messageDialogOpen} onClose={handleCloseMessageDialog} fullWidth maxWidth="sm">
+        <DialogTitle>
+          Message to {name}
+        </DialogTitle>
+        <DialogContent>
+          {error && (
+            <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+              {error}
+            </Typography>
+          )}
+          {messageSent ? (
+            <Typography color="success.main" variant="body1">
+              Message sent successfully!
+            </Typography>
+          ) : (
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Message"
+              fullWidth
+              multiline
+              rows={4}
+              value={messageContent}
+              onChange={(e) => setMessageContent(e.target.value)}
+              disabled={sendingMessage}
+              placeholder={`Write your message to ${name}...`}
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseMessageDialog} disabled={sendingMessage}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSendMessage} 
+            disabled={sendingMessage || messageSent} 
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(45deg, #FF6B00, #FF8C00)',
+              '&:hover': {
+                background: 'linear-gradient(45deg, #FF8C00, #FF6B00)',
+              },
+            }}
+          >
+            {sendingMessage ? 'Sending...' : 'Send Message'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </motion.div>
   );
 };
