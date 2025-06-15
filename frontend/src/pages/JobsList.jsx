@@ -95,6 +95,7 @@ const JobsList = () => {
   const [allCompanies, setAllCompanies] = useState([]); // Store all companies
   const [sortBy, setSortBy] = useState('recent'); // Add sorting state
   const [favoritedJobIds, setFavoritedJobIds] = useState([]); // State to store favorited job IDs
+  const [selectedJob, setSelectedJob] = useState(null); // Selected job for right panel
 
   // Add debounced filter application
   useEffect(() => {
@@ -323,6 +324,18 @@ const JobsList = () => {
   // Modify the jobs display to use sorted jobs
   const displayJobs = useMemo(() => sortJobs(jobs), [jobs, sortBy]);
 
+  // Auto-select first job when jobs change
+  useEffect(() => {
+    if (displayJobs.length > 0 && !selectedJob) {
+      setSelectedJob(displayJobs[0]);
+    }
+  }, [displayJobs]);
+
+  // Handle job selection
+  const handleJobSelect = (job) => {
+    setSelectedJob(job);
+  };
+
   // Effect to fetch favorited jobs on component mount or user change
   useEffect(() => {
     const fetchFavoritedJobs = async () => {
@@ -548,42 +561,54 @@ const JobsList = () => {
           </Grid>
 
           {/* Jobs List */}
-          <Grid item xs={12} md={9}>
-            <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h4" component="h1">
-                Available Jobs
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel id="sort-by-label">Sort By</InputLabel>
-                  <Select
-                    labelId="sort-by-label"
-                    value={sortBy}
-                    label="Sort By"
-                    onChange={(e) => setSortBy(e.target.value)}
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <SortIcon />
-                      </InputAdornment>
-                    }
+          <Grid item xs={12} md={9}>              {/* Search Results Header */}
+              <Box sx={{ mb: 3, pb: 2, borderBottom: '1px solid #e0e0e0' }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  justifyContent: 'space-between', 
+                  alignItems: { xs: 'stretch', sm: 'center' },
+                  mb: 2,
+                  gap: { xs: 2, sm: 0 }
+                }}>
+                <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
+                  {searchTerm ? `Jobs matching "${searchTerm}"` : 'Jobs'}
+                </Typography>                  <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>                    <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 200 } }}>
+                    <InputLabel id="sort-by-label">Sort By</InputLabel>
+                    <Select
+                      labelId="sort-by-label"
+                      value={sortBy}
+                      label="Sort By"
+                      onChange={(e) => setSortBy(e.target.value)}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <SortIcon />
+                        </InputAdornment>
+                      }
+                    >
+                      <MenuItem value="recent">Most Recent</MenuItem>
+                      <MenuItem value="salary_high">Salary (High to Low)</MenuItem>
+                      <MenuItem value="salary_low">Salary (Low to High)</MenuItem>
+                      <MenuItem value="grade_high">Grade (High to Low)</MenuItem>
+                      <MenuItem value="grade_low">Grade (Low to High)</MenuItem>
+                      <MenuItem value="questions_high">Questions (Most to Least)</MenuItem>
+                      <MenuItem value="questions_low">Questions (Least to Most)</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Button
+                    variant="contained"
+                    sx={{ background: '#FF6B00', '&:hover': { background: '#e65c00' } }}
+                    onClick={() => navigate('/jobs/create')}
                   >
-                    <MenuItem value="recent">Most Recent</MenuItem>
-                    <MenuItem value="salary_high">Salary (High to Low)</MenuItem>
-                    <MenuItem value="salary_low">Salary (Low to High)</MenuItem>
-                    <MenuItem value="grade_high">Grade (High to Low)</MenuItem>
-                    <MenuItem value="grade_low">Grade (Low to High)</MenuItem>
-                    <MenuItem value="questions_high">Questions (Most to Least)</MenuItem>
-                    <MenuItem value="questions_low">Questions (Least to Most)</MenuItem>
-                  </Select>
-                </FormControl>
-                <Button
-                  variant="contained"
-                  sx={{ background: '#FF6B00', '&:hover': { background: '#e65c00' } }}
-                  onClick={() => navigate('/jobs/create')}
-                >
-                  Post a Job
-                </Button>
+                    Post a Job
+                  </Button>
+                </Box>
               </Box>
+              
+              {/* Results count */}
+              <Typography variant="body2" color="text.secondary">
+                Page 1 of {displayJobs.length} jobs
+              </Typography>
             </Box>
 
             {error && (
@@ -605,44 +630,271 @@ const JobsList = () => {
               </Typography>
             )}
 
-                  <Grid container spacing={3}>
-              <AnimatePresence mode="wait">
-                    {displayJobs.map((job) => (
-                  <Grid item key={job.id} xs={12} sm={6} md={4}>
-                      <motion.div
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
+            {/* Indeed-style Job Layout */}
+            <Box sx={{ 
+              display: 'flex', 
+              height: 'calc(100vh - 200px)', 
+              border: '1px solid #e0e0e0',
+              borderRadius: 2,
+              overflow: 'hidden'
+            }}>
+              {/* Left Panel - Job List */}
+              <Box sx={{ 
+                width: '40%', 
+                borderRight: '1px solid #e0e0e0',
+                overflow: 'auto',
+                backgroundColor: '#fff'
+              }}>
+                {/* Results Count */}
+                <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', backgroundColor: '#f8f9fa' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Page 1 of {displayJobs.length} jobs
+                  </Typography>
+                </Box>
+
+                {/* Job List */}
+                <AnimatePresence mode="wait">
+                  {displayJobs.map((job) => (
+                    <motion.div
+                      key={job.id}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
                       variants={jobCardVariants}
+                    >
+                      <Box
+                        sx={{
+                          p: 2,
+                          borderBottom: '1px solid #e0e0e0',
+                          cursor: 'pointer',
+                          backgroundColor: selectedJob?.id === job.id ? '#fff3e0' : '#fff',
+                          borderLeft: selectedJob?.id === job.id ? '3px solid #FF6B00' : '3px solid transparent',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': { 
+                            backgroundColor: '#f5f5f5'
+                          }
+                        }}
+                        onClick={() => handleJobSelect(job)}
                       >
-                        <Card
-                        elevation={3}
-                          sx={{
-                          borderRadius: 2,
-                          transition: 'transform 0.2s, box-shadow 0.2s',
-                          '&:hover': { transform: 'translateY(-5px)', boxShadow: '0 8px 16px rgba(0,0,0,0.2)' },
-                            display: 'flex',
-                            flexDirection: 'column',
-                          height: '100%',
-                          position: 'relative', // Added for IconButton positioning
+                        {/* Job Title */}
+                        <Typography 
+                          variant="h6" 
+                          component="h3" 
+                          sx={{ 
+                            fontWeight: 600,
+                            color: '#FF6B00',
+                            mb: 0.5,
+                            fontSize: '1.1rem',
+                            lineHeight: 1.2
+                          }}
+                        >
+                          {job.title}
+                        </Typography>
+                        
+                        {/* Company Name */}
+                        <Typography 
+                          variant="body1" 
+                          sx={{ 
+                            color: '#333',
+                            fontWeight: 500,
+                            mb: 0.5
+                          }}
+                        >
+                          {job.company_name}
+                        </Typography>
+                        
+                        {/* Location */}
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary" 
+                          sx={{ mb: 1 }}
+                        >
+                          {job.location}
+                        </Typography>
+
+                        {/* Urgency, Salary, and Favorite */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            {job.urgent_hiring && (
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <Box
+                                  sx={{
+                                    backgroundColor: '#d32f2f',
+                                    color: 'white',
+                                    borderRadius: '50%',
+                                    width: 8,
+                                    height: 8,
+                                    mr: 0.5
+                                  }}
+                                />
+                                <Typography 
+                                  variant="caption" 
+                                  sx={{ 
+                                    color: '#d32f2f',
+                                    fontWeight: 600
+                                  }}
+                                >
+                                  Urgently hiring
+                                </Typography>
+                              </Box>
+                            )}
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              ${job.salary} an hour
+                            </Typography>
+                          </Box>
+                          
+                          {/* Favorite Icon */}
+                          {user && (
+                            <IconButton 
+                              size="small"
+                              sx={{
+                                color: favoritedJobIds.includes(job.id) ? '#FF6B00' : '#ccc',
+                                p: 0.5,
+                                '&:hover': {
+                                  color: favoritedJobIds.includes(job.id) ? '#e65c00' : '#999',
+                                  backgroundColor: 'rgba(0,0,0,0.04)'
+                                }
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleFavorite(job.id);
+                              }}
+                              aria-label="favorite job"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill={favoritedJobIds.includes(job.id) ? '#FF6B00' : 'none'}
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                              </svg>
+                            </IconButton>
+                          )}
+                        </Box>
+
+                        {/* Job Type */}
+                        <Typography variant="body2" color="text.secondary">
+                          {job.job_type}
+                        </Typography>
+
+                        {/* Posted Date */}
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                          {new Date(job.created_at).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {!loading && displayJobs.length === 0 && searchTerm !== '' && (
+                  <Box sx={{ textAlign: 'center', py: 8 }}>
+                    <Typography variant="h6" color="text.secondary">
+                      No jobs found for "{searchTerm}". Try a different search or adjust filters.
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Right Panel - Job Details */}
+              <Box sx={{ 
+                flex: 1, 
+                overflow: 'auto',
+                backgroundColor: '#fff'
+              }}>
+                {selectedJob ? (
+                  <Box sx={{ p: 3 }}>
+                    {/* Job Header */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography 
+                        variant="h4" 
+                        component="h1" 
+                        sx={{ 
+                          fontWeight: 600,
+                          color: '#333',
+                          mb: 1
                         }}
                       >
+                        {selectedJob.title}
+                      </Typography>
+                      
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          color: '#666',
+                          mb: 1
+                        }}
+                      >
+                        {selectedJob.company_name}
+                      </Typography>
+                      
+                      <Typography 
+                        variant="body1" 
+                        color="text.secondary" 
+                        sx={{ mb: 2 }}
+                      >
+                        {selectedJob.location}
+                      </Typography>
+
+                      {/* Response Rate */}
+                      {selectedJob.response_rate && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Box
+                            sx={{
+                              backgroundColor: '#2196F3',
+                              color: 'white',
+                              borderRadius: '50%',
+                              width: 8,
+                              height: 8,
+                              mr: 1
+                            }}
+                          />
+                          <Typography variant="body2" color="text.secondary">
+                            Responded to {selectedJob.response_rate}% of applications in the past 30 days, typically within 3 days
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {/* Action Buttons */}
+                      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                        <Button 
+                          variant="contained" 
+                          size="large"
+                          onClick={() => handleApply(selectedJob.id)}
+                          sx={{
+                            backgroundColor: '#FF6B00',
+                            color: 'white',
+                            fontWeight: 600,
+                            px: 4,
+                            py: 1.5,
+                            borderRadius: '8px',
+                            textTransform: 'none',
+                            '&:hover': { 
+                              backgroundColor: '#e65c00'
+                            }
+                          }}
+                        >
+                          Apply Now
+                        </Button>
+                        
                         {user && (
                           <IconButton 
+                            size="large"
                             sx={{
-                              position: 'absolute',
-                              top: 8,
-                              right: 8,
-                              zIndex: 1,
-                              color: favoritedJobIds.includes(job.id) ? '#FF6B00' : '#000000', // Orange for favorited, Black for not
-                            '&:hover': {
-                                color: favoritedJobIds.includes(job.id) ? '#e65c00' : '#333333', // Darker orange/black on hover
+                              color: favoritedJobIds.includes(selectedJob.id) ? '#FF6B00' : '#666',
+                              border: '1px solid #ddd',
+                              borderRadius: '8px',
+                              '&:hover': {
+                                color: favoritedJobIds.includes(selectedJob.id) ? '#e65c00' : '#333',
+                                backgroundColor: 'rgba(0,0,0,0.04)'
                               }
                             }}
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent card click from triggering
-                              handleToggleFavorite(job.id);
-                            }}
+                            onClick={() => handleToggleFavorite(selectedJob.id)}
                             aria-label="favorite job"
                           >
                             <svg
@@ -650,80 +902,127 @@ const JobsList = () => {
                               width="24"
                               height="24"
                               viewBox="0 0 24 24"
-                              fill={favoritedJobIds.includes(job.id) ? '#FF6B00' : 'none'}
+                              fill={favoritedJobIds.includes(selectedJob.id) ? '#FF6B00' : 'none'}
                               stroke="currentColor"
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="lucide lucide-heart"
                             >
                               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                             </svg>
                           </IconButton>
                         )}
-                        <CardContent sx={{ flexGrow: 1 }}>
-                          <Typography variant="h6" component="div" gutterBottom>
-                              {job.title}
-                            </Typography>
-                          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                            {job.company_name} - {job.location}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            {job.job_type} | {job.salary}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="body2" sx={{ mr: 1 }}>
-                              Attainability Grade:
-                            </Typography>
-                            <Typography
-                              variant="body1"
-                              component="span"
-                              sx={{
-                                color: getGradeColor(job.grade),
-                                fontWeight: 'bold',
-                                border: `1px solid ${getGradeColor(job.grade)}`,
-                                borderRadius: '4px',
-                                px: 1,
-                                py: 0.5,
-                              }}
-                            >
-                              {formatGrade(job.grade)}
-                            </Typography>
-                          </Box>
-                          <Typography variant="body2" color="text.secondary" noWrap sx={{ mb: 1 }}>
-                            {job.description}
-                              </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Posted: {new Date(job.created_at).toLocaleDateString()}
-                              </Typography>
-                        </CardContent>
-                        <Box sx={{ p: 2, pt: 0 }}>
-                          <Button 
-                            variant="contained" 
-                            fullWidth 
-                            onClick={() => handleApply(job.id)}
+                      </Box>
+
+                      {/* Urgency Badge */}
+                      {selectedJob.urgent_hiring && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Box
                             sx={{
-                              background: '#FF6B00',
-                              '&:hover': { background: '#e65c00' },
+                              backgroundColor: '#d32f2f',
+                              color: 'white',
+                              borderRadius: '50%',
+                              width: 8,
+                              height: 8,
+                              mr: 1
+                            }}
+                          />
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: '#d32f2f',
+                              fontWeight: 600
                             }}
                           >
-                            View Details
-                          </Button>
-                            </Box>
-                        </Card>
-                      </motion.div>
-                  </Grid>
-                ))}
-                </AnimatePresence>
+                            Urgently hiring
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
 
-              {!loading && displayJobs.length === 0 && searchTerm !== '' && (
-                <Grid item xs={12}>
-                  <Typography variant="h6" color="text.secondary" align="center" sx={{ mt: 4 }}>
-                    No jobs found for "{searchTerm}". Try a different search or adjust filters.
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
+                    {/* Job Details Section */}
+                    <Box sx={{ mb: 4 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                        Job details
+                      </Typography>
+                      
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          Salary
+                        </Typography>
+                        <Typography variant="body1">
+                          ${selectedJob.salary} an hour
+                        </Typography>
+                      </Box>
+
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          Job Type
+                        </Typography>
+                        <Typography variant="body1">
+                          {selectedJob.job_type}
+                        </Typography>
+                      </Box>
+
+                      {/* Attainability Grade */}
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          Attainability Grade
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          component="span"
+                          sx={{
+                            color: getGradeColor(selectedJob.grade),
+                            fontWeight: 'bold',
+                            backgroundColor: `${getGradeColor(selectedJob.grade)}15`,
+                            border: `1px solid ${getGradeColor(selectedJob.grade)}`,
+                            borderRadius: '12px',
+                            px: 1.5,
+                            py: 0.5,
+                          }}
+                        >
+                          {formatGrade(selectedJob.grade)}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Full Job Description */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                        Full Job Description
+                      </Typography>
+                      <Typography 
+                        variant="body1" 
+                        sx={{ 
+                          lineHeight: 1.6,
+                          whiteSpace: 'pre-wrap'
+                        }}
+                      >
+                        {selectedJob.description}
+                      </Typography>
+                    </Box>
+
+                    {/* Posted Date */}
+                    <Typography variant="body2" color="text.secondary">
+                      Posted on {new Date(selectedJob.created_at).toLocaleDateString()}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    height: '100%',
+                    color: 'text.secondary'
+                  }}>
+                    <Typography variant="h6">
+                      Select a job to view details
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
           </Grid>
         </Grid>
 
@@ -773,8 +1072,8 @@ const JobsList = () => {
               onChange={handleSalaryRangeChange}
                 valueLabelDisplay="auto"
                 min={0}
-              max={200}
-              step={5}
+              max={50}
+              step={1}
               marks
               sx={{ color: '#FF6B00' }}
             />
