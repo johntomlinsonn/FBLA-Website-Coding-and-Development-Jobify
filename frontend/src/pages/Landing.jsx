@@ -24,6 +24,7 @@ import { useAuth } from "../contexts/AuthContext"
 import { useTheme } from "@mui/material/styles"
 import useMediaQuery from "@mui/material/useMediaQuery"
 import FloatingNames from "../components/FloatingNames"
+import InfoGrid from "../components/InfoGrid"
 
 // Enhanced floating animation variants
 const floatingVariants = {
@@ -138,16 +139,7 @@ const Landing = () => {
   const { user } = useAuth()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [fps, setFps] = useState(60)
-
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
-    }
-    window.addEventListener("mousemove", handleMouseMove)
-    return () => window.removeEventListener("mousemove", handleMouseMove)
-  }, [])
 
   // Performance monitoring
   useEffect(() => {
@@ -173,15 +165,6 @@ const Landing = () => {
   const handleSearch = (e) => {
     e.preventDefault()
     navigate(`/jobs?search=${encodeURIComponent(search.trim())}`)
-  }
-
-  // Enhanced cursor effect
-  const cursorVariants = {
-    default: {
-      x: mousePosition.x - 10,
-      y: mousePosition.y - 10,
-      transition: { type: "spring", stiffness: 500, damping: 28 }
-    }
   }
 
   // Enhanced text animation variants
@@ -261,36 +244,6 @@ const Landing = () => {
         style={{paddingTop: 32, height:895}}
       >
         <FloatingNames />
-
-        {/* Enhanced cursor follower with multiple elements */}
-        <motion.div
-          variants={cursorVariants}
-          animate="default"
-          style={{
-            position: "fixed",
-            width: 20,
-            height: 20,
-            borderRadius: "50%",
-            background: "rgba(255, 107, 0, 0.5)",
-            pointerEvents: "none",
-            zIndex: 9999,
-            display: isMobile ? "none" : "block",
-          }}
-        />
-        <motion.div
-          variants={cursorVariants}
-          animate="default"
-          style={{
-            position: "fixed",
-            width: 40,
-            height: 40,
-            borderRadius: "50%",
-            border: "2px solid rgba(255, 107, 0, 0.3)",
-            pointerEvents: "none",
-            zIndex: 9998,
-            display: isMobile ? "none" : "block",
-          }}
-        />
 
         <motion.div
           initial="hidden"
@@ -951,6 +904,11 @@ const Landing = () => {
         </Grid>
       </Container>
 
+        
+
+      {/* InfoGrid Section */}
+      <InfoGrid />
+
       {/* Blob Transition for Success Stories to CTA */}
       <Box
         sx={{
@@ -983,6 +941,8 @@ const Landing = () => {
           />
         </svg>
       </Box>
+
+      
 
       {/* Final CTA Section */}
       <Box
@@ -1061,4 +1021,4 @@ const Landing = () => {
   )
 }
 
-export default Landing 
+export default Landing

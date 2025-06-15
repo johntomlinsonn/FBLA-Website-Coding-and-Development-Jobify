@@ -10,6 +10,8 @@ import Account from './pages/Account';
 import JobApplication from './pages/JobApplication';
 import FindApplicantsPage from './pages/FindApplicantsPage';
 import InboxPage from './pages/InboxPage';
+import About from './pages/About';
+import FAQ from './pages/FAQ';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -76,6 +78,8 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route path="/about" element={<About />} />
+      <Route path="/faq" element={<FAQ />} />
     </Routes>
   );
 };
