@@ -12,10 +12,14 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Collapse,
+  IconButton,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import MessageIcon from '@mui/icons-material/Message';
 import PersonIcon from '@mui/icons-material/Person';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import { api } from '../contexts/AuthContext';
 
 const ApplicantCard = ({ applicant }) => {
@@ -24,6 +28,20 @@ const ApplicantCard = ({ applicant }) => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageSent, setMessageSent] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Expandable sections state
+  const [expandedSections, setExpandedSections] = useState({
+    skills: false,
+    education: false,
+    references: false,
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const {
     account_holder_name,
@@ -98,7 +116,6 @@ const ApplicantCard = ({ applicant }) => {
       setSendingMessage(false);
     }
   };
-
   return (
     <motion.div
       variants={cardVariants}
@@ -107,7 +124,7 @@ const ApplicantCard = ({ applicant }) => {
     >
       <Card
         sx={{
-          height: '100%',
+          height: 450, // Fixed height for consistency
           display: 'flex',
           flexDirection: 'column',
           borderRadius: 2,
@@ -119,6 +136,7 @@ const ApplicantCard = ({ applicant }) => {
           },
         }}
       >
+        {/* Header Section - Fixed */}
         <Box
           sx={{
             p: 2,
@@ -126,34 +144,34 @@ const ApplicantCard = ({ applicant }) => {
             alignItems: 'center',
             gap: 2,
             borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+            minHeight: 100,
           }}
         >
           <Avatar
-            src={profilePicture} // This should now be profile_picture_url
+            src={profilePicture}
             alt={name}
             sx={{
-              width: 64,
-              height: 64,
+              width: 56,
+              height: 56,
               border: '3px solid #fff',
               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             }}
           >
-            {/* Display initials if no profile picture */}
             {!profilePicture && name && getInitials(applicant.user?.first_name, applicant.user?.last_name)}
           </Avatar>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }} noWrap>
               {name}
             </Typography>
             {email && (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" noWrap>
                 {email}
               </Typography>
             )}
             <Typography
               variant="body2"
               color="text.secondary"
-              sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+              sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}
             >
               <PersonIcon sx={{ fontSize: 16 }} />
               {schoolYear} • Class of {graduationYear}
@@ -161,13 +179,26 @@ const ApplicantCard = ({ applicant }) => {
           </Box>
         </Box>
 
-        <CardContent sx={{ flexGrow: 1, p: 2 }}>
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Top Skills
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {skills.map((skill, index) => (
+        {/* Scrollable Content Area */}
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          {/* Skills Section */}
+          <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Skills ({skills.length})
+              </Typography>
+              {skills.length > 3 && (
+                <IconButton
+                  size="small"
+                  onClick={() => toggleSection('skills')}
+                  sx={{ p: 0.5 }}
+                >
+                  {expandedSections.skills ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                </IconButton>
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+              {(expandedSections.skills ? skills : skills.slice(0, 3)).map((skill, index) => (
                 <Chip
                   key={index}
                   label={skill}
@@ -176,17 +207,33 @@ const ApplicantCard = ({ applicant }) => {
                     backgroundColor: 'rgba(255, 107, 0, 0.1)',
                     color: '#FF6B00',
                     fontWeight: 500,
+                    fontSize: '0.75rem',
                   }}
                 />
               ))}
+              {!expandedSections.skills && skills.length > 3 && (
+                <Chip
+                  label={`+${skills.length - 3} more`}
+                  size="small"
+                  variant="outlined"
+                  onClick={() => toggleSection('skills')}
+                  sx={{
+                    borderColor: '#FF6B00',
+                    color: '#FF6B00',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                  }}
+                />
+              )}
             </Box>
           </Box>
 
-          <Box sx={{ mb: 2 }}>
-             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-               Applied For
-             </Typography>
-             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          {/* Applied Jobs Section */}
+          <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Applied For ({appliedJobs.length})
+            </Typography>
+            <Box sx={{ maxHeight: 80, overflow: 'auto' }}>
               {appliedJobs.map((job, index) => (
                 <Typography
                   key={index}
@@ -194,6 +241,8 @@ const ApplicantCard = ({ applicant }) => {
                   sx={{
                     color: 'text.primary',
                     fontWeight: 500,
+                    fontSize: '0.85rem',
+                    mb: 0.5,
                   }}
                 >
                   • {job}
@@ -201,49 +250,103 @@ const ApplicantCard = ({ applicant }) => {
               ))}
             </Box>
           </Box>
-        </CardContent>
 
-        {/* Education Section */}
-        {education.length > 0 && (
-          <CardContent sx={{ borderTop: '1px solid #eee' }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Education
-            </Typography>
-            {education.map((edu, idx) => (
-              <Box key={idx} sx={{ mb: 1 }}>
-                <Typography variant="body2">
-                  {edu.school_name} (Class of {graduationYear || edu.graduation_date?.split('-')[0]})
+          {/* Education Section - Expandable */}
+          {education.length > 0 && (
+            <Box sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.05)' }}>
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  pb: expandedSections.education ? 1 : 2,
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  cursor: 'pointer'
+                }}
+                onClick={() => toggleSection('education')}
+              >
+                <Typography variant="subtitle2" color="text.secondary">
+                  Education ({education.length})
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  GPA: {edu.gpa}
+                <IconButton size="small" sx={{ p: 0.5 }}>
+                  {expandedSections.education ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                </IconButton>
+              </Box>
+              <Collapse in={expandedSections.education}>
+                <Box sx={{ px: 2, pb: 2 }}>
+                  {education.map((edu, idx) => (
+                    <Box key={idx} sx={{ mb: 1 }}>
+                      <Typography variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                        {edu.school_name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Class of {graduationYear || edu.graduation_date?.split('-')[0]} • GPA: {edu.gpa}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Collapse>
+            </Box>
+          )}
+
+          {/* References Section - Expandable */}
+          {references.length > 0 && (
+            <Box>
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  pb: expandedSections.references ? 1 : 2,
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  cursor: 'pointer'
+                }}
+                onClick={() => toggleSection('references')}
+              >
+                <Typography variant="subtitle2" color="text.secondary">
+                  References ({references.length})
                 </Typography>
+                <IconButton size="small" sx={{ p: 0.5 }}>
+                  {expandedSections.references ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                </IconButton>
               </Box>
-            ))}
-          </CardContent>
-        )}
-        {/* References Section */}
-        {references.length > 0 && (
-          <CardContent sx={{ borderTop: '1px solid #eee' }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              References
-            </Typography>
-            {references.map((ref, idx) => (
-              <Box key={idx} sx={{ mb: 1 }}>
-                <Typography variant="body2">{ref.name} - {ref.relation}</Typography>
-                <Typography variant="caption" color="text.secondary">Contact: {ref.contact}</Typography>
-              </Box>
-            ))}
-          </CardContent>
-        )}
-        {/* Actions */}
-        <Box sx={{ p: 2, pt: 0 }}>
+              <Collapse in={expandedSections.references}>
+                <Box sx={{ px: 2, pb: 2 }}>
+                  {references.map((ref, idx) => (
+                    <Box key={idx} sx={{ mb: 1 }}>
+                      <Typography variant="body2" sx={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                        {ref.name} - {ref.relation}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {ref.contact}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Collapse>
+            </Box>
+          )}
+        </Box>
+
+        {/* Actions Section - Fixed at bottom */}
+        <Box sx={{ p: 2, pt: 1, borderTop: '1px solid rgba(0, 0, 0, 0.05)', mt: 'auto' }}>
           {resume_url && (
             <Button
               fullWidth
               variant="outlined"
               href={resume_url}
               target="_blank"
-              sx={{ mb: 1 }}
+              sx={{ 
+                mb: 1, 
+                fontSize: '0.85rem',
+                py: 0.75,
+                borderColor: '#FF6B00',
+                color: '#FF6B00',
+                '&:hover': {
+                  borderColor: '#e65c00',
+                  backgroundColor: 'rgba(255, 107, 0, 0.04)',
+                }
+              }}
             >
               View Resume
             </Button>
@@ -251,13 +354,14 @@ const ApplicantCard = ({ applicant }) => {
           <Button
             fullWidth
             variant="contained"
-            startIcon={<MessageIcon />}
+            startIcon={<MessageIcon sx={{ fontSize: '1rem' }} />}
             onClick={handleOpenMessageDialog}
             sx={{
               background: 'linear-gradient(45deg, #FF6B00, #FF8C00)',
               color: '#fff',
               fontWeight: 600,
-              py: 1,
+              py: 0.75,
+              fontSize: '0.85rem',
               '&:hover': {
                 background: 'linear-gradient(45deg, #FF8C00, #FF6B00)',
               },
