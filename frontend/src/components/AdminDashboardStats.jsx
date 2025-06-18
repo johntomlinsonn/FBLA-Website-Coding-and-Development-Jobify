@@ -26,7 +26,7 @@ const AdminDashboardStats = () => {
     const fetchDashboardStats = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/admin/dashboard-stats/', {
+        const response = await axios.get('/admin/dashboard-stats/', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
@@ -42,14 +42,14 @@ const AdminDashboardStats = () => {
 
     const fetchAccountStats = async () => {
       try {
-        const studentResponse = await axios.get('/api/admin/student-account-stats/', {
+        const studentResponse = await axios.get('/admin/student-account-stats/', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
         setStudentStats(studentResponse.data.student_stats);
 
-        const jobProviderResponse = await axios.get('/api/job-post-success-rate/', {
+        const jobProviderResponse = await axios.get('/job-post-success-rate/', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },

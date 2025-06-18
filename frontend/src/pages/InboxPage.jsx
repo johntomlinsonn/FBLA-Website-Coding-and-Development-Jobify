@@ -13,14 +13,12 @@ import {
   Paper,
   Grid,
   CircularProgress,
-  Button,
   Alert,
   IconButton,
   TextField,
   InputAdornment,
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import DraftsIcon from '@mui/icons-material/Drafts';
 import SendIcon from '@mui/icons-material/Send';
 import { api, useAuth } from '../contexts/AuthContext';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -34,31 +32,74 @@ const InboxPage = () => {
   const [replyContent, setReplyContent] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
   const { user } = useAuth();
-  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const convPollingRef = useRef(null);
+  const msgPollingRef = useRef(null);
+  const isFetchingConvs = useRef(false);
+  const isFetchingMsgs = useRef(false);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+     const container = messagesContainerRef.current;
+     if (container) {
+       container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+     }
+   };
 
-  useEffect(() => {
-    if (selectedConversation) {
-      scrollToBottom();
-    }
-  }, [selectedConversation?.messages]);
-
-  const fetchConversations = async () => {
+  // Guarded fetchConversations
+  const fetchConversations = async (showLoader = true) => {
+    if (isFetchingConvs.current) return;
+    isFetchingConvs.current = true;
     try {
-      setLoading(true);
-      setError(null);
-      
+      if (showLoader) {
+        setLoading(true);
+        setError(null);
+      }
       const response = await api.get('/conversations/');
       setConversations(response.data);
-
     } catch (error) {
       console.error('Error fetching conversations:', error);
-      setError(error.response?.data?.error || 'Failed to fetch conversations');
+      if (showLoader) setError(error.response?.data?.error || 'Failed to fetch conversations');
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
+      isFetchingConvs.current = false;
+    }
+  };
+
+  // Fetch only updates (new messages) for the active conversation
+  const fetchConversationUpdates = async (conversationId) => {
+    if (isFetchingMsgs.current || !selectedConversation) return;
+    isFetchingMsgs.current = true;
+    try {
+      const response = await api.get(`/conversations/`);
+      const updated = response.data;
+      const existingIds = new Set(selectedConversation.messages.map(m => m.id));
+      const newMsgs = updated.messages.filter(m => !existingIds.has(m.id));
+      if (newMsgs.length) {
+        setSelectedConversation(prev => ({
+          ...prev,
+          messages: [...prev.messages, ...newMsgs],
+          last_message_timestamp: updated.last_message_timestamp,
+          unread_count: updated.unread_count
+        }));
+        setConversations(prev => prev.map(conv => conv.id === conversationId
+          ? { ...conv, messages: updated.messages, last_message_timestamp: updated.last_message_timestamp, unread_count: updated.unread_count }
+          : conv));
+        scrollToBottom();
+      }
+    } catch (err) {
+      console.error('Polling update error:', err);
+    } finally {
+      isFetchingMsgs.current = false;
+    }
+  };
+
+  // Load an entire conversation immediately
+  const loadConversation = async (conversationId) => {
+    try {
+      const resp = await api.get(`/conversations/${conversationId}/`);
+      setSelectedConversation(resp.data);
+    } catch (err) {
+      console.error('Error loading conversation:', err);
     }
   };
 
@@ -67,8 +108,37 @@ const InboxPage = () => {
       fetchConversations();
     }
   }, [user]);
+  
+  // Start 1s polling for conversations and active conversation updates
+  useEffect(() => {
+    clearInterval(convPollingRef.current);
+    clearInterval(msgPollingRef.current);
+    // poll all conversations every 1.5s without loader
+    convPollingRef.current = setInterval(() => {
+      if (document.visibilityState === 'visible') fetchConversations(false);
+    }, 1500);
+    // poll active convo messages every 1.5s
+    if (selectedConversation) {
+      msgPollingRef.current = setInterval(() => {
+        if (document.visibilityState === 'visible') fetchConversationUpdates(selectedConversation.id);
+      }, 1500);
+    }
+    return () => {
+      clearInterval(convPollingRef.current);
+      clearInterval(msgPollingRef.current);
+    };
+  }, [selectedConversation]);
+
+  // auto-scroll to bottom whenever a new conversation is loaded or messages update
+  useEffect(() => {
+    if (selectedConversation) {
+      scrollToBottom();
+    }
+  }, [selectedConversation]);
+
   const handleSelectConversation = (conversation) => {
     setSelectedConversation(conversation);
+    loadConversation(conversation.id);
     // Mark messages as read if they are from the other user in the selected conversation
     if (conversation.unread_count > 0) {
       const messagesToMark = conversation.messages.filter(
@@ -338,7 +408,10 @@ const InboxPage = () => {
                 >                  <Avatar src={selectedConversation.other_user.profile_picture || undefined} alt={selectedConversation.other_user.profile_name} sx={{ mr: 2 }} />
                   <Typography variant="h6">{selectedConversation.other_user.profile_name}</Typography>
                 </Box>
-                <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2, display: 'flex', flexDirection: 'column' }}>
+                <Box
+                  ref={messagesContainerRef}
+                  sx={{ flexGrow: 1, overflowY: 'auto', p: 2, display: 'flex', flexDirection: 'column' }}
+                >
                   {selectedConversation.messages.map((message, index) => (
                     <motion.div
                       key={message.id}
@@ -382,7 +455,6 @@ const InboxPage = () => {
                       </Box>
                     </motion.div>
                   ))}
-                  <div ref={messagesEndRef} />
                 </Box>
                 <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'background.paper' }}>
                   {error && sendingReply && ( // Show specific error for sending reply

@@ -52,7 +52,7 @@ const SAFE_POSITIONS = [
   { x: 0.90, y: 0.90 }, // bottom right
   { x: 0.13, y: 0.80 }, // left center
   { x: 0.90, y: 0.60 }, // right center
-  { x: 0.3, y: 0.30 }, // top center
+  { x: 0.3, y: 0.10 }, // top center
   { x: 0.10, y: 0.40 }, // bottom center
   { x: 0.2, y: 1.0 }, // upper left
   { x: 0.82, y: 0.28 }, // upper right

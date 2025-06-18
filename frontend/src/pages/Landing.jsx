@@ -243,7 +243,8 @@ const Landing = () => {
         }}
         style={{paddingTop: 32, height:895}}
       >
-        <FloatingNames />
+        {/* Only show FloatingNames on non-mobile devices */}
+        {!isMobile && <FloatingNames />}
 
         <motion.div
           initial="hidden"
@@ -318,11 +319,12 @@ const Landing = () => {
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              fontSize: { xs: "2.5rem", md: "4rem" },
+              fontSize: { xs: "2.2rem", sm: "2.5rem", md: "4rem" },
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               gap: "0.5rem",
+              px: { xs: 2, sm: 0 },
             }}
           >
             <motion.div
@@ -331,36 +333,75 @@ const Landing = () => {
               animate="visible"
               style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
             >
-              <motion.div style={{ display: "flex", gap: "0.5rem" }}>
-                {"Your Future,".split("").map((char, index) => (
-                  <motion.span
-                    key={index}
-                    variants={letterVariants}
-                    style={{ display: "inline-block" }}
+              {isMobile ? (
+                // Shorter mobile version
+                <>
+                  <motion.div style={{ display: "flex", gap: "0.2rem" }}>
+                    {"Your Future".split("").map((char, index) => (
+                      <motion.span
+                        key={index}
+                        variants={letterVariants}
+                        style={{ display: "inline-block" }}
+                      >
+                        {char === " " ? "\u00A0" : char}
+                      </motion.span>
+                    ))}
+                  </motion.div>
+                  <motion.div
+                    variants={highlightVariants}
+                    style={{
+                      display: "flex",
+                      gap: "0.2rem",
+                      color: "#FF6B00",
+                      transformOrigin: "center",
+                    }}
                   >
-                    {char === " " ? "\u00A0" : char}
-                  </motion.span>
-                ))}
-              </motion.div>
-              <motion.div
-                variants={highlightVariants}
-                style={{
-                  display: "flex",
-                  gap: "0.5rem",
-                  color: "#FF6B00",
-                  transformOrigin: "center",
-                }}
-              >
-                {"Starts Here Ironmen!".split("").map((char, index) => (
-                  <motion.span
-                    key={index}
-                    variants={letterVariants}
-                    style={{ display: "inline-block" }}
+                    {"Starts Here!".split("").map((char, index) => (
+                      <motion.span
+                        key={index}
+                        variants={letterVariants}
+                        style={{ display: "inline-block" }}
+                      >
+                        {char === " " ? "\u00A0" : char}
+                      </motion.span>
+                    ))}
+                  </motion.div>
+                </>
+              ) : (
+                // Full desktop version
+                <>
+                  <motion.div style={{ display: "flex", gap: "0.5rem" }}>
+                    {"Your Future,".split("").map((char, index) => (
+                      <motion.span
+                        key={index}
+                        variants={letterVariants}
+                        style={{ display: "inline-block" }}
+                      >
+                        {char === " " ? "\u00A0" : char}
+                      </motion.span>
+                    ))}
+                  </motion.div>
+                  <motion.div
+                    variants={highlightVariants}
+                    style={{
+                      display: "flex",
+                      gap: "0.5rem",
+                      color: "#FF6B00",
+                      transformOrigin: "center",
+                    }}
                   >
-                    {char === " " ? "\u00A0" : char}
-                  </motion.span>
-                ))}
-              </motion.div>
+                    {"Starts Here Ironmen!".split("").map((char, index) => (
+                      <motion.span
+                        key={index}
+                        variants={letterVariants}
+                        style={{ display: "inline-block" }}
+                      >
+                        {char === " " ? "\u00A0" : char}
+                      </motion.span>
+                    ))}
+                  </motion.div>
+                </>
+              )}
             </motion.div>
           </Typography>
 
@@ -370,15 +411,19 @@ const Landing = () => {
             sx={{
               color: "#444",
               mb: 5,
-              maxWidth: 700,
+              maxWidth: isMobile ? 350 : 700,
               mx: "auto",
               fontWeight: 400,
-              fontSize: { xs: "1.2rem", md: "1.5rem" },
+              fontSize: { xs: "1.3rem", sm: "1.2rem", md: "1.5rem" },
               textShadow: "0 2px 4px rgba(0,0,0,0.1)",
               lineHeight: 1.6,
+              px: { xs: 4, sm: 0 },
             }}
           >
-            Normal Community High School students, discover opportunities tailored for you. Build your future, gain valuable experience, and take the first step toward your dream career as an Ironman!
+            {isMobile 
+              ? "Discover opportunities and build your future!"
+              : "Normal Community High School students, discover opportunities tailored for you. Build your future, gain valuable experience, and take the first step toward your dream career as an Ironman!"
+            }
           </Typography>
 
           {/* Enhanced Search Bar with 3D effect */}
@@ -388,7 +433,7 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             style={{ 
               width: "100%", 
-              maxWidth: 600, 
+              maxWidth: isMobile ? 350 : 600, 
               margin: "0 auto 40px",
               transformStyle: "preserve-3d",
               perspective: "1000px"
@@ -406,7 +451,7 @@ const Landing = () => {
                 overflow: "hidden",
                 bgcolor: "rgba(255,255,255,0.98)",
                 backdropFilter: "blur(12px)",
-                height: 68,
+                height: isMobile ? 56 : 68,
                 border: "3px solid rgba(255,107,0,0.2)",
                 transform: "translateZ(10px)",
                 transition: "transform 0.3s ease, box-shadow 0.3s ease",
@@ -418,13 +463,13 @@ const Landing = () => {
             >
               <InputBase
                 sx={{
-                  ml: 4,
+                  ml: isMobile ? 2 : 4,
                   flex: 1,
-                  fontSize: "1.3rem",
+                  fontSize: isMobile ? "1rem" : "1.3rem",
                   color: "#333",
                   fontWeight: 500,
                 }}
-                placeholder="Search for your dream job... 💼"
+                placeholder={isMobile ? "Search jobs... 💼" : "Search for your dream job... 💼"}
                 inputProps={{ "aria-label": "search jobs" }}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -432,12 +477,12 @@ const Landing = () => {
               <IconButton
                 type="submit"
                 sx={{
-                  p: "18px",
+                  p: isMobile ? "12px" : "18px",
                   bgcolor: "#FF6B00",
                   color: "#fff",
                   borderRadius: "0 30px 30px 0",
                   height: "100%",
-                  width: 90,
+                  width: isMobile ? 70 : 90,
                   "&:hover": {
                     bgcolor: "#E65C00",
                     transform: "scale(1.05) translateX(5px)",
@@ -446,7 +491,7 @@ const Landing = () => {
                 }}
                 aria-label="search"
               >
-                <SearchIcon sx={{ fontSize: 30 }} />
+                <SearchIcon sx={{ fontSize: isMobile ? 24 : 30 }} />
               </IconButton>
             </Box>
           </motion.div>
