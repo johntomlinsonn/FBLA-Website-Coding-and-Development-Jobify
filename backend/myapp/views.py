@@ -1,8 +1,8 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from .serializers import UserProfileSerializer, JobPostingSerializer, UserSerializer, ReferenceSerializer, EducationSerializer, MessageSerializer, ConversationSerializer
-from .models import UserProfile, Reference, Education, JobPosting, Message
+from .serializers import UserProfileSerializer, JobPostingSerializer, UserSerializer, ReferenceSerializer, EducationSerializer, MessageSerializer, ConversationSerializer, BadgeSerializer, ChallengeSerializer, UserChallengeSerializer
+from .models import UserProfile, Reference, Education, JobPosting, Message, Badge, Challenge, UserChallenge
 from django.db import models
 import mimetypes
 from django.shortcuts import render, redirect, get_object_or_404
@@ -29,8 +29,12 @@ from rest_framework import permissions
 from cerebras.cloud.sdk import Cerebras
 from rest_framework import status
 from django.db.models.functions import TruncMonth
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, F
 from datetime import datetime
+from django.db.models.signals import post_save, m2m_changed
+from django.dispatch import receiver
+from django.utils import timezone
+from .challenge_logic import update_all_challenges_for_user
 
 Api = os.getenv("API_KEY")
 
@@ -653,27 +657,22 @@ def api_update_profile(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def api_register(request):
-    """API endpoint for user registration"""
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        # Create UserProfile for the new user
-
-        user_profile_serializer = UserProfileSerializer(data=request.data)
-        if user_profile_serializer.is_valid():
-            user_profile = user_profile_serializer.save(user=user)
-            user_profile.is_job_provider = request.data.get("is_job_provider")
-            user_profile.save()
-            print(user_profile.is_job_provider)
-
+        
+        # Manually create UserProfile right after user creation
+        UserProfile.objects.create(user=user, is_job_provider=request.data.get('is_job_provider', False))
+        
+        # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
-     
+        
         return Response({
             'refresh': str(refresh),
             'access': str(refresh.access_token),
-            'user': UserSerializer(user).data
-        }, status=201)
-    return Response(serializer.errors, status=400)
+            'user': serializer.data, # Send back user data as well
+        }, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -1274,3 +1273,169 @@ def api_unread_message_count(request):
         return Response({'unread_count': count})
     except UserProfile.DoesNotExist:
         return Response({'error': 'User profile not found'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_gamification_profile(request):
+    """Return gamification data for the current user (progress, points, level, badges, challenges)"""
+    profile = UserProfile.objects.get(user=request.user)
+    # Update profile completion
+    profile.profile_completion = profile.calculate_profile_completion()
+    profile.save()
+    serializer = UserProfileSerializer(profile, context={'request': request})
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def api_gamification_badges(request):
+    """Return all available badges"""
+    badges = Badge.objects.all()
+    serializer = BadgeSerializer(badges, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_gamification_challenges(request):
+    """
+    Returns all active challenges for the authenticated user.
+    First, it ensures UserChallenge entries exist for all active challenges.
+    Then, it uses the new logic to check and update progress before serialization.
+    """
+    user_profile = request.user.userprofile
+    
+    active_challenges = Challenge.objects.filter(
+        start_date__lte=timezone.now().date(),
+        end_date__gte=timezone.now().date()
+    )
+
+    # Ensure UserChallenge objects exist.
+    for challenge in active_challenges:
+        UserChallenge.objects.get_or_create(user=user_profile, challenge=challenge)
+
+    # Use the new, robust checking mechanism.
+    update_all_challenges_for_user(user_profile)
+
+    user_challenges = UserChallenge.objects.filter(
+        user=user_profile,
+        challenge__in=active_challenges
+    ).select_related('challenge', 'challenge__badge').order_by('is_completed', 'challenge__end_date')
+
+    serializer = UserChallengeSerializer(user_challenges, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def api_gamification_leaderboard(request):
+    """Return leaderboards for applications, profile completion, and completed challenges."""
+    # Top by applications
+    top_applications = UserProfile.objects.filter(is_job_provider=False, opt_in_leaderboard=True).order_by('-num_applications')[:10]
+    
+    # Top by profile completion
+    top_completion = UserProfile.objects.filter(is_job_provider=False, opt_in_leaderboard=True).order_by('-profile_completion')[:10]
+    
+    # Top by completed challenges
+    top_challenge_completers = UserProfile.objects.filter(
+        is_job_provider=False, 
+        opt_in_leaderboard=True
+    ).annotate(
+        num_challenges_completed=Count('user_challenges', filter=Q(user_challenges__is_completed=True))
+    ).order_by('-num_challenges_completed')[:10]
+
+    return Response({
+        'applications': UserProfileSerializer(top_applications, many=True, context={'request': request}).data,
+        'profile_completion': UserProfileSerializer(top_completion, many=True, context={'request': request}).data,
+        'challenge_completers': UserProfileSerializer(top_challenge_completers, many=True, context={'request': request}).data,
+    })
+
+# --- Award points and badges on key actions ---
+@receiver(post_save, sender=UserProfile)
+def update_profile_completion_and_badges(sender, instance, created, **kwargs):
+    # Calculate new profile completion
+    new_completion = instance.calculate_profile_completion()
+    if instance.profile_completion != new_completion:
+        UserProfile.objects.filter(pk=instance.pk).update(profile_completion=new_completion)
+    # Award badge logic (do NOT call instance.save() here)
+    if new_completion >= 100:
+        badge, _ = Badge.objects.get_or_create(
+            name="All-Star Profile",
+            defaults={'description': "Completed 100% of your profile!", 'icon': "star"},
+        )
+        instance.badges.add(badge)
+    elif new_completion >= 50:
+        badge, _ = Badge.objects.get_or_create(
+            name="Profile 50% Complete",
+            defaults={'description': "Completed 50% of your profile!", 'icon': "star"},
+        )
+        instance.badges.add(badge)
+
+# Example: award points and badges on job application
+@receiver(m2m_changed, sender=UserProfile.applied_jobs.through)
+def award_application_badges(sender, instance, action, **kwargs):
+    if action == "post_add":
+        # This function is now also responsible for checking application-related challenges
+        update_all_challenges_for_user(instance)
+
+# Award badges for challenges completed (assume a completed_challenges m2m or similar)
+def award_challenge_badges(user_profile):
+    # This function should be called when a challenge is completed
+    completed = user_profile.challenges_completed.count() if hasattr(user_profile, 'challenges_completed') else 0
+    badge_map = [
+        (1, "First Challenge Completed", "Completed your first challenge!", "award"),
+        (5, "5 Challenges Completed", "Completed 5 challenges!", "award"),
+        (10, "10 Challenges Completed", "Completed 10 challenges!", "award"),
+    ]
+    for count, name, desc, icon in badge_map:
+        if completed == count:
+            badge, _ = Badge.objects.get_or_create(name=name, defaults={'description': desc, 'icon': icon})
+            user_profile.badges.add(badge)
+
+# Utility: assign new default challenges to all existing profiles
+def assign_new_challenges_to_all():
+    from datetime import date
+    today = date.today()
+    default_challenges = Challenge.objects.filter(start_date__lte=today, end_date__gte=today)
+    for profile in UserProfile.objects.all():
+        profile.challenges.set(default_challenges)
+        profile.save()
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def admin_overhaul_challenges(request):
+    """
+    A one-time admin utility to delete old, untrackable challenges and create new ones.
+    This is a sensitive operation and should only be run once.
+    """
+    # IDs of the challenges to delete, based on the user's request.
+    ids_to_delete = [3, 5, 6, 7]
+    deleted_challenges, _ = Challenge.objects.filter(id__in=ids_to_delete).delete()
+
+    # Definitions for the new challenges.
+    new_challenges_definitions = [
+        {
+            'name': 'Message Received', 'description': 'Receive your first message from an employer.', 
+            'points': 25, 'start_date': timezone.now().date(), 'end_date': timezone.now().date() + timezone.timedelta(days=365)
+        },
+        {
+            'name': 'Reference Added', 'description': 'Add at least one professional reference to your profile.',
+            'points': 40, 'start_date': timezone.now().date(), 'end_date': timezone.now().date() + timezone.timedelta(days=365)
+        },
+        {
+            'name': 'First Favorite', 'description': 'Save your first job to your favorites.', 
+            'points': 15, 'start_date': timezone.now().date(), 'end_date': timezone.now().date() + timezone.timedelta(days=365)
+        },
+    ]
+
+    created_count = 0
+    for challenge_def in new_challenges_definitions:
+        _, created = Challenge.objects.get_or_create(
+            name=challenge_def['name'],
+            defaults=challenge_def
+        )
+        if created:
+            created_count += 1
+            
+    return Response({
+        "status": "Challenge overhaul complete.",
+        "deleted_count": deleted_challenges,
+        "created_count": created_count
+    })

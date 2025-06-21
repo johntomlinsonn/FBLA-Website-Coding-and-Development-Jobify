@@ -18,6 +18,13 @@ class UserProfile(models.Model):
     num_applications = models.IntegerField(blank=True, null=True,default=0)
     applied_jobs = models.ManyToManyField('JobPosting', related_name='applicants', blank=True)
     skills = models.ManyToManyField('Skill', related_name='users', blank=True)
+    # --- Gamification fields ---
+    points = models.IntegerField(default=0)
+    level = models.IntegerField(default=1)
+    profile_completion = models.FloatField(default=0.0)  # 0-100 percent
+    opt_in_leaderboard = models.BooleanField(default=True)
+    badges = models.ManyToManyField('Badge', related_name='users', blank=True)
+    challenges = models.ManyToManyField('Challenge', related_name='participants', blank=True)
 
     def __str__(self):
         return self.user.username
@@ -30,7 +37,13 @@ class UserProfile(models.Model):
         approved_jobs = self.posted_jobs.filter(status='approved').count()
         return (approved_jobs / total_jobs_posted) * 100
     
-
+    def calculate_profile_completion(self):
+        # Example: count filled fields for progress
+        fields = [self.profile_picture, self.resume, self.gpa, self.account_holder_name]
+        filled = sum(1 for f in fields if f)
+        total = len(fields)
+        # Add more fields as needed
+        return (filled / total) * 100 if total > 0 else 0
 
 class Reference(models.Model):
     user_profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='references')
@@ -113,3 +126,58 @@ class Message(models.Model):
 
     class Meta:
         ordering = ['-timestamp']
+
+class Badge(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField()
+    icon = models.CharField(max_length=255, blank=True, null=True)  # Path or name for frontend icon
+    criteria = models.TextField(blank=True, null=True)  # JSON or text description of how to earn
+
+    def __str__(self):
+        return self.name
+
+class Challenge(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+    points = models.IntegerField(default=0)
+    badge = models.ForeignKey(Badge, on_delete=models.SET_NULL, null=True, blank=True)
+    # New field to define criteria for completion
+    # Examples: {'action': 'apply_to_jobs', 'count': 5}
+    #           {'action': 'complete_profile', 'percentage': 100}
+    criteria = models.JSONField(default=dict)
+
+    def __str__(self):
+        return self.name
+
+class UserChallenge(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='user_challenges')
+    challenge = models.ForeignKey(Challenge, on_delete=models.CASCADE, related_name='user_challenges')
+    is_completed = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    # progress can store things like {'applications': 2}
+    progress = models.JSONField(default=dict) 
+
+    class Meta:
+        unique_together = ('user', 'challenge') # Each user can only have one instance of a challenge
+
+    def __str__(self):
+        return f"{self.user.user.username}'s {self.challenge.name} - {'Completed' if self.is_completed else 'In Progress'}"
+
+# Example badge types for gamification system:
+# - First Application
+# - 5 Applications
+# - 10 Applications
+# - 20 Applications
+# - 50 Applications
+# - First Challenge Completed
+# - 5 Challenges Completed
+# - 10 Challenges Completed
+# - Profile 50% Complete
+# - Profile 100% Complete
+# - Application Streak (5+ in a week)
+# - Challenge Streak (3+ in a month)
+# - Early Bird (first to complete a challenge)
+# - All-Star Profile
+# - Custom badges for special events

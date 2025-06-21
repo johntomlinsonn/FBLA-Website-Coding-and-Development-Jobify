@@ -74,6 +74,11 @@ urlpatterns = [
     path('api/admin/jobs/<int:job_id>/', views.api_admin_delete_job, name='api_admin_delete_job'),
     path('api/admin/dashboard-stats/', views.api_admin_dashboard_stats, name='api_admin_dashboard_stats'),
     path('api/admin/student-account-stats/', views.api_admin_student_account_stats, name='api_admin_student_account_stats'),
+    path('api/gamification/profile/', views.api_gamification_profile, name='api_gamification_profile'),
+    path('api/gamification/badges/', views.api_gamification_badges, name='api_gamification_badges'),
+    path('api/gamification/challenges/', views.api_gamification_challenges, name='api_gamification_challenges'),
+    path('api/gamification/leaderboard/', views.api_gamification_leaderboard, name='api_gamification_leaderboard'),
+    path('api/admin/challenges/overhaul/', views.admin_overhaul_challenges, name='admin-overhaul-challenges'),
 ]
 
 if settings.DEBUG:

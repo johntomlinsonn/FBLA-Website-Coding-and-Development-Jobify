@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User # Keep for UserProfile.user relation if UserProfile is AUTH_USER_MODEL
 # Or preferably: from django.contrib.auth import get_user_model
 # User = get_user_model() # This would be UserProfile if set as AUTH_USER_MODEL
-from .models import JobPosting, UserProfile, Reference, Education, TodoItem, Skill, Message # Ensure UserProfile is imported
+from .models import JobPosting, UserProfile, Reference, Education, TodoItem, Skill, Message, Badge, Challenge, UserChallenge # Ensure UserProfile is imported
 from datetime import datetime, timezone
 import json
 
@@ -69,6 +69,24 @@ class EducationSerializer(serializers.ModelSerializer):
         model = Education
         fields = ['id', 'school_name', 'graduation_date', 'gpa']
 
+class BadgeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Badge
+        fields = '__all__'
+
+class ChallengeSerializer(serializers.ModelSerializer):
+    badge = BadgeSerializer(read_only=True)
+    class Meta:
+        model = Challenge
+        fields = '__all__'
+
+class UserChallengeSerializer(serializers.ModelSerializer):
+    challenge = ChallengeSerializer(read_only=True)
+
+    class Meta:
+        model = UserChallenge
+        fields = ['id', 'challenge', 'is_completed', 'completed_at', 'progress']
+
 class UserProfileSerializer(serializers.ModelSerializer):
     skills = serializers.SlugRelatedField(
         many=True,
@@ -80,14 +98,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
     references = ReferenceSerializer(many=True, read_only=True)
     education = EducationSerializer(many=True, read_only=True)
     resume_url = serializers.SerializerMethodField()
-    profile_picture_url = serializers.SerializerMethodField() # Add this line
-    
+    profile_picture_url = serializers.SerializerMethodField()
+    badges = BadgeSerializer(many=True, read_only=True)
+    challenges = ChallengeSerializer(many=True, read_only=True)
+    num_challenges_completed = serializers.IntegerField(read_only=True, default=0)
+
     class Meta:
         model = UserProfile
         fields = [
-            'id', 'user', 'resume', 'resume_url', 'profile_picture', 'profile_picture_url', 'gpa', # Add 'profile_picture' and 'profile_picture_url'
+            'id', 'user', 'resume', 'resume_url', 'profile_picture', 'profile_picture_url', 'gpa',
             'is_job_provider', 'account_holder_name', 'skills',
-            'references', 'education'
+            'references', 'education',
+            # Gamification fields
+            'points', 'level', 'profile_completion', 'opt_in_leaderboard', 'badges', 'challenges',
+            'num_applications', 'num_challenges_completed',
         ]
     
     def get_resume_url(self, obj):
