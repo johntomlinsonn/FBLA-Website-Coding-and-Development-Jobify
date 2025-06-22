@@ -152,11 +152,16 @@ class JobPostingSerializer(serializers.ModelSerializer):
     )
     posted_by = serializers.PrimaryKeyRelatedField(read_only=True)
     status = serializers.CharField(read_only=True)
+    applicant_count = serializers.SerializerMethodField()
 
     class Meta:
         model = JobPosting
-        fields = ['id', 'title', 'company_name', 'company_email', 'description', 'salary', 'location', 'job_type', 'requirements', 'custom_questions', 'posted_by', 'status', 'created_at', 'updated_at','grade']
+        fields = ['id', 'title', 'company_name', 'company_email', 'description', 'salary', 'location', 'job_type', 'requirements', 'custom_questions', 'posted_by', 'status', 'created_at', 'updated_at','grade', 'applicant_count']
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_applicant_count(self, obj):
+        """Return the number of applicants for this job"""
+        return obj.applicants.count()
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)

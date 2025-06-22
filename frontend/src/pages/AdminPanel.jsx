@@ -20,7 +20,8 @@ import {
   Divider,
   Stack,
   Badge,
-  LinearProgress
+  LinearProgress,
+  CircularProgress
 } from '@mui/material';
 import { 
   KeyboardArrowDown as KeyboardArrowDownIcon, 
@@ -62,9 +63,13 @@ const AdminPanel = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [actionType, setActionType] = useState('');
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [expandedJobId, setExpandedJobId] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });  const [expandedJobId, setExpandedJobId] = useState(null);
   const [currentTab, setCurrentTab] = useState(0);
+  const [expandedRequirements, setExpandedRequirements] = useState({});
+  const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [userInfo, setUserInfo] = useState({});
+  const [loadingUsers, setLoadingUsers] = useState({});
+  const [revealedUsers, setRevealedUsers] = useState({});
   // Debounced version of fetchJobs
   const debouncedFetchJobs = useRef(debounce(async (currentStatusFilter, currentSearchTerm) => {
     try {
@@ -138,11 +143,44 @@ const AdminPanel = () => {
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
   };
-
   const handleRowClick = (jobId) => {
     const job = jobs.find(j => j.id === jobId);
     console.log('Clicked row for job:', job);
     setExpandedJobId(expandedJobId === jobId ? null : jobId);
+  };
+
+  const toggleRequirements = (jobId) => {
+    setExpandedRequirements(prev => ({
+      ...prev,
+      [jobId]: !prev[jobId]
+    }));
+  };
+  const toggleQuestions = (jobId) => {
+    setExpandedQuestions(prev => ({
+      ...prev,
+      [jobId]: !prev[jobId]
+    }));
+  };
+  const revealUser = async (userId, jobId) => {
+    // If already revealed, don't fetch again
+    if (revealedUsers[userId]) return;
+
+    setLoadingUsers(prev => ({ ...prev, [userId]: true }));
+
+    try {
+      const userData = await adminAPI.getUserInfo(userId);
+      setUserInfo(prev => ({ ...prev, [userId]: userData }));
+      setRevealedUsers(prev => ({ ...prev, [userId]: true }));
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to load user information', 
+        severity: 'error' 
+      });
+    } finally {
+      setLoadingUsers(prev => ({ ...prev, [userId]: false }));
+    }
   };
 
   // Animation variants
@@ -210,6 +248,9 @@ const AdminPanel = () => {
       switch (sortBy) {
         case 'grade':
           comparison = (Number(b.grade) || 0) - (Number(a.grade) || 0);
+          break;
+        case 'applicant':
+          comparison = (Number(b.applicant_count) || 0) - (Number(a.applicant_count) || 0);
           break;
         case 'date':
           comparison = new Date(b.created_at || b.date_posted) - new Date(a.created_at || a.date_posted);
@@ -454,30 +495,9 @@ const AdminPanel = () => {
                 </Box>
                   {/* Quick Sorting */}
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <TextField
-                    placeholder="Search jobs..."
-                    variant="outlined"
-                    size="small"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    sx={{ 
-                      width: 250,
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        '&:hover fieldset': {
-                          borderColor: '#FF6B00',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#FF6B00',
-                        },
-                      }
-                    }}
-                    InputProps={{
-                      startAdornment: <SearchIcon sx={{ color: '#999', mr: 1, fontSize: 20 }} />
-                    }}
-                  />                  <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    {[
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>                    {[
                       { label: 'Grade', value: 'grade', color: '#FF6B00' },
+                      { label: 'Applicants', value: 'applicant', color: '#4CAF50' },
                       { label: 'Date', value: 'date', color: '#2196F3' },
                       { label: 'Questions', value: 'questions', color: '#9C27B0' }
                     ].map((sort) => {
@@ -564,10 +584,9 @@ const AdminPanel = () => {
                         }
                       }}>
                         <CardContent sx={{ p: 0 }}>
-                          {/* Main Job Info */}
-                          <Box 
+                          {/* Main Job Info */}                          <Box 
                             sx={{ 
-                              p: 3,
+                              p: 2,
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
@@ -576,23 +595,23 @@ const AdminPanel = () => {
                             onClick={() => handleRowClick(job.id)}
                           >
                             <Box sx={{ flex: 1 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                                <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 600, color: '#333', fontSize: '1.1rem' }}>
                                   {job.title}
                                 </Typography>
                                 <Chip
-                                  icon={<StatusIcon sx={{ fontSize: 16 }} />}
+                                  icon={<StatusIcon sx={{ fontSize: 14 }} />}
                                   label={statusConfig.label}
+                                  size="small"
                                   sx={{
                                     bgcolor: statusConfig.bgColor,
                                     color: statusConfig.color,
                                     fontWeight: 600,
-                                    border: `1px solid ${statusConfig.color}20`
+                                    border: `1px solid ${statusConfig.color}20`,
+                                    fontSize: '0.75rem'
                                   }}
                                 />
-                              </Box>
-                              
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+                              </Box>                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                   <WorkOutlineIcon sx={{ color: '#666', fontSize: 16 }} />
                                   <Typography variant="body2" color="text.secondary">
@@ -605,72 +624,101 @@ const AdminPanel = () => {
                                     {job.location}
                                   </Typography>
                                 </Box>
-                              </Box>                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: 1,
+                                  p: sortBy === 'grade' ? 1 : 0,
+                                  bgcolor: sortBy === 'grade' ? '#FF6B0015' : 'transparent',
+                                  borderRadius: sortBy === 'grade' ? 1 : 0,
+                                  border: sortBy === 'grade' ? '1px solid #FF6B0040' : 'none'
+                                }}>
                                   <Typography variant="body2" color="text.secondary">
                                     Grade:
                                   </Typography>
                                   <Box sx={{
                                     bgcolor: getGradeColor(job.grade) + '20',
                                     color: getGradeColor(job.grade),
-                                    px: 1.5,
-                                    py: 0.5,
+                                    px: 1,
+                                    py: 0.25,
                                     borderRadius: 1,
                                     fontWeight: 700,
-                                    fontSize: '0.875rem',
+                                    fontSize: '0.75rem',
                                     border: `1px solid ${getGradeColor(job.grade)}40`
                                   }}>
                                     {formatGrade(job.grade)}
                                   </Box>
                                 </Box>
                                 
-                                {/* Show additional sort metric when active */}
-                                {sortBy === 'date' && (
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {/* Dynamic sort field or default applicants */}
+                                {sortBy === 'date' ? (
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1,
+                                    p: 1,
+                                    bgcolor: '#2196F315',
+                                    borderRadius: 1,
+                                    border: '1px solid #2196F340'
+                                  }}>
                                     <Typography variant="body2" color="text.secondary">
                                       Posted:
                                     </Typography>
                                     <Box sx={{
                                       bgcolor: '#2196F320',
                                       color: '#2196F3',
-                                      px: 1.5,
-                                      py: 0.5,
+                                      px: 1,
+                                      py: 0.25,
                                       borderRadius: 1,
                                       fontWeight: 600,
-                                      fontSize: '0.875rem',
+                                      fontSize: '0.75rem',
                                       border: '1px solid #2196F340'
                                     }}>
                                       {new Date(job.created_at).toLocaleDateString()}
                                     </Box>
                                   </Box>
-                                )}
-                                
-                                {sortBy === 'questions' && (
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                ) : sortBy === 'questions' ? (
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 1,
+                                    p: 1,
+                                    bgcolor: '#9C27B015',
+                                    borderRadius: 1,
+                                    border: '1px solid #9C27B040'
+                                  }}>
                                     <Typography variant="body2" color="text.secondary">
                                       Questions:
                                     </Typography>
                                     <Box sx={{
                                       bgcolor: '#9C27B020',
                                       color: '#9C27B0',
-                                      px: 1.5,
-                                      py: 0.5,
+                                      px: 1,
+                                      py: 0.25,
                                       borderRadius: 1,
                                       fontWeight: 600,
-                                      fontSize: '0.875rem',
+                                      fontSize: '0.75rem',
                                       border: '1px solid #9C27B040'
                                     }}>
                                       {Array.isArray(job.custom_questions) ? job.custom_questions.length : 0}
                                     </Box>
                                   </Box>
+                                ) : (
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: 0.5,
+                                    p: sortBy === 'applicant' ? 1 : 0,
+                                    bgcolor: sortBy === 'applicant' ? '#4CAF5015' : 'transparent',
+                                    borderRadius: sortBy === 'applicant' ? 1 : 0,
+                                    border: sortBy === 'applicant' ? '1px solid #4CAF5040' : 'none'
+                                  }}>
+                                    <PersonIcon sx={{ color: '#666', fontSize: 16 }} />
+                                    <Typography variant="body2" color="text.secondary">
+                                      {job.applicant_count || 0} {job.applicant_count === 1 ? 'applicant' : 'applicants'}
+                                    </Typography>
+                                  </Box>
                                 )}
-                                
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <PersonIcon sx={{ color: '#666', fontSize: 16 }} />
-                                  <Typography variant="body2" color="text.secondary">
-                                    1 applicant
-                                  </Typography>
-                                </Box>
                               </Box>
                             </Box>
 
@@ -691,24 +739,80 @@ const AdminPanel = () => {
                               animate={{ height: 'auto', opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
                               transition={{ duration: 0.3 }}
-                            >
-                              <Divider />
+                            >                              <Divider />
                               <Box sx={{ p: 3, bgcolor: '#FAFBFC' }}>
-                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                                <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
                                   Job Details
                                 </Typography>
                                 
-                                <Stack spacing={2} sx={{ mb: 3 }}>
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <AttachMoneyIcon sx={{ color: '#4CAF50', fontSize: 20 }} />
-                                    <Typography variant="body2" color="text.secondary">
-                                      Salary: <strong>${job.salary?.toLocaleString() || 'N/A'}</strong>
-                                    </Typography>
-                                  </Box>
-                                  
+                                <Stack spacing={3}>
+                                  {/* Basic Info Section */}
                                   <Box>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                      <strong>Description:</strong>
+                                    <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: '#333' }}>
+                                      Basic Information
+                                    </Typography>
+                                    <Stack spacing={2}>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <WorkOutlineIcon sx={{ color: '#666', fontSize: 18 }} />
+                                        <Typography variant="body2" color="text.secondary">
+                                          Job Type: <strong>{job.job_type || 'N/A'}</strong>
+                                        </Typography>
+                                      </Box>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <AttachMoneyIcon sx={{ color: '#4CAF50', fontSize: 18 }} />
+                                        <Typography variant="body2" color="text.secondary">
+                                          Salary: <strong>${job.salary?.toLocaleString() || 'N/A'}</strong>
+                                        </Typography>
+                                      </Box>                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <PersonIcon sx={{ color: '#666', fontSize: 18 }} />
+                                        <Typography variant="body2" color="text.secondary">
+                                          Posted by: 
+                                          {revealedUsers[job.posted_by] ? (
+                                            <strong style={{ marginLeft: '4px' }}>
+                                              {userInfo[job.posted_by]?.display_name || 'Unknown User'}
+                                            </strong>
+                                          ) : (
+                                            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, ml: 1 }}>
+                                              <Button
+                                                variant="outlined"
+                                                size="small"
+                                                onClick={() => revealUser(job.posted_by, job.id)}
+                                                disabled={loadingUsers[job.posted_by]}
+                                                sx={{
+                                                  minWidth: 'auto',
+                                                  px: 1,
+                                                  py: 0.25,
+                                                  fontSize: '0.7rem',
+                                                  textTransform: 'none',
+                                                  color: '#666',
+                                                  borderColor: '#ddd',
+                                                  '&:hover': {
+                                                    borderColor: '#333',
+                                                    color: '#333',
+                                                  }
+                                                }}
+                                              >
+                                                {loadingUsers[job.posted_by] ? (
+                                                  <CircularProgress size={12} sx={{ mr: 0.5 }} />
+                                                ) : null}
+                                                {loadingUsers[job.posted_by] ? 'Loading...' : 'Reveal User'}
+                                              </Button>
+                                            </Box>
+                                          )}
+                                        </Typography>
+                                      </Box>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                          📧 Company Email: <strong>{job.company_email || 'N/A'}</strong>
+                                        </Typography>
+                                      </Box>
+                                    </Stack>
+                                  </Box>
+
+                                  {/* Description Section */}
+                                  <Box>
+                                    <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: '#333' }}>
+                                      Job Description
                                     </Typography>
                                     <Typography variant="body2" sx={{ 
                                       color: '#555',
@@ -720,57 +824,177 @@ const AdminPanel = () => {
                                     }}>
                                       {job.description || 'No description provided'}
                                     </Typography>
+                                  </Box>                                  {/* Requirements Section */}
+                                  {job.requirements && Array.isArray(job.requirements) && job.requirements.length > 0 && (
+                                    <Box>
+                                      <Box 
+                                        sx={{ 
+                                          display: 'flex', 
+                                          alignItems: 'center', 
+                                          justifyContent: 'space-between',
+                                          cursor: 'pointer',
+                                          p: 1,
+                                          borderRadius: 1,
+                                          '&:hover': {
+                                            bgcolor: '#F5F5F5'
+                                          }
+                                        }}
+                                        onClick={() => toggleRequirements(job.id)}
+                                      >
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333' }}>
+                                          Requirements ({job.requirements.length})
+                                        </Typography>
+                                        <IconButton size="small">
+                                          {expandedRequirements[job.id] ? 
+                                            <KeyboardArrowUpIcon /> : 
+                                            <KeyboardArrowDownIcon />
+                                          }
+                                        </IconButton>
+                                      </Box>
+                                      {expandedRequirements[job.id] && (
+                                        <motion.div
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: 'auto', opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          transition={{ duration: 0.2 }}
+                                        >
+                                          <Box sx={{ 
+                                            bgcolor: 'white',
+                                            borderRadius: 1,
+                                            border: '1px solid #E5E7EB',
+                                            p: 2,
+                                            mt: 1
+                                          }}>
+                                            {job.requirements.map((requirement, index) => (
+                                              <Typography key={index} variant="body2" sx={{ 
+                                                color: '#555',
+                                                mb: 1,
+                                                display: 'flex',
+                                                alignItems: 'flex-start',
+                                                gap: 1
+                                              }}>
+                                                <span style={{ color: '#FF6B00', fontWeight: 'bold' }}>•</span>
+                                                {requirement}
+                                              </Typography>
+                                            ))}
+                                          </Box>
+                                        </motion.div>
+                                      )}
+                                    </Box>
+                                  )}                                  {/* Custom Questions Section */}
+                                  {job.custom_questions && Array.isArray(job.custom_questions) && job.custom_questions.length > 0 && (
+                                    <Box>
+                                      <Box 
+                                        sx={{ 
+                                          display: 'flex', 
+                                          alignItems: 'center', 
+                                          justifyContent: 'space-between',
+                                          cursor: 'pointer',
+                                          p: 1,
+                                          borderRadius: 1,
+                                          '&:hover': {
+                                            bgcolor: '#F5F5F5'
+                                          }
+                                        }}
+                                        onClick={() => toggleQuestions(job.id)}
+                                      >
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#333' }}>
+                                          Custom Questions ({job.custom_questions.length})
+                                        </Typography>
+                                        <IconButton size="small">
+                                          {expandedQuestions[job.id] ? 
+                                            <KeyboardArrowUpIcon /> : 
+                                            <KeyboardArrowDownIcon />
+                                          }
+                                        </IconButton>
+                                      </Box>
+                                      {expandedQuestions[job.id] && (
+                                        <motion.div
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: 'auto', opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          transition={{ duration: 0.2 }}
+                                        >
+                                          <Box sx={{ 
+                                            bgcolor: 'white',
+                                            borderRadius: 1,
+                                            border: '1px solid #E5E7EB',
+                                            p: 2,
+                                            mt: 1
+                                          }}>
+                                            {job.custom_questions.map((question, index) => (
+                                              <Typography key={index} variant="body2" sx={{ 
+                                                color: '#555',
+                                                mb: 1,
+                                                display: 'flex',
+                                                alignItems: 'flex-start',
+                                                gap: 1
+                                              }}>
+                                                <span style={{ color: '#9C27B0', fontWeight: 'bold' }}>{index + 1}.</span>
+                                                {question}
+                                              </Typography>
+                                            ))}
+                                          </Box>
+                                        </motion.div>
+                                      )}
+                                    </Box>
+                                  )}
+
+                                  {/* Actions Section */}
+                                  <Box>
+                                    <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: '#333' }}>
+                                      Actions
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                      {job.status !== 'approved' && (
+                                        <Button 
+                                          variant="contained" 
+                                          startIcon={<CheckCircleIcon />}
+                                          onClick={() => handleAction(job, 'approve')}
+                                          sx={{ 
+                                            bgcolor: '#4CAF50',
+                                            '&:hover': { bgcolor: '#45A049' },
+                                            borderRadius: 2,
+                                            textTransform: 'none',
+                                            fontWeight: 600
+                                          }}
+                                        >
+                                          Approve
+                                        </Button>
+                                      )}
+                                      {job.status !== 'denied' && (
+                                        <Button 
+                                          variant="outlined" 
+                                          startIcon={<CancelIcon />}
+                                          onClick={() => handleAction(job, 'deny')}
+                                          sx={{ 
+                                            color: '#666',
+                                            borderColor: '#666',
+                                            '&:hover': { borderColor: '#333', bgcolor: '#F5F5F5' },
+                                            borderRadius: 2,
+                                            textTransform: 'none',
+                                            fontWeight: 600
+                                          }}
+                                        >
+                                          Deny
+                                        </Button>
+                                      )}
+                                      <Button 
+                                        variant="outlined" 
+                                        color="error" 
+                                        startIcon={<DeleteIcon />}
+                                        onClick={() => handleAction(job, 'delete')}
+                                        sx={{ 
+                                          borderRadius: 2,
+                                          textTransform: 'none',
+                                          fontWeight: 600
+                                        }}
+                                      >
+                                        Delete
+                                      </Button>
+                                    </Box>
                                   </Box>
                                 </Stack>
-
-                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                  {job.status !== 'approved' && (
-                                    <Button 
-                                      variant="contained" 
-                                      startIcon={<CheckCircleIcon />}
-                                      onClick={() => handleAction(job, 'approve')}
-                                      sx={{ 
-                                        bgcolor: '#4CAF50',
-                                        '&:hover': { bgcolor: '#45A049' },
-                                        borderRadius: 2,
-                                        textTransform: 'none',
-                                        fontWeight: 600
-                                      }}
-                                    >
-                                      Approve
-                                    </Button>
-                                  )}
-                                  {job.status !== 'denied' && (
-                                    <Button 
-                                      variant="outlined" 
-                                      startIcon={<CancelIcon />}
-                                      onClick={() => handleAction(job, 'deny')}
-                                      sx={{ 
-                                        color: '#666',
-                                        borderColor: '#666',
-                                        '&:hover': { borderColor: '#333', bgcolor: '#F5F5F5' },
-                                        borderRadius: 2,
-                                        textTransform: 'none',
-                                        fontWeight: 600
-                                      }}
-                                    >
-                                      Deny
-                                    </Button>
-                                  )}
-                                  <Button 
-                                    variant="outlined" 
-                                    color="error" 
-                                    startIcon={<DeleteIcon />}
-                                    onClick={() => handleAction(job, 'delete')}
-                                    sx={{ 
-                                      borderRadius: 2,
-                                      textTransform: 'none',
-                                      fontWeight: 600
-                                    }}
-                                  >
-                                    Delete
-                                  </Button>
-                                </Box>
                               </Box>
                             </motion.div>
                           )}

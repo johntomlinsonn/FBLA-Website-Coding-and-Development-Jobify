@@ -803,7 +803,7 @@ def api_admin_list_jobs(request):
     status_filter = request.GET.get('status', None)
     search_term = request.GET.get('search', None)
 
-    jobs = JobPosting.objects.all()
+    jobs = JobPosting.objects.prefetch_related('applicants').all()
 
     if status_filter:
         jobs = jobs.filter(status=status_filter)
@@ -842,6 +842,23 @@ def api_admin_delete_job(request, job_id):
     job = get_object_or_404(JobPosting, id=job_id)
     job.delete()
     return Response({'message': 'Job deleted.'})
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def api_admin_get_user(request, user_id):
+    """Get user information by UserProfile ID"""
+    try:
+        user_profile = UserProfile.objects.select_related('user').get(id=user_id)
+        return Response({
+            'id': user_profile.id,
+            'username': user_profile.user.username,
+            'first_name': user_profile.user.first_name,
+            'last_name': user_profile.user.last_name,
+            'email': user_profile.user.email,
+            'display_name': f"{user_profile.user.first_name} {user_profile.user.last_name}".strip() or user_profile.user.username
+        })
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

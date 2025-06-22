@@ -72,6 +72,7 @@ urlpatterns = [
     path('admin/jobs/<int:job_id>/approve/', views.api_admin_approve_job, name='api_admin_approve_job'),
     path('admin/jobs/<int:job_id>/deny/', views.api_admin_deny_job, name='api_admin_deny_job'),
     path('admin/jobs/<int:job_id>/', views.api_admin_delete_job, name='api_admin_delete_job'),
+    path('admin/users/<int:user_id>/', views.api_admin_get_user, name='api_admin_get_user'),
     path('admin/dashboard-stats/', views.api_admin_dashboard_stats, name='api_admin_dashboard_stats'),
     path('admin/student-account-stats/', views.api_admin_student_account_stats, name='api_admin_student_account_stats'),
     path('gamification/profile/', views.api_gamification_profile, name='api_gamification_profile'),

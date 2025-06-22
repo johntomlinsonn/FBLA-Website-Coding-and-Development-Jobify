@@ -285,6 +285,16 @@ export const adminAPI = {
       throw error;
     }
   },
+
+  getUserInfo: async (userId) => {
+    try {
+      const response = await api.get(`/admin/users/${userId}/`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching user info for id ${userId}:`, error);
+      throw error;
+    }
+  },
 };
 
 // Favorite Jobs API
