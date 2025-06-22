@@ -17,14 +17,19 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
-  Avatar
+  Avatar,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import { profileAPI } from '../services/api';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, api } from '../contexts/AuthContext';
+import ProfileCompletionBar from '../components/ProfileCompletionBar';
+import BadgeDisplay from '../components/BadgeDisplay';
+import ChallengeWidget from '../components/ChallengeWidget';
 
 const Account = () => {
   const { user, loading: authLoading } = useAuth();
@@ -38,7 +43,8 @@ const Account = () => {
     gpa: '',
     is_job_provider: false,
     account_holder_name: '',
-    skills: []
+    skills: [],
+    currently_working: false,
   });
   const [references, setReferences] = useState([]);
   const [education, setEducation] = useState([]);
@@ -46,6 +52,8 @@ const Account = () => {
   const [newEducation, setNewEducation] = useState({ school_name: '', graduation_date: '', gpa: '' });
   const [showNewReferenceForm, setShowNewReferenceForm] = useState(false);
   const [showNewEducationForm, setShowNewEducationForm] = useState(false);
+  const [gamification, setGamification] = useState(null);
+  const [challenges, setChallenges] = useState([]);
 
   // Categorized skills list
   const skillCategories = {
@@ -96,7 +104,8 @@ const Account = () => {
             profile_picture: null, // Reset profile_picture on fetch
             is_job_provider: profileData.is_job_provider || false,
             account_holder_name: profileData.account_holder_name || '',
-            skills: profileData.skills || []
+            skills: profileData.skills || [],
+            currently_working: profileData.currently_working || false,
           });
           setLoading(false);
         } catch (err) {
@@ -110,12 +119,26 @@ const Account = () => {
         setProfile(null);
         setReferences([]);
         setEducation([]);
-        setFormData({ resume: null, profile_picture: null, gpa: '', is_job_provider: false, account_holder_name: '' }); // Reset profile_picture
+        setFormData({ resume: null, profile_picture: null, gpa: '', is_job_provider: false, account_holder_name: '', currently_working: false }); // Reset profile_picture
         setLoading(false);
       }
     };
 
     fetchProfile();
+
+    const fetchGamification = async () => {
+      try {
+        const [profileRes, challengesRes] = await Promise.all([
+          api.get('/gamification/profile/'),
+          api.get('/gamification/challenges/'),
+        ]);
+        setGamification(profileRes.data);
+        setChallenges(challengesRes.data);
+      } catch (err) {
+        // Optionally handle error
+      }
+    };
+    fetchGamification();
   }, [user, authLoading]);
 
   const handleResumeChange = (e) => {
@@ -132,6 +155,14 @@ const Account = () => {
     });
   };
 
+  const handleFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -142,7 +173,9 @@ const Account = () => {
       const formDataToSend = new FormData();
       Object.keys(formData).forEach(key => {
         if (formData[key] !== null) {
-          if (key !== 'skills') {
+          if (key === 'currently_working') {
+            formDataToSend.append(key, formData[key] ? 'true' : 'false');
+          } else if (key !== 'skills') {
             formDataToSend.append(key, formData[key]);
           }
         }
@@ -317,6 +350,28 @@ const Account = () => {
                       </Button>
                     )}
                   </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Full Name"
+                    name="account_holder_name"
+                    value={formData.account_holder_name}
+                    onChange={handleFormChange}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControlLabel
+                      control={
+                          <Switch
+                              checked={formData.currently_working}
+                              onChange={handleFormChange}
+                              name="currently_working"
+                              color="primary"
+                          />
+                      }
+                      label="Currently Working"
+                  />
                 </Grid>
                 {/* Save Profile Changes */}
                 <Grid item xs={12}>

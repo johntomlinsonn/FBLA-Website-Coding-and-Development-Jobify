@@ -31,12 +31,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
     education = EducationSerializer(many=True, read_only=True)
     user = UserSerializer(read_only=True)
     is_job_provider = serializers.BooleanField(required=False, allow_null=True)
+    currently_working = serializers.BooleanField(required=False)
 
     class Meta:
         model = UserProfile
-        fields = ['id', 'user', 'resume', 'gpa', 'is_job_provider', 'account_holder_name', 'references', 'education']
+        fields = ['id', 'user', 'resume', 'gpa', 'is_job_provider', 'account_holder_name', 'references', 'education', 'currently_working']
 
-    def validate_is_job_provider(self, value):
+    def validate_boolean_field(self, value):
         if value is None:
             return False
         if isinstance(value, str):
@@ -45,10 +46,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 return False
             elif normalized_value in ['true', '1', 'yes']:
                 return True
-            # If it's a string not explicitly 'true' or 'false', treat as True
-            # This handles cases where unexpected non-empty strings are sent
-            return True
         return bool(value)
+
+    def validate_is_job_provider(self, value):
+        return self.validate_boolean_field(value)
+
+    def validate_currently_working(self, value):
+        return self.validate_boolean_field(value)
 
     def create(self, validated_data):
         return super().create(validated_data)

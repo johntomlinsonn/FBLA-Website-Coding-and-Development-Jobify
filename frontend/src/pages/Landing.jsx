@@ -25,6 +25,7 @@ import { useTheme } from "@mui/material/styles"
 import useMediaQuery from "@mui/material/useMediaQuery"
 import FloatingNames from "../components/FloatingNames"
 import InfoGrid from "../components/InfoGrid"
+import axios from 'axios'
 
 // Enhanced floating animation variants
 const floatingVariants = {
@@ -108,10 +109,10 @@ const features = [
 
 const testimonials = [
   {
-    name: "Emma Rodriguez",
-    image: "/placeholder.svg?height=80&width=80",
+    name: "Alex Ince",
+    image: "/Testimonial-Guy.webp",
     quote:
-      "Jobify helped me land my first job at a local café! The application process was so simple and I love earning my own money.",
+      "Jobify helped me land my first job at a local grocery store! The application process was so simple and I love earning my own money.",
     title: "High School Junior",
     color: "#FF6B35",
   },
@@ -140,6 +141,7 @@ const Landing = () => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const [fps, setFps] = useState(60)
+  const [leaderboard, setLeaderboard] = useState(null)
 
   // Performance monitoring
   useEffect(() => {
@@ -160,6 +162,18 @@ const Landing = () => {
     }
     
     requestAnimationFrame(checkFps)
+  }, [])
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const res = await axios.get('/api/gamification/leaderboard/')
+        setLeaderboard(res.data)
+      } catch (err) {
+        // Optionally handle error
+      }
+    }
+    fetchLeaderboard()
   }, [])
 
   const handleSearch = (e) => {
@@ -422,7 +436,7 @@ const Landing = () => {
           >
             {isMobile 
               ? "Discover opportunities and build your future!"
-              : "Normal Community High School students, discover opportunities tailored for you. Build your future, gain valuable experience, and take the first step toward your dream career as an Ironman!"
+              : "NCHS Students, Your Next Job Is One Click Away. Explore, Apply, and Get Hired, all in One Place."
             }
           </Typography>
 
@@ -949,8 +963,6 @@ const Landing = () => {
         </Grid>
       </Container>
 
-        
-
       {/* InfoGrid Section */}
       <InfoGrid />
 
@@ -986,8 +998,6 @@ const Landing = () => {
           />
         </svg>
       </Box>
-
-      
 
       {/* Final CTA Section */}
       <Box

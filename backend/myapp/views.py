@@ -1035,6 +1035,7 @@ def get_applicants(request):
     skill_filter = request.query_params.get('skill', '')
     job_filter = request.query_params.get('job', '')
     sort_by = request.query_params.get('sort_by', 'recent')
+    quick_filter = request.query_params.get('quick_filter', '')
 
     # Base queryset - get all users who are not job providers
     applicants = UserProfile.objects.filter(is_job_provider=False)
@@ -1049,6 +1050,17 @@ def get_applicants(request):
         applicants = applicants.filter(
             applied_jobs__title__icontains=job_filter
         ).distinct()
+
+    # Apply quick filters
+    if quick_filter == 'High GPA (3.5+)':
+        applicants = applicants.filter(gpa__gte=3.5)
+    elif quick_filter == 'Multiple Skills':
+        applicants = applicants.annotate(skill_count=Count('skills')).filter(skill_count__gt=1)
+    elif quick_filter == 'Available Now':
+        # Assuming 'Available Now' means they have not yet graduated.
+        # This requires that education details are present.
+        current_year = datetime.now().year
+        applicants = applicants.filter(education__graduation_date__year__gte=current_year).distinct()
 
     # Apply sorting
     if sort_by == 'alphabetical':
@@ -1097,6 +1109,9 @@ def get_applicants(request):
             'applied_jobs': list(applied_jobs),
             'graduation_year': graduation_year,
             'school_year': school_year,
+            'gpa': applicant_data.get('gpa'), 
+            'school': 'Normal Community High School',
+            'status': 'Currently Working' if applicant_data.get('currently_working') else 'Available',
             'profile_picture': f"https://ui-avatars.com/api/?name={applicant_data['user']['first_name']}+{applicant_data['user']['last_name']}&background=FF6B00&color=fff"
         })
 

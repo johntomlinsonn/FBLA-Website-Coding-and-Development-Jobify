@@ -13,6 +13,7 @@ import InboxPage from './pages/InboxPage';
 import About from './pages/About';
 import FAQ from './pages/FAQ';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChallengeCenter from './pages/ChallengeCenter';
 
 const AppRoutes = () => {
   return (
@@ -80,6 +81,7 @@ const AppRoutes = () => {
       />
       <Route path="/about" element={<About />} />
       <Route path="/faq" element={<FAQ />} />
+      <Route path="/challenge-center" element={<ChallengeCenter />} />
     </Routes>
   );
 };

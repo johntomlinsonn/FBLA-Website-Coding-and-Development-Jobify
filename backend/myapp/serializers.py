@@ -102,18 +102,33 @@ class UserProfileSerializer(serializers.ModelSerializer):
     badges = BadgeSerializer(many=True, read_only=True)
     challenges = ChallengeSerializer(many=True, read_only=True)
     num_challenges_completed = serializers.IntegerField(read_only=True, default=0)
+    currently_working = serializers.BooleanField()
+    gpa = serializers.SerializerMethodField()
+    num_favorited_jobs = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
         fields = [
             'id', 'user', 'resume', 'resume_url', 'profile_picture', 'profile_picture_url', 'gpa',
-            'is_job_provider', 'account_holder_name', 'skills',
+            'is_job_provider', 'account_holder_name', 'skills','currently_working',
             'references', 'education',
             # Gamification fields
             'points', 'level', 'profile_completion', 'opt_in_leaderboard', 'badges', 'challenges',
-            'num_applications', 'num_challenges_completed',
+            'num_applications', 'num_challenges_completed', 'num_favorited_jobs',
         ]
     
+    def get_gpa(self, obj):
+        education = obj.education.first()
+        if education and hasattr(education, 'gpa') and education.gpa is not None:
+            gpa = float(education.gpa)
+            if gpa == int(gpa):
+                return f"{gpa:.1f}"
+            return gpa
+        return None
+
+    def get_num_favorited_jobs(self, obj):
+        return obj.favorited_jobs.count()
+
     def get_resume_url(self, obj):
         if obj.resume:
             return self.context['request'].build_absolute_uri(obj.resume.url)

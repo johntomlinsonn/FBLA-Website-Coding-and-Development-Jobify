@@ -33,6 +33,7 @@ import InstagramIcon from '@mui/icons-material/Instagram';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 const footerLinks = [
   { label: 'Home', href: '/' },
@@ -312,6 +313,12 @@ const MainLayout = () => {
                           <AccountCircleIcon fontSize="small" />
                         </ListItemIcon>
                         Account
+                      </MenuItem>
+                      <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/challenge-center'); }}>
+                        <ListItemIcon>
+                          <EmojiEventsIcon fontSize="small" />
+                        </ListItemIcon>
+                        Challenge Center
                       </MenuItem>
                       <MenuItem onClick={() => { handleCloseUserMenu(); navigate('/inbox'); }}>
                         <ListItemIcon>

@@ -48,7 +48,7 @@ const Register = () => {
     onSubmit: async (values) => {
       try {
         await dispatch(register(values)).unwrap();
-        navigate('/login');
+        navigate('/');
       } catch (err) {
         // Error is handled by the auth slice
       }
