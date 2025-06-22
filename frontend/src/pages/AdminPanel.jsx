@@ -64,9 +64,9 @@ const AdminPanel = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [actionType, setActionType] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });  const [expandedJobId, setExpandedJobId] = useState(null);
-  const [currentTab, setCurrentTab] = useState(0);
-  const [expandedRequirements, setExpandedRequirements] = useState({});
+  const [currentTab, setCurrentTab] = useState(0);  const [expandedRequirements, setExpandedRequirements] = useState({});
   const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [expandedUserDetails, setExpandedUserDetails] = useState({});
   const [userInfo, setUserInfo] = useState({});
   const [loadingUsers, setLoadingUsers] = useState({});
   const [revealedUsers, setRevealedUsers] = useState({});
@@ -160,10 +160,15 @@ const AdminPanel = () => {
       ...prev,
       [jobId]: !prev[jobId]
     }));
-  };
-  const revealUser = async (userId, jobId) => {
-    // If already revealed, don't fetch again
-    if (revealedUsers[userId]) return;
+  };  const revealUser = async (userId, jobId) => {
+    // If already revealed, just toggle the dropdown
+    if (revealedUsers[userId]) {
+      setExpandedUserDetails(prev => ({
+        ...prev,
+        [userId]: !prev[userId]
+      }));
+      return;
+    }
 
     setLoadingUsers(prev => ({ ...prev, [userId]: true }));
 
@@ -171,6 +176,7 @@ const AdminPanel = () => {
       const userData = await adminAPI.getUserInfo(userId);
       setUserInfo(prev => ({ ...prev, [userId]: userData }));
       setRevealedUsers(prev => ({ ...prev, [userId]: true }));
+      setExpandedUserDetails(prev => ({ ...prev, [userId]: true }));
     } catch (error) {
       console.error('Error fetching user data:', error);
       setSnackbar({ 
@@ -181,6 +187,13 @@ const AdminPanel = () => {
     } finally {
       setLoadingUsers(prev => ({ ...prev, [userId]: false }));
     }
+  };
+
+  const toggleUserDetails = (userId) => {
+    setExpandedUserDetails(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
   };
 
   // Animation variants
@@ -763,43 +776,117 @@ const AdminPanel = () => {
                                         <Typography variant="body2" color="text.secondary">
                                           Salary: <strong>${job.salary?.toLocaleString() || 'N/A'}</strong>
                                         </Typography>
-                                      </Box>                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <PersonIcon sx={{ color: '#666', fontSize: 18 }} />
-                                        <Typography variant="body2" color="text.secondary">
-                                          Posted by: 
-                                          {revealedUsers[job.posted_by] ? (
-                                            <strong style={{ marginLeft: '4px' }}>
-                                              {userInfo[job.posted_by]?.display_name || 'Unknown User'}
-                                            </strong>
+                                      </Box>                                      <Box>                                        <Box 
+                                          sx={{ 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'space-between',
+                                            cursor: 'pointer',
+                                            p: 1,
+                                            borderRadius: 1,
+                                            '&:hover': {
+                                              bgcolor: '#F5F5F5'
+                                            }
+                                          }}
+                                          onClick={() => {
+                                            if (revealedUsers[job.posted_by]) {
+                                              toggleUserDetails(job.posted_by);
+                                            } else {
+                                              revealUser(job.posted_by, job.id);
+                                            }
+                                          }}
+                                        >
+                                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <PersonIcon sx={{ color: '#666', fontSize: 18 }} />
+                                            <Typography variant="body2" color="text.secondary">
+                                              Posted by: 
+                                              {revealedUsers[job.posted_by] ? (
+                                                <strong style={{ marginLeft: '4px' }}>
+                                                  {userInfo[job.posted_by]?.display_name || 'Unknown User'}
+                                                </strong>
+                                              ) : (
+                                                <span style={{ marginLeft: '4px', fontStyle: 'italic', color: '#999' }}>
+                                                  Click to reveal user details
+                                                </span>
+                                              )}
+                                            </Typography>
+                                          </Box>
+                                          
+                                          {loadingUsers[job.posted_by] ? (
+                                            <CircularProgress size={16} />
                                           ) : (
-                                            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, ml: 1 }}>
-                                              <Button
-                                                variant="outlined"
-                                                size="small"
-                                                onClick={() => revealUser(job.posted_by, job.id)}
-                                                disabled={loadingUsers[job.posted_by]}
-                                                sx={{
-                                                  minWidth: 'auto',
-                                                  px: 1,
-                                                  py: 0.25,
-                                                  fontSize: '0.7rem',
-                                                  textTransform: 'none',
-                                                  color: '#666',
-                                                  borderColor: '#ddd',
-                                                  '&:hover': {
-                                                    borderColor: '#333',
-                                                    color: '#333',
-                                                  }
-                                                }}
-                                              >
-                                                {loadingUsers[job.posted_by] ? (
-                                                  <CircularProgress size={12} sx={{ mr: 0.5 }} />
-                                                ) : null}
-                                                {loadingUsers[job.posted_by] ? 'Loading...' : 'Reveal User'}
-                                              </Button>
-                                            </Box>
+                                            <IconButton size="small">
+                                              {revealedUsers[job.posted_by] && expandedUserDetails[job.posted_by] ? 
+                                                <KeyboardArrowUpIcon /> : 
+                                                <KeyboardArrowDownIcon />
+                                              }
+                                            </IconButton>
                                           )}
-                                        </Typography>
+                                        </Box>
+                                        
+                                        {/* User Details Dropdown */}
+                                        {revealedUsers[job.posted_by] && expandedUserDetails[job.posted_by] && userInfo[job.posted_by] && (
+                                          <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                          >
+                                            <Box sx={{ 
+                                              bgcolor: '#F8F9FA',
+                                              borderRadius: 1,
+                                              border: '1px solid #E5E7EB',
+                                              p: 2,
+                                              mt: 1,
+                                              ml: 3
+                                            }}>
+                                              <Stack spacing={1}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80 }}>
+                                                    Full Name:
+                                                  </Typography>
+                                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                    {userInfo[job.posted_by].display_name}
+                                                  </Typography>
+                                                </Box>
+                                                
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80 }}>
+                                                    Username:
+                                                  </Typography>
+                                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                    {userInfo[job.posted_by].username}
+                                                  </Typography>
+                                                </Box>
+                                                
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80 }}>
+                                                    Email:
+                                                  </Typography>
+                                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                    {userInfo[job.posted_by].email}
+                                                  </Typography>
+                                                </Box>
+                                                
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                  <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80 }}>
+                                                    User ID:
+                                                  </Typography>
+                                                  <Chip 
+                                                    label={`#${userInfo[job.posted_by].id}`}
+                                                    size="small"
+                                                    sx={{ 
+                                                      height: 20,
+                                                      fontSize: '0.7rem',
+                                                      bgcolor: '#E3F2FD',
+                                                      color: '#1976D2'
+                                                    }}
+                                                  />
+                                                </Box>
+                                              </Stack>
+                                            </Box>
+                                          </motion.div>
+                                        )}
                                       </Box>
                                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <Typography variant="body2" color="text.secondary">
