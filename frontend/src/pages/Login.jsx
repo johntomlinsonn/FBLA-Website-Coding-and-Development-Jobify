@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Box,
@@ -262,6 +262,26 @@ const Login = () => {
           setError('Please select an account type (Student or Recruiter)');
           return;
         }
+
+        if (accountType === 'recruiter') {
+          const disallowedDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com'];
+          const emailDomain = formData.email.split('@')[1];
+          if (disallowedDomains.includes(emailDomain?.toLowerCase())) {
+            setError(
+              <>
+                Recruiter accounts must use a company email address. Free email providers are not permitted.
+                <br />
+                Please use a different email or{' '}
+                <MuiLink component={Link} to="/faq" sx={{ color: 'error.main', textDecoration: 'underline', fontWeight: 'bold' }}>
+                  contact us
+                </MuiLink>
+                {' '}for assistance.
+              </>
+            );
+            return;
+          }
+        }
+
         const isJobProvider = accountType === 'recruiter';
 
         console.log(isJobProvider);

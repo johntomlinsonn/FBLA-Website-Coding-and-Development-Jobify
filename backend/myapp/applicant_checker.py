@@ -6,6 +6,7 @@ import requests
 from urllib.parse import urlparse
 from io import BytesIO
 import PyPDF2
+import re
 
 
 api_key_me = os.getenv('API_KEY')
@@ -115,6 +116,71 @@ def get_pdf_text(pdf_path):
         print(f"Error reading PDF: {str(e)}")
         return ""
 
+def extract_pii_from_text(text):
+    """
+    Extracts Personally Identifiable Information (PII) from a given text using regex.
+    This is based on common resume formats and inspired by PII detection tools.
+    Reference for PII types: https://github.com/KevinColemanInc/awesome-pii
+    Reference for regex patterns: https://medium.com/john-snow-labs/the-complete-guide-to-information-extraction-by-regular-expressions-with-spark-nlp-and-python-e5ad18a801d7
+    """
+    pii = {
+        'emails': set(),
+        'phones': set(),
+        'addresses': set(),
+        'ssns': set(),
+        'dobs': set(),
+        'linkedin': set(),
+        'websites': set()
+    }
+
+    # Case-insensitive text for some patterns
+    text_lower = text.lower()
+
+    # Regex for emails
+    pii['emails'].update(re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text))
+
+    # Regex for phone numbers (US formats)
+    pii['phones'].update(re.findall(r'\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', text))
+
+    # Regex for Social Security Numbers
+    pii['ssns'].update(re.findall(r'\b\d{3}-\d{2}-\d{4}\b', text))
+
+    # Regex for addresses (simplified for US). This is complex and may not be exhaustive.
+    pii['addresses'].update(re.findall(r'\b\d{1,6}\s(?:[A-Za-z0-9#.\']+\s){1,7}(?:Avenue|Ave|Street|St|Drive|Dr|Lane|Ln|Road|Rd|Boulevard|Blvd|Court|Ct)\b[.,]?\s(?:[A-Za-z0-9]+\s){0,3},?\s[A-Z]{2}\s\d{5}(?:-\d{4})?', text, re.IGNORECASE))
+
+    # Regex for Date of Birth (various formats)
+    pii['dobs'].update(re.findall(r'\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}\b|\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', text, re.IGNORECASE))
+
+    # Regex for LinkedIn profiles
+    pii['linkedin'].update(re.findall(r'linkedin\.com/in/[\w-]+', text_lower))
+    
+    # Regex for other websites/portfolio links
+    pii['websites'].update(re.findall(r'https?://[^\s/$.?#].[^\s]*', text_lower))
+
+    # Convert sets to lists for easier use later
+    return {key: list(values) for key, values in pii.items()}
+
+def redact_pii_from_text(text, pii_data):
+    """
+    Redacts found PII from the given text.
+    """
+    redacted_text = text
+    if not pii_data:
+        return redacted_text
+    
+    # Create a single regex from all PII values to be redacted
+    # Escaping special characters in each PII value
+    all_pii = [re.escape(item) for sublist in pii_data.values() for item in sublist]
+    
+    if not all_pii:
+        return redacted_text
+
+    # Combine into a single pattern for efficiency
+    redaction_pattern = re.compile('|'.join(all_pii), re.IGNORECASE)
+    redacted_text = redaction_pattern.sub("[REDACTED]", redacted_text)
+    
+    return redacted_text
+
 import functools
 
 @functools.cache
@@ -122,12 +188,18 @@ def check_applicant(pdf_path, job_description):
     global client
     
     text = get_pdf_text(pdf_path)
+    
+    # Extract and redact PII from the resume text
+    pii_data = extract_pii_from_text(text)
+    redacted_text = redact_pii_from_text(text, pii_data)
+    print(redacted_text)
+    
     try:
         stream = client.chat.completions.create(
             messages=[
                 {
                     "role": "user",
-                    "content": role + f"The job description is as follows: {job_description} and here is the canidates job application: {text}"
+                    "content": role + f"The job description is as follows: {job_description} and here is the canidates job application: {redacted_text}"
                 }
             ],
             model="llama-4-scout-17b-16e-instruct",
