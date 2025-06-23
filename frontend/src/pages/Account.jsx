@@ -41,6 +41,8 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SaveIcon from '@mui/icons-material/Save';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import PersonIcon from '@mui/icons-material/Person';
+import AccessibilitySettings from '../components/AccessibilitySettings';
+import ResumeBuilderWizard from '../components/ResumeBuilder';
 
 const orange = '#FF9100';
 const lightOrange = '#FFF7ED';
@@ -72,6 +74,8 @@ const Account = () => {
   const [showNewEducationForm, setShowNewEducationForm] = useState(false);
   const [gamification, setGamification] = useState(null);
   const [challenges, setChallenges] = useState([]);
+  const [accessOpen, setAccessOpen] = useState(false);
+  const [showResumeBuilder, setShowResumeBuilder] = useState(false);
 
   // Categorized skills list
   const skillCategories = {
@@ -190,17 +194,18 @@ const Account = () => {
     try {
       const formDataToSend = new FormData();
       Object.keys(formData).forEach(key => {
-        if (formData[key] !== null) {
+        if (formData[key] !== null && key !== 'skills') {
           if (key === 'currently_working') {
             formDataToSend.append(key, formData[key] ? 'true' : 'false');
-          } else if (key !== 'skills') {
+          } else {
             formDataToSend.append(key, formData[key]);
           }
         }
       });
-      // Append skills array
-      formData.skills.forEach(skill => formDataToSend.append('skills', skill));
-
+      // Append skills as a single JSON string if present
+      if (formData.skills && formData.skills.length > 0) {
+        formDataToSend.append('skills', JSON.stringify(formData.skills));
+      }
       await profileAPI.update(formDataToSend);
       setSuccess('Profile updated successfully');
       setLoading(false);
@@ -281,8 +286,13 @@ const Account = () => {
   }
 
   return (
+    <>
     <Box sx={{ minHeight: '100vh', background: '#fff', py: 6 }}>
       <Container maxWidth="md" sx={{ py: 4 }}>
+          {/* Page Title */}
+          <Typography variant="h3" component="h1" sx={{ fontWeight: 800, color: '#FF9100', mb: 4, textAlign: 'center', letterSpacing: 1 }}>
+            Account Settings
+          </Typography>
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
@@ -425,23 +435,74 @@ const Account = () => {
                       </Button>
                     </>
                   ) : (
-                    <Button
-                      variant="contained"
-                      component="label"
-                      startIcon={<UploadFileIcon />}
-                      sx={{ background: '#2563EB', color: '#fff', fontWeight: 700, borderRadius: 2, px: 4, py: 1.2, fontSize: 16, boxShadow: '0 2px 8px 0 #2563EB22', '&:hover': { background: '#1D4ED8' } }}
-                    >
-                      Upload Resume
-                      <input
-                        type="file"
-                        hidden
-                        accept=".pdf,.doc,.docx"
-                        onChange={handleResumeChange}
-                      />
-                    </Button>
+                    <>
+                      <Button
+                        variant="contained"
+                        component="label"
+                        startIcon={<UploadFileIcon />}
+                        sx={{ background: '#2563EB', color: '#fff', fontWeight: 700, borderRadius: 2, px: 4, py: 1.2, fontSize: 16, boxShadow: '0 2px 8px 0 #2563EB22', '&:hover': { background: '#1D4ED8' } }}
+                      >
+                        Upload Resume
+                        <input
+                          type="file"
+                          hidden
+                          accept=".pdf,.doc,.docx"
+                          onChange={handleResumeChange}
+                        />
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => setShowResumeBuilder(true)}
+                        sx={{ fontWeight: 700, borderRadius: 2, px: 4, py: 1.2, fontSize: 16, borderColor: '#FF9100', color: '#FF9100', '&:hover': { borderColor: '#FF9100', background: '#FF910011' } }}
+                      >
+                        Build with Jobify
+                      </Button>
+                    </>
                   )}
                 </Box>
               </Box>
+                {/* Resume Builder Wizard Inline */}
+                {showResumeBuilder && (
+                  <Box sx={{ mt: 4 }}>
+                    <ResumeBuilderWizard onClose={() => setShowResumeBuilder(false)} />
+                  </Box>
+                )}
+                {/* Accessibility Settings Accordion - moved here */}
+                <Box sx={{ mt: 4 }}>
+                  <Accordion
+                    expanded={accessOpen}
+                    onChange={() => setAccessOpen((prev) => !prev)}
+                    sx={{
+                      borderRadius: 3,
+                      boxShadow: '0 2px 12px 0 #FF910022',
+                      background: '#fff',
+                      '&:before': { display: 'none' },
+                      mb: 2,
+                    }}
+                  >
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon sx={{ color: '#FF9100' }} />}
+                      sx={{
+                        borderRadius: 3,
+                        background: '#FFF6ED',
+                        color: '#FF9100',
+                        fontWeight: 700,
+                        fontSize: 18,
+                        px: 3,
+                        py: 2,
+                        boxShadow: '0 2px 8px 0 #FF910022',
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 700, color: '#FF9100' }}>
+                        Accessibility Settings
+                      </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ background: '#fff', borderRadius: 3 }}>
+                      <AccessibilitySettings />
+                    </AccordionDetails>
+                  </Accordion>
+                </Box>
             </Paper>
           </Grid>
 
@@ -716,6 +777,7 @@ const Account = () => {
         </Grid>
       </Container>
     </Box>
+    </>
   );
 };
 

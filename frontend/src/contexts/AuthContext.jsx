@@ -141,21 +141,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const signup = async (first_name, last_name, email, username, password, isJobProvider) => {
+  const signup = async (firstName, lastName, email, username, password, isJobProvider, locationData = null) => {
     try {
-      setLoading(true);
-      const response = await api.post('/register/', {
-        first_name,
-        last_name,
-        email,
+      const payload = {
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
         username,
         password,
         is_job_provider: isJobProvider,
-      });
+      };
 
-      // Automatically log the user in after successful registration
-      const { access, refresh } = response.data;
-
+      if (isJobProvider && locationData) {
+        payload.latitude = locationData.latitude;
+        payload.longitude = locationData.longitude;
+      }
+      
+      const response = await api.post('/register/', payload);
+      const { user, access, refresh } = response.data;
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
 
@@ -176,8 +179,6 @@ export const AuthProvider = ({ children }) => {
       return { ...userProfile, is_staff: isStaff };
     } catch (error) {
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 

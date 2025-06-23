@@ -14,4 +14,103 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+/* Accessibility classes */
+body.dyslexia-font, .dyslexia-font * {
+  font-family: 'OpenDyslexic', Arial, sans-serif !important;
+}
+
+body.color-blind-mode {
+  /* Example: Use a color-blind safe palette */
+  --primary: #0072B2;
+  --secondary: #E69F00;
+  --success: #009E73;
+  --danger: #D55E00;
+  --warning: #F0E442;
+  --info: #56B4E9;
+  --background: #ffffff;
+  --text: #222222;
+}
+
+body.color-blind-mode .MuiButton-containedPrimary {
+  background-color: var(--primary) !important;
+  color: #fff !important;
+}
+
+body.dark-mode-access {
+  background: #181818 !important;
+  color: #f5f5f5 !important;
+}
+body.dark-mode-access * {
+  background: transparent !important;
+  color: #f5f5f5 !important;
+}
+body.dark-mode-access .MuiPaper-root,
+body.dark-mode-access .MuiAccordion-root,
+body.dark-mode-access .MuiAccordionSummary-root,
+body.dark-mode-access .MuiAccordionDetails-root {
+  background: #232323 !important;
+  color: #f5f5f5 !important;
+  border-color: #333 !important;
+}
+body.dark-mode-access .MuiButton-root {
+  background-color: #333 !important;
+  color: #fff !important;
+  border-color: #444 !important;
+}
+body.dark-mode-access .MuiButton-containedPrimary {
+  background-color: #FF9100 !important;
+  color: #181818 !important;
+}
+body.dark-mode-access .MuiInputBase-root,
+body.dark-mode-access .MuiOutlinedInput-root,
+body.dark-mode-access input,
+body.dark-mode-access textarea {
+  background: #181818 !important;
+  color: #f5f5f5 !important;
+  border-color: #444 !important;
+}
+body.dark-mode-access .MuiFormLabel-root {
+  color: #bbb !important;
+}
+body.dark-mode-access .MuiChip-root {
+  background: #333 !important;
+  color: #fff !important;
+}
+body.dark-mode-access .MuiAlert-root {
+  background: #222 !important;
+  color: #fff !important;
+}
+body.dark-mode-access .MuiDivider-root {
+  border-color: #444 !important;
+}
+body.dark-mode-access .MuiAvatar-root {
+  background: #444 !important;
+  color: #fff !important;
+}
+body.dark-mode-access .MuiSvgIcon-root {
+  color: #FF9100 !important;
+}
+body.dark-mode-access .MuiSwitch-root .Mui-checked {
+  color: #FF9100 !important;
+}
+body.dark-mode-access .MuiSwitch-track {
+  background: #444 !important;
+}
+body.dark-mode-access .MuiLinearProgress-root {
+  background: #333 !important;
+}
+body.dark-mode-access .MuiLinearProgress-bar {
+  background: #FF9100 !important;
+}
+
+body.high-contrast {
+  filter: contrast(1.5) !important;
+}
+
+body.highlight-missing-alt img:not([alt]),
+body.highlight-missing-alt img[alt=""] {
+  outline: 3px solid red !important;
+  box-shadow: 0 0 0 2px yellow !important;
 } 

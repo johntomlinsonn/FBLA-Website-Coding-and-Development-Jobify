@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from .serializers import UserProfileSerializer, JobPostingSerializer, UserSerializer, ReferenceSerializer, EducationSerializer, MessageSerializer, ConversationSerializer, BadgeSerializer, ChallengeSerializer, UserChallengeSerializer
-from .models import UserProfile, Reference, Education, JobPosting, Message, Badge, Challenge, UserChallenge
+from .models import UserProfile, Reference, Education, JobPosting, Message, Badge, Challenge, UserChallenge, Skill
 from django.db import models
 import mimetypes
 from django.shortcuts import render, redirect, get_object_or_404
@@ -35,6 +35,7 @@ from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.utils import timezone
 from .challenge_logic import update_all_challenges_for_user
+from rest_framework.exceptions import ValidationError
 
 Api = os.getenv("API_KEY")
 
@@ -637,7 +638,6 @@ def api_update_profile(request):
     # Pre-create any new Skill entries so SlugRelatedField can match
     skill_names = request.data.getlist('skills') if hasattr(request.data, 'getlist') else request.data.get('skills')
     if skill_names:
-        from .models import Skill
         for name in skill_names:
             Skill.objects.get_or_create(name=name)
     serializer = UserProfileSerializer(profile, data=request.data, partial=True, context={'request': request})
@@ -647,8 +647,6 @@ def api_update_profile(request):
         # Handle skills m2m explicitly if provided
         skill_names = request.data.getlist('skills') if hasattr(request.data, 'getlist') else request.data.get('skills')
         if skill_names is not None:
-            from .models import Skill
-            # Set skills by matching names
             skills_qs = Skill.objects.filter(name__in=skill_names)
             profile_instance.skills.set(skills_qs)
         return Response(UserProfileSerializer(profile_instance, context={'request': request}).data)
@@ -1471,3 +1469,19 @@ def admin_overhaul_challenges(request):
         "deleted_count": deleted_challenges,
         "created_count": created_count
     })
+
+def validate_recruiter_location(latitude, longitude):
+    """
+    Validates if a recruiter's location is within 25 minutes of the high school.
+    Raises ValidationError if the location is too far.
+    """
+    HIGH_SCHOOL_ADDRESS = getattr(settings, 'HIGH_SCHOOL_ADDRESS', None)
+    if not HIGH_SCHOOL_ADDRESS:
+        # If the address isn't set, we can't validate. We'll log a warning and allow it.
+        print("Warning: HIGH_SCHOOL_ADDRESS is not set. Skipping recruiter location validation.")
+        return
+
+    travel_time = get_travel_time_from_coords(latitude, longitude, HIGH_SCHOOL_ADDRESS)
+
+    if travel_time > 25:
+        raise ValidationError("Your location is too far from the school. To get access, please contact us through the FAQ page for a manual review.")

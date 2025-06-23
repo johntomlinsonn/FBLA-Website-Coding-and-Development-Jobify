@@ -59,6 +59,17 @@ class Education(models.Model):
     gpa = models.DecimalField(max_digits=4, decimal_places=2, blank=True, null=True)
 
 class JobPosting(models.Model):
+    """
+    JobPosting Model for managing job postings on the platform.
+    This model stores all the information related to job opportunities posted by employers
+    or recruiters. It includes details about the job, the company, application requirements,
+    and administrative metadata.
+    
+    Notes:
+        - The requirements field accepts various input formats and normalizes them to JSON
+        - The custom_questions field similarly accepts various formats and normalizes them
+        - All job postings start with 'pending' status and require approval to be visible
+    """
     posted_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='posted_jobs',default=1)
     title = models.CharField(max_length=255)
     company_name = models.CharField(max_length=255)
@@ -69,7 +80,10 @@ class JobPosting(models.Model):
     description = models.TextField()
     requirements = models.TextField()
     custom_questions = models.TextField(blank=True, null=True)
-    featured = models.BooleanField(default=False)  # Added featured field
+    featured = models.BooleanField(default=False) 
+    grade = models.IntegerField(blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
   
     #Adding the options ot wether if the job is active on the website or not
     status = models.CharField(
@@ -78,9 +92,7 @@ class JobPosting(models.Model):
         max_length=10
     )
     #job grade and date it was made on
-    grade = models.IntegerField(blank=True, null=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+    
 
     def save(self, *args, **kwargs):
         # Ensure requirements and custom_questions are stored as JSON strings

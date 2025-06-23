@@ -241,3 +241,5 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_USER_CLASS': 'django.contrib.auth.models.User',
 }
+
+HIGH_SCHOOL_ADDRESS = "Normal Community High School, 3900 E Raab Rd, Normal, IL 61761"

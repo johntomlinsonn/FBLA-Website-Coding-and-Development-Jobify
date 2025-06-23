@@ -13,6 +13,7 @@ import {
   useTheme,
   useMediaQuery,
   Link as MuiLink,
+  LinearProgress,
 } from '@mui/material';
 import {
   Visibility,
@@ -29,6 +30,94 @@ import {
 import { styled } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import MainLayout from '../components/MainLayout';
+
+// Password strength calculation function
+const calculatePasswordStrength = (password) => {
+  if (!password) return { score: 0, label: 'No password', color: '#ccc' };
+  
+  let score = 0;
+  const feedback = [];
+  
+  // Length check
+  if (password.length >= 8) score += 20;
+  else feedback.push('At least 8 characters');
+  
+  // Uppercase check
+  if (/[A-Z]/.test(password)) score += 20;
+  else feedback.push('One uppercase letter');
+  
+  // Lowercase check
+  if (/[a-z]/.test(password)) score += 20;
+  else feedback.push('One lowercase letter');
+  
+  // Number check
+  if (/\d/.test(password)) score += 20;
+  else feedback.push('One number');
+  
+  // Special character check
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score += 20;
+  else feedback.push('One special character');
+  
+  // Determine strength level and color
+  let label, color;
+  if (score <= 40) {
+    label = 'Weak';
+    color = '#f44336'; // Red
+  } else if (score <= 60) {
+    label = 'Fair';
+    color = '#ff9800'; // Orange
+  } else if (score <= 80) {
+    label = 'Good';
+    color = '#2196f3'; // Blue
+  } else {
+    label = 'Strong';
+    color = '#4caf50'; // Green
+  }
+  
+  return { score, label, color, feedback };
+};
+
+// Password Strength Meter Component
+const PasswordStrengthMeter = ({ password }) => {
+  const strength = calculatePasswordStrength(password);
+  
+  return (
+    <Box sx={{ mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+        <Typography variant="caption" color="text.secondary">
+          Password Strength
+        </Typography>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            color: strength.color,
+            fontWeight: 'bold'
+          }}
+        >
+          {strength.label}
+        </Typography>
+      </Box>
+      <LinearProgress 
+        variant="determinate" 
+        value={strength.score} 
+        sx={{
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: '#e0e0e0',
+          '& .MuiLinearProgress-bar': {
+            backgroundColor: strength.color,
+            borderRadius: 4,
+          }
+        }}
+      />
+      {strength.feedback.length > 0 && password && (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+          Missing: {strength.feedback.join(', ')}
+        </Typography>
+      )}
+    </Box>
+  );
+};
 
 // SVG Icons
 const StudentIcon = (props) => (
@@ -208,6 +297,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [accountType, setAccountType] = useState(null);
+  const [locationData, setLocationData] = useState(null);
 
   // New state for multi-step form
   const [currentStep, setCurrentStep] = useState(0); // 0 for login flow, 0 for signup part 1, 1 for signup part 2
@@ -239,6 +329,25 @@ const Login = () => {
     setCurrentStep(prev => prev - 1);
   };
 
+  const handleLocationRequest = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocationData({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          setError(''); // Clear any previous errors
+        },
+        (err) => {
+          setError(`Location Error: ${err.message}. Please enable location services.`);
+        }
+      );
+    } else {
+      setError('Geolocation is not supported by this browser.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -263,29 +372,15 @@ const Login = () => {
           return;
         }
 
-        if (accountType === 'recruiter') {
-          const disallowedDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com'];
-          const emailDomain = formData.email.split('@')[1];
-          if (disallowedDomains.includes(emailDomain?.toLowerCase())) {
-            setError(
-              <>
-                Recruiter accounts must use a company email address. Free email providers are not permitted.
-                <br />
-                Please use a different email or{' '}
-                <MuiLink component={Link} to="/faq" sx={{ color: 'error.main', textDecoration: 'underline', fontWeight: 'bold' }}>
-                  contact us
-                </MuiLink>
-                {' '}for assistance.
-              </>
-            );
-            return;
-          }
+        if (accountType === 'recruiter' && !locationData) {
+          setError('Recruiters must share their location to sign up. Please click the "Share Location" button.');
+          return;
         }
 
         const isJobProvider = accountType === 'recruiter';
 
         console.log(isJobProvider);
-        await signup(formData.first_name, formData.last_name, formData.email, formData.username, formData.password, isJobProvider);
+        await signup(formData.first_name, formData.last_name, formData.email, formData.username, formData.password, isJobProvider, locationData);
         // User is automatically logged in and redirected by the signup function
       }
     } catch (err) {
@@ -550,6 +645,7 @@ const Login = () => {
                       }}
                       required
                     />
+                    <PasswordStrengthMeter password={formData.password} />
                     <StyledTextField
                       label="Confirm Password"
                       name="confirmPassword"
@@ -627,6 +723,31 @@ const Login = () => {
                         <Typography variant="subtitle1">Recruiter</Typography>
                       </Button>
                     </Box>
+
+                    {accountType === 'recruiter' && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        transition={{ duration: 0.5 }}
+                        style={{ overflow: 'hidden', textAlign: 'center', marginBottom: theme.spacing(2) }}
+                      >
+                        <Typography variant="body1" sx={{ mb: 1 }}>
+                          Recruiter validation requires your location.
+                        </Typography>
+                        <Button
+                          variant="contained"
+                          onClick={handleLocationRequest}
+                          sx={{ mb: 1 }}
+                        >
+                          Share Location
+                        </Button>
+                        {locationData && (
+                          <Typography variant="caption" sx={{ color: 'success.main', display: 'block' }}>
+                            Location captured successfully!
+                          </Typography>
+                        )}
+                      </motion.div>
+                    )}
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
                       <StyledButton

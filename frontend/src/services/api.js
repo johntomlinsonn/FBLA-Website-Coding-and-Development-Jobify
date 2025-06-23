@@ -90,48 +90,85 @@ export const authAPI = {
 };
 
 // Jobs API
+
 export const jobsAPI = {
+  /**
+   * Fetches all jobs based on optional filters
+   * @async
+   * @param {Object} [filters={}] - Optional query parameters to filter jobs
+   * @returns {Promise<Array>} Array of job objects
+   */
   getAll: async (filters = {}) => {
     try {
-      // Use the imported api instance which already handles URL construction and params
+      //Sends a GET request to the jobs endpoint with optional filters
       const response = await api.get('/jobs/', { params: filters });
-    return response.data;
+      return response.data;
+      //Preventing any errors during the API call
     } catch (error) {
       console.error('Error fetching jobs:', error);
       throw error;
     }
   },
 
+  /**
+   * Retrieves a specific job by ID
+   * @async
+   * @param {string|number} id - The unique identifier of the job
+   * @returns {Promise<Object>} The job object
+   * @throws {Error} If the API request fails
+   */
   getById: async (id) => {
     try {
-    const response = await api.get(`/jobs/${id}/`);
-    return response.data;
+      const response = await api.get(`/jobs/${id}/`);
+      return response.data;
     } catch (error) {
       console.error(`Error fetching job with id ${id}:`, error);
       throw error;
     }
   },
 
+  /**
+   * Creates a new job listing
+   * @async
+   * @param {Object} jobData - The job data to be created
+   * @returns {Promise<Object>} The created job object
+   * @throws {Error} If the API request fails
+   */
   create: async (jobData) => {
     try {
-    const response = await api.post('/jobs/', jobData);
-    return response.data;
+      const response = await api.post('/jobs/', jobData);
+      return response.data;
     } catch (error) {
       console.error('Error creating job:', error);
       throw error;
     }
   },
 
+  /**
+   * Updates an existing job listing
+   * @async
+   * @param {string|number} id - The unique identifier of the job to update
+   * @param {Object} jobData - The job data to be updated
+   * @returns {Promise<Object>} The updated job object
+   * @throws {Error} If the API request fails
+   */
   update: async (id, jobData) => {
     try {
-    const response = await api.put(`/jobs/${id}/`, jobData);
-    return response.data;
+      const response = await api.put(`/jobs/${id}/`, jobData);
+      return response.data;
     } catch (error) {
       console.error(`Error updating job with id ${id}:`, error);
       throw error;
     }
   },
 
+  /**
+   * Deletes a specific job
+   * @async
+   * @param {string|number} id - The unique identifier of the job to delete
+   * @returns {Promise<Object>} Response data from the server
+   * @throws {Error} If the API request fails
+   */
   delete: async (id) => {
     try {
       const response = await api.delete(`/jobs/${id}/`);
