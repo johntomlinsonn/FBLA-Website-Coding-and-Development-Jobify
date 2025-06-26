@@ -70,6 +70,7 @@ class JobPostingSerializer(serializers.ModelSerializer):
         allow_empty=True
     )
     
+    #Converts lists to JSON strings for requirements and custom_questions
     def to_representation(self, instance):
         data = super().to_representation(instance)
         # Convert string back to list for requirements and custom_questions
@@ -94,6 +95,7 @@ class JobPostingSerializer(serializers.ModelSerializer):
         data['grade'] = instance.grade
         return data
 
+    #Converts JSON strings to lists for requirements and custom_questions
     def to_internal_value(self, data):
         # Convert lists to strings for requirements and custom_questions
         if 'requirements' in data:
@@ -130,6 +132,7 @@ class JobPostingSerializer(serializers.ModelSerializer):
                 data['grade'] = 0
         return super().to_internal_value(data)
 
+    #Create Method to deal with missing data
     def create(self, validated_data):
         print("Creating job with validated data:", validated_data)
         # Ensure grade is included in the creation

@@ -24,7 +24,8 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import FilterListIcon from '@mui/icons-material/FilterList';
 
 const FindApplicantsPage = () => {
-    const [applicants, setApplicants] = useState([]);
+    const [allApplicants, setAllApplicants] = useState([]); // Store all applicants
+    const [filteredApplicants, setFilteredApplicants] = useState([]); // Store filtered results
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
@@ -36,6 +37,8 @@ const FindApplicantsPage = () => {
     });
 
     const [stats, setStats] = useState({ activeStudents: 2847, thisWeek: 127 });
+    const [availableSkills, setAvailableSkills] = useState([]);
+    const [availableJobs, setAvailableJobs] = useState([]);
 
     const activeFilterStyle = {
         '& .MuiOutlinedInput-notchedOutline': {
@@ -50,15 +53,13 @@ const FindApplicantsPage = () => {
             setLoading(true);
             setError(null);
             
-            const params = new URLSearchParams();
-            if (filters.skill && filters.skill !== 'All Skills') params.append('skill', filters.skill);
-            if (filters.position && filters.position !== 'All Positions') params.append('job', filters.position);
-            if (filters.sortBy) params.append('sort_by', filters.sortBy);
-            if (filters.searchTerm) params.append('search', filters.searchTerm);
-            if (filters.quickFilter) params.append('quick_filter', filters.quickFilter);
-
-            const response = await api.get(`/applicants/?${params.toString()}`);
-            setApplicants(response.data.applicants);
+            // Fetch all applicants without filters (except maybe initial load optimizations)
+            const response = await api.get('/applicants/');
+            setAllApplicants(response.data.applicants);
+            
+            // Extract unique skills and jobs from applicants
+            extractFilterOptions(response.data.applicants);
+            
             // In a real app, you'd fetch these stats from an API
             // setStats(response.data.stats);
         } catch (error) {
@@ -69,12 +70,195 @@ const FindApplicantsPage = () => {
         }
     };
 
+    // Extract unique skills and jobs from applicants data
+    const extractFilterOptions = (applicants) => {
+        console.log('Extracting filter options from:', applicants.length, 'applicants');
+        console.log('Sample applicant data:', applicants[0]); // Debug: show first applicant structure
+        
+        // Extract unique skills
+        const skillsSet = new Set();
+        applicants.forEach(applicant => {
+            console.log('Applicant skills:', applicant.skills); // Debug: log each applicant's skills
+            if (applicant.skills && Array.isArray(applicant.skills)) {
+                applicant.skills.forEach(skill => {
+                    // Skills are serialized as strings (slug field), not objects
+                    if (typeof skill === 'string' && skill.trim()) {
+                        skillsSet.add(skill);
+                    } else if (skill && skill.name) {
+                        // Fallback in case they're objects
+                        skillsSet.add(skill.name);
+                    }
+                });
+            }
+        });
+        const uniqueSkills = Array.from(skillsSet).sort();
+        console.log('Extracted skills:', uniqueSkills);
+        setAvailableSkills(uniqueSkills);
+
+        // Extract unique jobs
+        const jobsSet = new Set();
+        applicants.forEach(applicant => {
+            if (applicant.applied_jobs && Array.isArray(applicant.applied_jobs)) {
+                applicant.applied_jobs.forEach(job => {
+                    if (job && job.trim()) {
+                        jobsSet.add(job);
+                    }
+                });
+            }
+        });
+        const uniqueJobs = Array.from(jobsSet).sort();
+        console.log('Extracted jobs:', uniqueJobs);
+        setAvailableJobs(uniqueJobs);
+    };
+
+    // Frontend filtering function
+    const applyFilters = () => {
+        let filtered = [...allApplicants];
+        
+        console.log('Applying filters:', filters);
+        console.log('Total applicants:', filtered.length);
+
+        // Apply skill filter
+        if (filters.skill && filters.skill !== 'All Skills') {
+            filtered = filtered.filter(applicant => {
+                if (!applicant.skills || !Array.isArray(applicant.skills)) return false;
+                
+                // Skills are strings (slug field), not objects
+                return applicant.skills.some(skill => {
+                    if (typeof skill === 'string') {
+                        return skill === filters.skill;
+                    } else if (skill && skill.name) {
+                        // Fallback in case they're objects
+                        return skill.name === filters.skill;
+                    }
+                    return false;
+                });
+            });
+            console.log('After skill filter:', filtered.length);
+        }
+
+        // Apply position filter
+        if (filters.position && filters.position !== 'All Positions') {
+            filtered = filtered.filter(applicant => 
+                applicant.applied_jobs && applicant.applied_jobs.some(job => 
+                    job === filters.position
+                )
+            );
+            console.log('After position filter:', filtered.length);
+        }
+
+        // Apply search term filter
+        if (filters.searchTerm) {
+            const searchTerm = filters.searchTerm.toLowerCase();
+            filtered = filtered.filter(applicant => {
+                const name = `${applicant.user?.first_name || ''} ${applicant.user?.last_name || ''}`.toLowerCase();
+                const location = (applicant.location || '').toLowerCase();
+                
+                // Handle skills as strings (slug field) or objects
+                let skills = '';
+                if (applicant.skills && Array.isArray(applicant.skills)) {
+                    skills = applicant.skills.map(skill => {
+                        if (typeof skill === 'string') {
+                            return skill.toLowerCase();
+                        } else if (skill && skill.name) {
+                            return skill.name.toLowerCase();
+                        }
+                        return '';
+                    }).join(' ');
+                }
+                
+                return name.includes(searchTerm) || 
+                       location.includes(searchTerm) || 
+                       skills.includes(searchTerm);
+            });
+            console.log('After search filter:', filtered.length);
+        }
+
+        // Apply quick filters
+        if (filters.quickFilter) {
+            switch (filters.quickFilter) {
+                case 'Available Now':
+                    // Filter for students who are not currently working or are available
+                    filtered = filtered.filter(applicant => !applicant.currently_working);
+                    break;
+                case 'High GPA (3.5+)':
+                    filtered = filtered.filter(applicant => 
+                        applicant.gpa && parseFloat(applicant.gpa) >= 3.5
+                    );
+                    break;
+                case 'Multiple Skills':
+                    filtered = filtered.filter(applicant => 
+                        applicant.skills && applicant.skills.length > 1
+                    );
+                    break;
+                case 'Recent Applicants':
+                    // Filter for applicants who joined recently (within last 30 days)
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    filtered = filtered.filter(applicant => {
+                        const joinDate = new Date(applicant.user?.date_joined || '');
+                        return joinDate >= thirtyDaysAgo;
+                    });
+                    break;
+                default:
+                    break;
+            }
+            console.log('After quick filter:', filtered.length);
+        }
+
+        // Apply sorting
+        switch (filters.sortBy) {
+            case 'gpa_high_to_low':
+                filtered.sort((a, b) => {
+                    const gpaA = parseFloat(a.gpa) || 0;
+                    const gpaB = parseFloat(b.gpa) || 0;
+                    return gpaB - gpaA;
+                });
+                break;
+            case 'gpa_low_to_high':
+                filtered.sort((a, b) => {
+                    const gpaA = parseFloat(a.gpa) || 0;
+                    const gpaB = parseFloat(b.gpa) || 0;
+                    return gpaA - gpaB;
+                });
+                break;
+            case 'Most Recent':
+            default:
+                filtered.sort((a, b) => {
+                    const dateA = new Date(a.user?.date_joined || '');
+                    const dateB = new Date(b.user?.date_joined || '');
+                    return dateB - dateA;
+                });
+                break;
+        }
+
+        console.log('Final filtered count:', filtered.length);
+        setFilteredApplicants(filtered);
+    };
+
+    // Initial fetch of all applicants
     useEffect(() => {
-        const handler = setTimeout(() => {
-            fetchApplicants();
-        }, 500); // Debounce search/filter requests
-        return () => clearTimeout(handler);
-    }, [filters]);
+        fetchApplicants();
+    }, []);
+
+    // Set initial filtered applicants when allApplicants loads
+    useEffect(() => {
+        if (allApplicants.length > 0 && filteredApplicants.length === 0) {
+            setFilteredApplicants(allApplicants);
+        }
+    }, [allApplicants]);
+
+    // Apply filters whenever filters change or allApplicants change
+    // Add debounce for search term to improve performance
+    useEffect(() => {
+        if (allApplicants.length > 0) {
+            const handler = setTimeout(() => {
+                applyFilters();
+            }, filters.searchTerm ? 300 : 0); // Debounce search, instant for other filters
+            
+            return () => clearTimeout(handler);
+        }
+    }, [filters, allApplicants]);
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -195,10 +379,11 @@ const FindApplicantsPage = () => {
                                 sx={filters.skill !== 'All Skills' ? activeFilterStyle : {}}
                             >
                                 <MenuItem value="All Skills">All Skills</MenuItem>
-                                <MenuItem value="Python Programming">Python Programming</MenuItem>
-                                <MenuItem value="Research & Writing">Research & Writing</MenuItem>
-                                <MenuItem value="Note-Taking">Note-Taking</MenuItem>
-                                <MenuItem value="Public Speaking">Public Speaking</MenuItem>
+                                {availableSkills.map((skill) => (
+                                    <MenuItem key={skill} value={skill}>
+                                        {skill}
+                                    </MenuItem>
+                                ))}
                             </Select>
                         </FormControl>
                     </Grid>
@@ -212,7 +397,11 @@ const FindApplicantsPage = () => {
                                 sx={filters.position !== 'All Positions' ? activeFilterStyle : {}}
                             >
                                 <MenuItem value="All Positions">All Positions</MenuItem>
-                                <MenuItem value="Software Engineering Intern">Software Engineering Intern</MenuItem>
+                                {availableJobs.map((job) => (
+                                    <MenuItem key={job} value={job}>
+                                        {job}
+                                    </MenuItem>
+                                ))}
                             </Select>
                         </FormControl>
                     </Grid>
@@ -256,7 +445,7 @@ const FindApplicantsPage = () => {
 
             <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                    {loading ? 'Searching...' : `${applicants.length} Talented Students Found`}
+                    {loading ? 'Searching...' : `${filteredApplicants.length} Talented Students Found`}
                 </Typography>
                     <Button variant="text" size="small">Showing best matches</Button>
             </Box>
@@ -273,7 +462,7 @@ const FindApplicantsPage = () => {
                     initial="hidden"
                     animate="visible"
                 >
-                    {applicants.length === 0 ? (
+                    {filteredApplicants.length === 0 ? (
                         <Box sx={{ textAlign: 'center', py: 8 }}>
                             <Typography variant="h6" color="text.secondary">
                                 No applicants found matching your criteria
@@ -282,7 +471,7 @@ const FindApplicantsPage = () => {
                     ) : (
                         <Grid container spacing={3}>
                             <AnimatePresence>
-                                {applicants.map((applicant) => (
+                                {filteredApplicants.map((applicant) => (
                                     <Grid item xs={12} sm={6} md={4} key={applicant.id}>
                                         <ApplicantCard applicant={applicant} />
                                     </Grid>

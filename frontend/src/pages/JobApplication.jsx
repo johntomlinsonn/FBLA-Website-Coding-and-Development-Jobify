@@ -856,57 +856,81 @@ const JobApplication = () => {
   };
 
   return (
-    <Box sx={{ bgcolor: '#FFFFFF', minHeight: '100vh', p: 3 }}>
+    <Box sx={{ bgcolor: '#fff', minHeight: '100vh', p: 3 }}>
       <Container maxWidth="md">
+        {/* Job Info */}
         <Box sx={{ textAlign: 'center', my: 4 }}>
-            <Typography variant="h3" sx={{ fontWeight: 'bold' }}>
-                Apply for {jobDetails?.title}
-                 <AutoAwesomeIcon sx={{ color: '#ff6b00', ml: 1, fontSize: 'inherit' }} />
-            </Typography>
-            <Typography variant="h6" color="text.secondary">
-                at {jobDetails?.company_name}. Take the next step in your career journey!
-            </Typography>
+          <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#111' }}>
+            Apply for {jobDetails?.title}
+            <AutoAwesomeIcon sx={{ color: '#ff6b00', ml: 1, fontSize: 'inherit' }} />
+          </Typography>
+          <Typography variant="h5" sx={{ color: '#111', fontWeight: 500, mb: 2 }}>
+            at {jobDetails?.company_name}
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ fontSize: 18 }}>
+            Take the next step in your career journey!
+          </Typography>
         </Box>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
+        {/* Horizontal Stepper */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 5 }}>
+          {steps.map((label, index) => {
+            const Icon = stepIcons[index];
+            const isActive = activeStep === index;
+            const isCompleted = activeStep > index;
+            return (
+              <React.Fragment key={label}>
+                <Box sx={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '50%',
+                      bgcolor: isCompleted ? '#ff6b00' : isActive ? '#ff6b00' : 'grey.200',
+                      color: isCompleted || isActive ? 'white' : 'grey.500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 1,
+                      border: isActive ? '3px solid #ffd1b3' : '3px solid transparent',
+                    }}
+                  >
+                    {Icon ? (isCompleted ? <CheckCircleIcon /> : <Icon />) : null}
+                  </Box>
+                  <Typography sx={{ fontWeight: isActive || isCompleted ? 'bold' : 'normal', color: isActive || isCompleted ? 'text.primary' : 'text.secondary' }}>{label}</Typography>
+                </Box>
+                {index < steps.length - 1 && (
+                  <Box sx={{ flex: 1, height: '3px', bgcolor: isCompleted ? '#ff6b00' : 'grey.200', mt: '24px', mx: 1 }} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </Box>
 
-        <CustomStepper activeStep={activeStep} steps={steps} stepIcons={stepIcons} />
-        
-        <motion.div
-          layout
-          style={{
-            position: 'relative',
-            width: '100%',
-            minHeight: '500px'
-          }}
-        >
+        {/* Step Card */}
+        <motion.div layout style={{ position: 'relative', minHeight: '500px' }}>
           <AnimatePresence initial={false} custom={activeStep} mode="wait">
             {renderStepContent(steps[activeStep])}
           </AnimatePresence>
         </motion.div>
 
+        {/* Navigation Buttons */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
           <Button
             disabled={activeStep === 0}
             onClick={handleBack}
             startIcon={<ArrowBackIcon />}
-            sx={{ color: '#ff6b00' }}
+            sx={{ color: '#ff6b00', fontWeight: 600 }}
           >
             Back
           </Button>
-
           <Typography variant="body2" color="text.secondary">Step {activeStep + 1} of {steps.length}</Typography>
-
           {activeStep === steps.length - 1 ? (
             <Button
               variant="contained"
               onClick={handleSubmit}
               endIcon={<ArrowForwardIcon />}
-              sx={{ bgcolor: '#ff6b00', '&:hover': { bgcolor: '#e65100' }, borderRadius: '20px', px: 3 }}
+              sx={{ bgcolor: '#ff6b00', '&:hover': { bgcolor: '#e65100' }, borderRadius: '20px', px: 3, fontWeight: 600 }}
             >
               Submit Application
             </Button>
@@ -915,7 +939,7 @@ const JobApplication = () => {
               variant="contained"
               onClick={handleNext}
               endIcon={<ArrowForwardIcon />}
-              sx={{ bgcolor: '#ff6b00', '&:hover': { bgcolor: '#e65100' }, borderRadius: '20px', px: 3 }}
+              sx={{ bgcolor: '#ff6b00', '&:hover': { bgcolor: '#e65100' }, borderRadius: '20px', px: 3, fontWeight: 600 }}
             >
               Next
             </Button>

@@ -33,29 +33,30 @@ import MainLayout from '../components/MainLayout';
 
 // Password strength calculation function
 const calculatePasswordStrength = (password) => {
-  if (!password) return { score: 0, label: 'No password', color: '#ccc' };
+  const safePassword = typeof password === 'string' ? password : '';
+  if (!safePassword) return { score: 0, label: 'No password', color: '#ccc', feedback: [] };
   
   let score = 0;
   const feedback = [];
   
   // Length check
-  if (password.length >= 8) score += 20;
+  if (safePassword.length >= 8) score += 20;
   else feedback.push('At least 8 characters');
   
   // Uppercase check
-  if (/[A-Z]/.test(password)) score += 20;
+  if (/[A-Z]/.test(safePassword)) score += 20;
   else feedback.push('One uppercase letter');
   
   // Lowercase check
-  if (/[a-z]/.test(password)) score += 20;
+  if (/[a-z]/.test(safePassword)) score += 20;
   else feedback.push('One lowercase letter');
   
   // Number check
-  if (/\d/.test(password)) score += 20;
+  if (/\d/.test(safePassword)) score += 20;
   else feedback.push('One number');
   
   // Special character check
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score += 20;
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(safePassword)) score += 20;
   else feedback.push('One special character');
   
   // Determine strength level and color
@@ -79,7 +80,8 @@ const calculatePasswordStrength = (password) => {
 
 // Password Strength Meter Component
 const PasswordStrengthMeter = ({ password }) => {
-  const strength = calculatePasswordStrength(password);
+  const safePassword = typeof password === 'string' ? password : '';
+  const strength = calculatePasswordStrength(safePassword);
   
   return (
     <Box sx={{ mb: 2 }}>
@@ -110,7 +112,7 @@ const PasswordStrengthMeter = ({ password }) => {
           }
         }}
       />
-      {strength.feedback.length > 0 && password && (
+      {strength.feedback.length > 0 && safePassword && (
         <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
           Missing: {strength.feedback.join(', ')}
         </Typography>
@@ -645,7 +647,6 @@ const Login = () => {
                       }}
                       required
                     />
-                    <PasswordStrengthMeter password={formData.password} />
                     <StyledTextField
                       label="Confirm Password"
                       name="confirmPassword"
@@ -671,6 +672,7 @@ const Login = () => {
                       }}
                       required
                     />
+                    <PasswordStrengthMeter password={formData.password} />
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
                       <Button
                         variant="outlined"

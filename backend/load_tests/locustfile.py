@@ -9,12 +9,12 @@ class WebsiteUser(HttpUser):
 
     @task
     def view_search_results(self):
-        self.client.get("/search/?search=busser")
+        self.client.get("api/search/?search=busser")
 
     @task
     def view_signin(self):
-        self.client.get("/signin/")
+        self.client.get("api/signin/")
 
     @task
     def view_postjob(self):
-        self.client.get("/postjob/")
+        self.client.get("api/postjob/")

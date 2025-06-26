@@ -43,7 +43,7 @@ Evaluation Process:
 
 Compare the resume against the job description over these multiple passes.
 Determine which grade (100, 85, 75, or 0) best reflects the candidate's fit for the role based on the criteria above.
-Provide a concise explanation justifying your grading decision in a single sentence.
+Provide a concise explanation justifying your grading decision in a single sentence. Do not make the grades nice numbers like 30 , 25 make them like 63, 97. Also give at least a 20 on their score 
 Output Format:
 
 Your final output must be on a single line, formatted as:

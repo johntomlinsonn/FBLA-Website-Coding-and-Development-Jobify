@@ -47,6 +47,14 @@ const socialLinks = [
   { icon: <LinkedInIcon />, href: 'https://linkedin.com', label: 'LinkedIn' },
 ];
 
+// These are the nav links shown in the reference image
+const staticNavLinks = [
+  { label: 'Recruiters', path: '/recruiters' },
+  { label: 'Careers', path: '/careers' },
+  { label: 'Employers', path: '/employers' },
+  { label: 'Guidance', path: '/guidance' },
+];
+
 const MainLayout = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -87,7 +95,6 @@ const MainLayout = () => {
   const performUserLogout = () => {
     logout(); // Call existing logout function from useAuth
     handleCloseUserMenu();
-    // navigate('/'); // Optional: navigate to home or login after logout
   };
 
   // Add useEffect for chatbot script
@@ -102,18 +109,15 @@ const MainLayout = () => {
     };
   }, []);
 
-  const handleLogout = () => { // This is the original handleLogout, now wrapped by performUserLogout for menu
-    logout();
-    navigate('/');
-  };
-
   const isLandingPage = location.pathname === '/';
   const MainContentWrapper = isLandingPage ? Box : Container;
-  const wrapperSx = isLandingPage ? { width: '100%', flexGrow: 1 } : { flexGrow: 1, py: 4, pb: 16, px: { xs: 2, md: 'auto' } };
+  const wrapperSx = isLandingPage
+    ? { width: '100%', flexGrow: 1, pt: { xs: 10, sm: 12 } }
+    : { flexGrow: 1, py: 4, pb: 16, px: { xs: 2, md: 'auto' }, pt: { xs: 10, sm: 12 } };
 
   // Navigation links for AppBar and Drawer (excluding Account/Logout for logged-in users, which are in the menu)
   const navLinkItems = [
-    user?.is_job_provider && { label: 'Post a Job', onClick: () => navigate('/post-job') }, // Ensure path is correct
+    user?.is_job_provider && { label: 'Post a Job', onClick: () => navigate('/post-job') },
     user && !user.is_job_provider && { label: 'Browse Jobs', onClick: () => navigate('/jobs') },
     user?.is_staff && { label: 'Admin Panel', onClick: () => navigate('/admin') },
     user?.is_job_provider && { label: 'Find Applicants', onClick: () => navigate('/find-applicants') },
@@ -123,74 +127,40 @@ const MainLayout = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Orange accent bar */}
-      {/* <Box sx={{ width: '100%', height: 4, background: 'linear-gradient(90deg, #FF6B00 0%, #FF8C00 100%)', zIndex: 1301 }} /> */}
-      {/* Chatbot container with highest z-index */}
-      <Box
+      {/* Glassy, fixed, transparent AppBar */}
+      <AppBar
+        position="fixed"
+        elevation={0}
         sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          pointerEvents: 'none',
-          zIndex: 9999,
-          '& > *': {
-            pointerEvents: 'auto'
-          }
-        }}
-      />
-      <AppBar 
-        position="static" 
-        color="default" 
-        elevation={0} 
-        sx={{ 
-          background: 'rgba(255,255,255,0.98)', 
-          backdropFilter: 'blur(8px)',
-          boxShadow: '0 2px 12px 0 rgba(0,0,0,0.05)', 
-          pt: 2,
-          pb: 2,
-          position: 'relative',
+          background: 'rgba(255, 255, 255, 0.55)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+          boxShadow: '0 2px 24px 0 rgba(255,107,0,0.07)',
+          borderBottom: '1.5px solid rgba(255,255,255,0.18)',
           zIndex: 1200,
-          transition: 'all 0.3s ease-in-out',
-          '&:hover': {
-            boxShadow: '0 4px 20px 0 rgba(255,255,255,0.2)',
-          }
+          transition: 'all 0.3s',
         }}
       >
         <Container maxWidth="xl">
-          <Toolbar sx={{ 
-            justifyContent: 'space-between',
-            px: { xs: 0, sm: 2 },
-            minHeight: { xs: 64, sm: 72 }
-          }}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+          <Toolbar
+            sx={{
+              justifyContent: 'space-between',
+              px: { xs: 0, sm: 2 },
+              minHeight: { xs: 64, sm: 72 },
+              gap: 2,
+            }}
+          >
+            {/* Logo and Brand */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
                 cursor: 'pointer',
-                transition: 'transform 0.2s ease-in-out',
-                '&:hover': { 
-                  transform: 'scale(1.02)',
-                  opacity: 0.9 
-                }
+                transition: 'transform 0.2s',
+                '&:hover': { transform: 'scale(1.02)', opacity: 0.9 },
               }}
               onClick={() => navigate('/')}
             >
-              <Typography 
-                variant="h5" 
-                sx={{ 
-                  fontWeight: 800, 
-                  background: 'linear-gradient(45deg, #FF6B00, #FF8C00)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  letterSpacing: 1.5,
-                  mr: 1.5,
-                  fontSize: { xs: '1.5rem', sm: '1.75rem' }
-                }}
-              >
-                Jobify
-              </Typography>
               <motion.div
                 initial={{ scale: 1 }}
                 animate={{
@@ -210,41 +180,49 @@ const MainLayout = () => {
                     width: '36px',
                     height: '36px',
                     objectFit: 'contain',
-                    filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))' // Add a subtle shadow if needed
+                    filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))'
                   }}
                 />
               </motion.div>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 800,
+                  color: '#18181b',
+                  letterSpacing: 1.5,
+                  ml: 1.5,
+                  fontSize: { xs: '1.5rem', sm: '1.75rem' }
+                }}
+              >
+                Jobify
+              </Typography>
             </Box>
-            {/* Desktop Nav */}
+      
+            {/* Right Nav: Dynamic */}
             {!isMobile && (
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center',
-                gap: { xs: 1, sm: 2 },
-                flexWrap: { xs: 'wrap', sm: 'nowrap' }
-              }}>
-                {navLinkItems.map((link, i) => (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {navLinkItems.map((link) =>
                   link.isButton ? (
-                    <Button 
+                    <Button
                       key={link.label}
-                      variant="contained" 
-                      sx={{ 
+                      variant="contained"
+                      sx={{
                         background: 'linear-gradient(45deg, #FF6B00, #FF8C00)',
-                        color: '#fff', 
+                        color: '#fff',
                         fontWeight: 600,
                         fontSize: '0.95rem',
                         px: 3,
                         py: 1,
                         borderRadius: 2,
                         boxShadow: '0 4px 14px 0 rgba(255, 107, 0, 0.3)',
-                        transition: 'all 0.3s ease-in-out',
+                        transition: 'all 0.3s',
                         ml: 1,
                         '&:hover': {
                           background: 'linear-gradient(45deg, #FF8C00, #FF6B00)',
                           boxShadow: '0 6px 20px 0 rgba(255, 107, 0, 0.4)',
                           transform: 'translateY(-1px)'
                         }
-                      }} 
+                      }}
                       onClick={link.onClick}
                     >
                       {link.label}
@@ -253,14 +231,14 @@ const MainLayout = () => {
                     <Button
                       key={link.label}
                       color="inherit"
-                      startIcon={link.icon}
-                      sx={{ 
-                        color: '#222', 
+                      sx={{
+                        color: '#18181b',
                         fontWeight: 600,
                         fontSize: '0.95rem',
                         px: 2,
                         py: 1,
                         borderRadius: 2,
+                        background: 'transparent',
                         '&:hover': {
                           backgroundColor: 'rgba(255, 107, 0, 0.08)',
                           color: '#FF6B00'
@@ -271,16 +249,16 @@ const MainLayout = () => {
                       {link.label}
                     </Button>
                   )
-                ))}
+                )}
                 {/* User Avatar and Menu for logged-in users */}
                 {user && (
                   <Box sx={{ flexGrow: 0, ml: 2 }}>
                     <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                      <Avatar 
-                        alt={user.first_name || 'User'} 
+                      <Avatar
+                        alt={user.first_name || 'User'}
                         src={user.profile_picture_url || ''}
-                        sx={{ 
-                          width: { xs: 36, sm: 42 }, 
+                        sx={{
+                          width: { xs: 36, sm: 42 },
                           height: { xs: 36, sm: 42 },
                           background: user.profile_picture_url ? 'transparent' : 'linear-gradient(45deg, #FF6B00, #FF8C00)',
                           color: '#fff',
@@ -362,9 +340,11 @@ const MainLayout = () => {
               boxSizing: "border-box",
               width: "100%",
               maxWidth: 300,
-              bgcolor: "#fff",
+              bgcolor: "rgba(255,255,255,0.95)",
               borderLeft: "1px solid #eee",
               boxShadow: "-5px 0 15px rgba(0,0,0,0.05)",
+              backdropFilter: 'blur(18px)',
+              WebkitBackdropFilter: 'blur(18px)',
             },
           }}
         >
@@ -375,21 +355,33 @@ const MainLayout = () => {
             <Box
               sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}
             >
+              <div
+              sx={{display:"flex"}}
+              >
               <Typography
                 variant="h6"
                 component="div"
                 sx={{
                   flexGrow: 1,
                   fontWeight: 800,
-                  background: "linear-gradient(135deg, #FF6B00 0%, #FF8C00 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
+                  color: '#18181b',
                   letterSpacing: 1.5,
                   mr: 1,
                 }}
               >
                 Jobify
               </Typography>
+              <img
+                  src="/logo.svg"
+                  alt="Jobify Logo"
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0px 1px 3px rgba(0,0,0,0.1))'
+                  }}
+                />
+                </div>
               <motion.div
                 initial={{ scale: 1 }}
                 animate={{
@@ -402,16 +394,6 @@ const MainLayout = () => {
                   repeatType: "reverse"
                 }}
               >
-                <img
-                  src="/logo.svg"
-                  alt="Jobify Logo"
-                  style={{
-                    width: '30px',
-                    height: '30px',
-                    objectFit: 'contain',
-                    filter: 'drop-shadow(0px 1px 3px rgba(0,0,0,0.1))'
-                  }}
-                />
               </motion.div>
               <IconButton
                 onClick={handleDrawerToggle}
@@ -420,8 +402,10 @@ const MainLayout = () => {
                 <CloseIcon />
               </IconButton>
             </Box>
-
+            {/* Center Nav Links (static, as in image) */}
             <List>
+  
+              {/* Dynamic nav links */}
               {navLinkItems.map((item) => (
                 <ListItem key={item.label} disablePadding>
                   <ListItemButton
@@ -478,25 +462,26 @@ const MainLayout = () => {
         </Drawer>
       </AppBar>
 
+      {/* Add top padding to prevent content from being hidden behind fixed header */}
       <MainContentWrapper sx={wrapperSx}>
         <Outlet />
       </MainContentWrapper>
 
-      {/* Footer */}
+      {/* Footer (unchanged) */}
       <Box sx={{
-        background: 'rgba(255,255,255,0.98)', // Changed to match header background
-        backdropFilter: 'blur(8px)', // Added backdropFilter
-        color: '#222', // Text color needs to be dark for light background
+        background: 'rgba(255,255,255,0.98)',
+        backdropFilter: 'blur(8px)',
+        color: '#222',
         py: { xs: 6, md: 8 },
         textAlign: 'center',
-        borderTop: '5px solid #FF6B00', // Orange accent line
+        borderTop: '5px solid #FF6B00',
       }}>
         <Container maxWidth="lg">
           <Grid container spacing={4} justifyContent="center" alignItems="center">
             <Grid item xs={12} md={4}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'center', md: 'flex-start' }, mb: { xs: 2, md: 0 } }}>
-                <Typography variant="h5" sx={{ 
-                  fontWeight: 800, 
+                <Typography variant="h5" sx={{
+                  fontWeight: 800,
                   background: 'linear-gradient(45deg, #FF6B00, #FF8C00)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',

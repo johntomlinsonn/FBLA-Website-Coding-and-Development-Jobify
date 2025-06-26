@@ -156,7 +156,11 @@ class JobPostingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobPosting
-        fields = ['id', 'title', 'company_name', 'company_email', 'description', 'salary', 'location', 'job_type', 'requirements', 'custom_questions', 'posted_by', 'status', 'created_at', 'updated_at','grade', 'applicant_count']
+        fields = ['id', 'title', 'company_name', 'company_email', 'description',
+                   'salary', 'location', 'job_type', 'requirements',
+                   'custom_questions', 'posted_by', 'status',
+                   'created_at', 'updated_at','grade', 'applicant_count']
+        
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def get_applicant_count(self, obj):

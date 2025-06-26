@@ -118,7 +118,7 @@ const testimonials = [
   },
   {
     name: "Marcus Chen",
-    image: "/placeholder.svg?height=80&width=80",
+    image: "/IMG_7849.jpeg",
     quote:
       "Found an amazing internship at a tech startup through Jobify. It's given me real-world experience and looks great on college applications!",
     title: "Senior, Future Engineer",
@@ -126,7 +126,7 @@ const testimonials = [
   },
   {
     name: "Sophia Williams",
-    image: "/placeholder.svg?height=80&width=80",
+    image: "/IMG_7848.jpeg",
     quote:
       "The platform made it easy to balance work and school. I've gained confidence and valuable skills that will help me in college.",
     title: "FBLA President",

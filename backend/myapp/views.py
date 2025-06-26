@@ -122,12 +122,13 @@ def account(request):
 def postjob(request):
     #Checking if the request is a post request
     if request.method == 'POST':
+        print("cronem")
         form = JobPostingForm(request.POST)
         #Checking if the form is valid
         if form.is_valid():
             #Saving all of the info from the form
             job_posting = form.save(commit=False)
-            job_posting.posted_by = request.user.userprofile  # Set the user profile as the poster
+            job_posting.posted_by = request.user.userprofile 
             job_posting.status = 'pending'
             # Assign the list directly. The model's save method will handle JSON dumping.
             job_posting.requirements = form.cleaned_data['requirements']
@@ -259,10 +260,22 @@ def api_job_list(request):
     elif request.method == 'POST':
         serializer = JobPostingSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
+    
             # Save the serializer. The create method will handle user and status from context
             job_posting = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+@api_view(['POST'])
+def api_job_post(request):
+    #Serializer allows the backend to use JSON data to create a new job posting
+    serializer = JobPostingSerializer(data=request.data)
+    # Check if the serializer is valid
+    if serializer.is_valid():
+        #Saves the job posting to backend
+        job_posting = serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def signin_view(request):
     signin_form = SignInForm()
