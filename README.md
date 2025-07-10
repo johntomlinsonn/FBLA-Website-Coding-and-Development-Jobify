@@ -9,11 +9,10 @@ Jobify addresses the unique challenges high school students face when searching 
 ## 🎯 FBLA Competition Context
 
 This project was created for the **FBLA 2024-25 Website Coding and Development** event, focusing on:
-- Creating a practical solution for high school students entering the workforce
-- Demonstrating advanced web development skills with modern technologies
-- Implementing AI integration for intelligent job matching
-- Building a complete full-stack application with user authentication and data management
-
+- A page for employers to submit postings
+- A backend panel to approve or delete postings
+- A page displaying the approved postings
+- A page for students to apply for the posting
 ## 🌟 Features
 
 ### Core Features
@@ -32,10 +31,10 @@ This project was created for the **FBLA 2024-25 Website Coding and Development**
 - **Favorites System**: Save and manage favorite job postings
 - **Reference & Education Management**: Comprehensive profile building with [`Reference`](backend/myapp/models.py) and [`Education`](backend/myapp/models.py) models
 
-### AI-Powered Features
-- **Intelligent Job Scoring**: Uses Cerebras LLaMA-4-Scout model to evaluate job suitability on a 1-75 scale
-- **Location Analysis**: Geographic scoring system that adds up to 25 points based on travel time from a reference location
-- **Smart Recommendations**: Evaluates jobs based on education requirements, typical high school employment, experience needs, age restrictions, and school hour compatibility
+### AI Job Grading
+- **Intelligent Job Scoring**: Uses Cerebras LLaMA-4-Scout model to evaluate job suitability on a 1-75
+-  **Travel Time Calculator**:Uses GEO APIFY to calculate travel time. This time is then converted to a 1-25 score
+-  **Grade Combination**: SCores are then combined to give the full job grade out of 100
 
 ## 🛠️ Tech Stack
 
@@ -177,7 +176,7 @@ The application uses Django ORM with several key models:
 ### AI Integration
 The [`job_grade.py`](backend/myapp/job_grade.py) module implements:
 - **Cerebras LLaMA-4-Scout Integration**: Uses advanced language model for job suitability assessment
-- **Dual Scoring System**: Base job score (1-75) + location score (up to 25 points)
+- **Dual Scoring System**: Base job score (1-75) + location score by GEO APIFY (up to 25 points)
 - **Error Handling**: Robust fallback mechanisms for API failures
 - **Real-time Grading**: Live scoring as users input job descriptions
 
@@ -198,16 +197,6 @@ The platform includes a comprehensive gamification system to encourage student e
 - **Challenges**: Time-limited objectives with specific criteria
 - **Leaderboards**: Optional competitive rankings (opt-in via `opt_in_leaderboard` field)
 
-## 🤖 AI Job Grading Algorithm
-
-Our proprietary scoring system evaluates jobs on multiple criteria:
-
-1. **Education Requirements** (High Weight): Prioritizes jobs with minimal education requirements
-2. **Typical High School Jobs** (Moderate Weight): Favors common student positions
-3. **Experience Requirements** (Moderate Weight): Scores higher for entry-level positions
-4. **Age Restrictions** (Moderate Weight): Penalizes 18+ requirements
-5. **Work Hours** (Moderate Weight): Considers school schedule compatibility
-6. **Geographic Accessibility** (25 points): Travel time from reference location
 
 ## 🔧 Development Scripts
 
@@ -243,7 +232,8 @@ python manage.py createsuperuser     # Create admin user
 2. **Post job listings** with real-time AI grading feedback
 3. **Review applications** from qualified high school students
 4. **Manage postings** through approval workflow
-5. **Message candidates** directly through the platform
+5.  **Find applicants** on the find applicants page (http://localhost:3000/find-applicants)
+6. **Message candidates** directly through the platform
 
 ### For Administrators
 1. **Access admin panel** with provided credentials
@@ -296,7 +286,6 @@ https://github.com/user-attachments/assets/2e2650ae-051f-431c-8768-95f2729ec51a
 # Recruiter and Admin View Video
 
 https://github.com/user-attachments/assets/9d816668-15ca-4721-86a2-c263e8daf3ae
-
 
 
 
