@@ -2,18 +2,18 @@
 
 A comprehensive full-stack job search platform specifically designed to help high school students find and apply for suitable employment opportunities. This project was developed for the **FBLA 2024-25 Website Coding and Development** competition.
 
-## 🚀 Project Overview
+## Project Overview
 
 Jobify addresses the unique challenges high school students face when searching for their first jobs. The platform features AI-powered job grading, gamification elements, and a modern React frontend with a Django REST API backend. Our intelligent scoring system evaluates job suitability specifically for high school students, considering factors like education requirements, work hours compatibility with school schedules, and age restrictions.
 
-## 🎯 FBLA Competition Context
+## FBLA Competition Context
 
 This project was created for the **FBLA 2024-25 Website Coding and Development** event, focusing on:
 - A page for employers to submit postings
 - A backend panel to approve or delete postings
 - A page displaying the approved postings
 - A page for students to apply for the posting
-## 🌟 Features
+## Features
 
 ### Core Features
 - **User Authentication & Profiles**: Complete user registration, login, and profile management with [`UserProfile`](backend/myapp/models.py) model
@@ -36,7 +36,7 @@ This project was created for the **FBLA 2024-25 Website Coding and Development**
 -  **Travel Time Calculator**:Uses GEO APIFY to calculate travel time. This time is then converted to a 1-25 score
 -  **Grade Combination**: SCores are then combined to give the full job grade out of 100
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 - **React 18** with Vite for fast development
@@ -58,14 +58,14 @@ This project was created for the **FBLA 2024-25 Website Coding and Development**
 - **Pillow** for image processing
 - **Python-dotenv** for environment variable management
 
-## 📋 Prerequisites
+## Prerequisites
 
 - **Node.js** (v18 or higher)
 - **Python** (3.8 or higher)
 - **pip** (Python package manager)
 - **Git**
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### Backend Setup
 
@@ -128,7 +128,7 @@ This project was created for the **FBLA 2024-25 Website Coding and Development**
 - Navigate to `http://127.0.0.1:8000/admin/` for Django admin
 - Navigate to `http://localhost:3000/admin/` for custom admin features
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 state_jobify/
@@ -162,7 +162,7 @@ state_jobify/
 └── README.md                    # Project documentation
 ```
 
-## 💻 Code Architecture & Technical Details
+## Code Architecture & Technical Details
 
 ### Database Models
 The application uses Django ORM with several key models:
@@ -198,7 +198,7 @@ The platform includes a comprehensive gamification system to encourage student e
 - **Leaderboards**: Optional competitive rankings (opt-in via `opt_in_leaderboard` field)
 
 
-## 🔧 Development Scripts
+## Development Scripts
 
 ### Frontend Commands
 ```bash
@@ -217,7 +217,7 @@ python manage.py collectstatic       # Collect static files
 python manage.py createsuperuser     # Create admin user
 ```
 
-## 🎯 Usage Guide
+## Usage Guide
 
 ### For Job Seekers (Students)
 1. **Register** a new account with student profile
@@ -241,7 +241,7 @@ python manage.py createsuperuser     # Create admin user
 3. **Manage user accounts** and resolve platform issues
 4. **Monitor engagement** through gamification analytics
 
-## 🔒 Security Features
+## Security Features
 
 - **JWT Token Authentication** for secure API access
 - **CORS Protection** with configurable allowed hosts
@@ -250,7 +250,7 @@ python manage.py createsuperuser     # Create admin user
 - **XSS Prevention** through React's built-in protections
 - **CSRF Protection** for form submissions
 
-## 🌟 Unique Features & Innovation
+## Unique Features & Innovation
 
 1. **AI-Powered Job Suitability**: First platform to use advanced AI for high school job evaluation
 2. **Geographic Intelligence**: Travel time integration for realistic job accessibility
@@ -259,7 +259,7 @@ python manage.py createsuperuser     # Create admin user
 5. **Student-Centric Design**: Built specifically for high school student needs and constraints
 6. **Comprehensive Communication**: Built-in messaging eliminates external communication needs
 
-## 🎓 Educational Value
+## Educational Value
 
 This project demonstrates:
 - **Full-Stack Development**: Complete frontend and backend integration
@@ -269,7 +269,7 @@ This project demonstrates:
 - **Modern Frontend**: React with contemporary libraries and patterns
 - **User Experience**: Intuitive design focused on target demographic
 
-## 📊 Performance & Scalability
+## Performance & Scalability
 
 - **Optimized Database Queries**: Efficient ORM usage with proper indexing
 - **Caching Strategy**: Static file serving and media optimization
@@ -277,7 +277,7 @@ This project demonstrates:
 - **Responsive Design**: Mobile-first approach for accessibility
 - **Modular Architecture**: Scalable code organization for future expansion
 
-## 🎥 Demo Videos
+## Demo Videos
 
 # Student View Video
 
